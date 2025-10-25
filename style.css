@@ -1,0 +1,16 @@
+body {
+    font-family: sans-serif;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+}
+
+.input-area {
+    padding: 20px;
+}
+
+.plot-area {
+    padding: 20px;
+}
