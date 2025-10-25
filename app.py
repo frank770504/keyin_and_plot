@@ -58,7 +58,28 @@ def delete_dataset(name):
     print(f"Deleted dataset: '{name}'") # Server-side log
     return jsonify({"message": f"Dataset '{name}' deleted"}), 200 # 200 OK
 
+@app.route('/api/datasets/<string:name>/points', methods=['POST'])
+def add_point(name):
+    """Add a new point to a dataset."""
+    if name not in datasets:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    data = request.get_json()
+    if not data or 'x' not in data or 'y' not in data:
+        return jsonify({"error": "Request must include x and y values"}), 400
+
+    try:
+        # Basic validation to ensure they are numbers
+        x = float(data['x'])
+        y = float(data['y'])
+    except (ValueError, TypeError):
+        return jsonify({"error": "x and y must be valid numbers"}), 400
+
+    new_point = {"x": x, "y": y}
+    datasets[name].append(new_point)
+    print(f"Added point {new_point} to dataset '{name}'") # Server-side log
+    return jsonify({"message": "Point added successfully"}), 201
+
 
 if __name__ == '__main__':
-    # Using a different port to avoid conflicts with the old http.server
     app.run(debug=True, port=5001)
