@@ -35,11 +35,11 @@ def create_dataset():
 
     dataset_name = data['name'].strip()
     if dataset_name in datasets:
-        return jsonify({"error": "Dataset with this name already exists"}), 409 # 409 Conflict
+        return jsonify({"error": "Dataset with this name already exists"}), 409
 
     datasets[dataset_name] = []
-    print(f"Created new dataset: '{dataset_name}'") # Server-side log
-    return jsonify({"message": f"Dataset '{dataset_name}' created successfully"}), 201 # 201 Created
+    print(f"Created new dataset: '{dataset_name}'")
+    return jsonify({"message": f"Dataset '{dataset_name}' created successfully"}), 201
 
 @app.route('/api/datasets/<string:name>', methods=['GET'])
 def get_dataset(name):
@@ -52,11 +52,11 @@ def get_dataset(name):
 def delete_dataset(name):
     """Delete a dataset."""
     if name not in datasets:
-        return jsonify({"error": "Dataset not found"}), 404 # 404 Not Found
+        return jsonify({"error": "Dataset not found"}), 404
 
     del datasets[name]
-    print(f"Deleted dataset: '{name}'") # Server-side log
-    return jsonify({"message": f"Dataset '{name}' deleted"}), 200 # 200 OK
+    print(f"Deleted dataset: '{name}'")
+    return jsonify({"message": f"Dataset '{name}' deleted"}), 200
 
 @app.route('/api/datasets/<string:name>/points', methods=['POST'])
 def add_point(name):
@@ -69,7 +69,6 @@ def add_point(name):
         return jsonify({"error": "Request must include x and y values"}), 400
 
     try:
-        # Basic validation to ensure they are numbers
         x = float(data['x'])
         y = float(data['y'])
     except (ValueError, TypeError):
@@ -77,8 +76,22 @@ def add_point(name):
 
     new_point = {"x": x, "y": y}
     datasets[name].append(new_point)
-    print(f"Added point {new_point} to dataset '{name}'") # Server-side log
+    print(f"Added point {new_point} to dataset '{name}'")
     return jsonify({"message": "Point added successfully"}), 201
+
+@app.route('/api/datasets/<string:name>/points/<int:index>', methods=['DELETE'])
+def delete_point(name, index):
+    """Delete a point from a dataset by its index."""
+    if name not in datasets:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    try:
+        point_to_delete = datasets[name][index]
+        del datasets[name][index]
+        print(f"Deleted point {point_to_delete} from dataset '{name}'")
+        return jsonify({"message": "Point deleted"}), 200
+    except IndexError:
+        return jsonify({"error": "Point index out of bounds"}), 404
 
 
 if __name__ == '__main__':

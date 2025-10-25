@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const dashboardView = document.getElementById('dashboard-view');
@@ -52,12 +53,38 @@ document.addEventListener('DOMContentLoaded', () => {
         pointsList.innerHTML = '';
         points.forEach((point, index) => {
             const li = document.createElement('li');
-            li.textContent = `(x: ${point.x}, y: ${point.y})`;
+            const textSpan = document.createElement('span');
+            textSpan.textContent = `(x: ${point.x}, y: ${point.y})`;
+            li.appendChild(textSpan);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.onclick = () => deletePoint(index);
+            li.appendChild(deleteBtn);
+
             pointsList.appendChild(li);
         });
     }
 
     // --- API Communication ---
+    async function deletePoint(index) {
+        if (!confirm(`Are you sure you want to delete point #${index + 1}?`)) return;
+
+        try {
+            const response = await fetch(`/api/datasets/${currentDataset}/points/${index}`, { method: 'DELETE' });
+            if (response.ok) {
+                await loadPointsForCurrentDataset(); // Refresh the view
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.error}`);
+            }
+        } catch (error) {
+            console.error('Error deleting point:', error);
+            alert('An error occurred while deleting the point.');
+        }
+    }
+
     async function addPoint() {
         const x = xInput.value;
         const y = yInput.value;
@@ -65,25 +92,22 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please enter both X and Y values.');
             return;
         }
-
         try {
             const response = await fetch(`/api/datasets/${currentDataset}/points`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ x, y }),
             });
-
             if (response.status === 201) {
                 xInput.value = '';
                 yInput.value = '';
-                await loadPointsForCurrentDataset(); // Refresh chart and list
+                await loadPointsForCurrentDataset();
             } else {
                 const errorData = await response.json();
                 alert(`Error: ${errorData.error}`);
             }
         } catch (error) {
             console.error('Error adding point:', error);
-            alert('An error occurred while adding the point.');
         }
     }
 
@@ -91,13 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentDataset) return;
         try {
             const response = await fetch(`/api/datasets/${currentDataset}`);
-            if (!response.ok) throw new Error('Failed to fetch points for dataset');
+            if (!response.ok) throw new Error('Failed to fetch points');
             const points = await response.json();
             initializeOrUpdateChart(points);
             renderPointsList(points);
         } catch (error) {
             console.error('Error loading points:', error);
-            pointsList.innerHTML = '<li>Error loading points.</li>';
         }
     }
 
