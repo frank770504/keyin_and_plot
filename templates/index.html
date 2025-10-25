@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Key-in and Plot</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Dataset Plotter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Key-in and Plot</h1>
-    <div class="container">
-        <div class="input-area">
-            <input type="number" id="x-input" placeholder="X value">
-            <input type="number" id="y-input" placeholder="Y value">
-            <button id="add-point">Add Point</button>
-        </div>
-        <div class="plot-area">
-            <canvas id="myChart"></canvas>
-        </div>
+
+    <div id="dashboard-view">
+        <h1>My Datasets</h1>
+        <ul id="dataset-list">
+            <!-- Datasets will be loaded here by JavaScript -->
+            <li>Loading...</li>
+        </ul>
     </div>
+
+    <!-- The edit view and chart will be added in a later step -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
