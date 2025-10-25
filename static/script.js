@@ -5,6 +5,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const newDatasetNameInput = document.getElementById('new-dataset-name');
 
     /**
+     * Deletes a dataset after confirmation.
+     * @param {string} name The name of the dataset to delete.
+     */
+    async function deleteDataset(name) {
+        if (!confirm(`Are you sure you want to delete the dataset "${name}"?`)) {
+            return; // User cancelled the action
+        }
+
+        try {
+            const response = await fetch(`/api/datasets/${name}`, { method: 'DELETE' });
+
+            if (response.ok) {
+                await loadDatasets(); // Refresh the list to show the item has been removed
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.error}`);
+            }
+        } catch (error) {
+            console.error('Error deleting dataset:', error);
+            alert('An error occurred while deleting the dataset.');
+        }
+    }
+
+    /**
      * Fetches dataset names from the API and renders them in the list.
      */
     async function loadDatasets() {
@@ -16,7 +40,17 @@ document.addEventListener('DOMContentLoaded', () => {
             datasetList.innerHTML = '';
             datasets.forEach(name => {
                 const li = document.createElement('li');
-                li.textContent = name;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = name;
+                li.appendChild(nameSpan);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'delete-btn'; // For potential styling
+                deleteBtn.onclick = () => deleteDataset(name);
+                li.appendChild(deleteBtn);
+
                 datasetList.appendChild(li);
             });
 
@@ -43,11 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ name: name }),
             });
 
-            if (response.status === 201) { // 201 Created
-                newDatasetNameInput.value = ''; // Clear the input
-                await loadDatasets(); // Refresh the list
+            if (response.status === 201) {
+                newDatasetNameInput.value = '';
+                await loadDatasets();
             } else {
-                // Display error message from the server
                 const errorData = await response.json();
                 alert(`Error: ${errorData.error}`);
             }

@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
@@ -41,6 +40,16 @@ def create_dataset():
     datasets[dataset_name] = []
     print(f"Created new dataset: '{dataset_name}'") # Server-side log
     return jsonify({"message": f"Dataset '{dataset_name}' created successfully"}), 201 # 201 Created
+
+@app.route('/api/datasets/<string:name>', methods=['DELETE'])
+def delete_dataset(name):
+    """Delete a dataset."""
+    if name not in datasets:
+        return jsonify({"error": "Dataset not found"}), 404 # 404 Not Found
+
+    del datasets[name]
+    print(f"Deleted dataset: '{name}'") # Server-side log
+    return jsonify({"message": f"Dataset '{name}' deleted"}), 200 # 200 OK
 
 
 if __name__ == '__main__':
