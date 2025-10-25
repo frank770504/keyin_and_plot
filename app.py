@@ -41,6 +41,13 @@ def create_dataset():
     print(f"Created new dataset: '{dataset_name}'") # Server-side log
     return jsonify({"message": f"Dataset '{dataset_name}' created successfully"}), 201 # 201 Created
 
+@app.route('/api/datasets/<string:name>', methods=['GET'])
+def get_dataset(name):
+    """Return the points for a specific dataset."""
+    if name not in datasets:
+        return jsonify({"error": "Dataset not found"}), 404
+    return jsonify(datasets[name])
+
 @app.route('/api/datasets/<string:name>', methods=['DELETE'])
 def delete_dataset(name):
     """Delete a dataset."""
