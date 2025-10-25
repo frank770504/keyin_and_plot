@@ -8,20 +8,40 @@
 </head>
 <body>
 
+    <!-- View for the main dataset list -->
     <div id="dashboard-view">
         <h1>My Datasets</h1>
         <ul id="dataset-list">
-            <!-- Datasets will be loaded here by JavaScript -->
             <li>Loading...</li>
         </ul>
-
         <div class="input-area">
             <input type="text" id="new-dataset-name" placeholder="Enter new dataset name">
             <button id="create-dataset-btn">Create Dataset</button>
         </div>
     </div>
 
-    <!-- The edit view and chart will be added in a later step -->
+    <!-- View for editing a single dataset (initially hidden) -->
+    <div id="edit-view" style="display: none;">
+        <h1 id="current-dataset-name"></h1>
+        <button id="back-to-dashboard-btn">&larr; Back to Dashboard</button>
+        
+        <div class="container">
+            <div class="input-area">
+                <h2>Add a Point</h2>
+                <input type="number" id="x-input" placeholder="X value">
+                <input type="number" id="y-input" placeholder="Y value">
+                <button id="add-point-btn">Add Point</button>
+                
+                <h2>Points</h2>
+                <ul id="points-list">
+                    <!-- Points will be loaded here -->
+                </ul>
+            </div>
+            <div class="plot-area">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>

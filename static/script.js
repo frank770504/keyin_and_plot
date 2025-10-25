@@ -1,23 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
+    const dashboardView = document.getElementById('dashboard-view');
+    const editView = document.getElementById('edit-view');
     const datasetList = document.getElementById('dataset-list');
     const createDatasetBtn = document.getElementById('create-dataset-btn');
     const newDatasetNameInput = document.getElementById('new-dataset-name');
+    const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
+    const currentDatasetNameH1 = document.getElementById('current-dataset-name');
 
-    /**
-     * Deletes a dataset after confirmation.
-     * @param {string} name The name of the dataset to delete.
-     */
+    // --- View Navigation ---
+    function showDashboard() {
+        editView.style.display = 'none';
+        dashboardView.style.display = 'block';
+        loadDatasets();
+    }
+
+    function showEditView(datasetName) {
+        dashboardView.style.display = 'none';
+        editView.style.display = 'block';
+        currentDatasetNameH1.textContent = datasetName;
+        // In the next step, we will load the points and draw the chart here.
+    }
+
+    // --- API Communication ---
+
     async function deleteDataset(name) {
-        if (!confirm(`Are you sure you want to delete the dataset "${name}"?`)) {
-            return; // User cancelled the action
-        }
+        if (!confirm(`Are you sure you want to delete the dataset "${name}"?`)) return;
 
         try {
             const response = await fetch(`/api/datasets/${name}`, { method: 'DELETE' });
-
             if (response.ok) {
-                await loadDatasets(); // Refresh the list to show the item has been removed
+                await loadDatasets();
             } else {
                 const errorData = await response.json();
                 alert(`Error: ${errorData.error}`);
@@ -28,29 +41,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Fetches dataset names from the API and renders them in the list.
-     */
     async function loadDatasets() {
         try {
             const response = await fetch('/api/datasets');
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const datasets = await response.json();
-
-            datasetList.innerHTML = '';
+            
+            datasetList.innerHTML = ''; 
             datasets.forEach(name => {
                 const li = document.createElement('li');
-
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = name;
                 li.appendChild(nameSpan);
 
+                const controlsDiv = document.createElement('div');
+
+                const viewBtn = document.createElement('button');
+                viewBtn.textContent = 'View/Edit';
+                viewBtn.onclick = () => showEditView(name);
+                controlsDiv.appendChild(viewBtn);
+
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Delete';
-                deleteBtn.className = 'delete-btn'; // For potential styling
+                deleteBtn.className = 'delete-btn';
                 deleteBtn.onclick = () => deleteDataset(name);
-                li.appendChild(deleteBtn);
+                controlsDiv.appendChild(deleteBtn);
 
+                li.appendChild(controlsDiv);
                 datasetList.appendChild(li);
             });
 
@@ -60,15 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Sends a request to create a new dataset and reloads the list on success.
-     */
     async function createDataset() {
         const name = newDatasetNameInput.value.trim();
-        if (!name) {
-            alert('Please enter a dataset name.');
-            return;
-        }
+        if (!name) return alert('Please enter a dataset name.');
 
         try {
             const response = await fetch('/api/datasets', {
@@ -92,7 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     createDatasetBtn.addEventListener('click', createDataset);
+    backToDashboardBtn.addEventListener('click', showDashboard);
 
     // --- Initial Load ---
-    loadDatasets();
+    showDashboard(); // Start by showing the dashboard
 });
