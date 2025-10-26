@@ -1,0 +1,12 @@
+[project]
+name = "keyin-and-plot"
+version = "0.1.0"
+description = "A web application to plot user-keyed (x, y) data points across multiple datasets." 
+requires-python = ">=3.11"
+readme = "README.md"
+
+# Defines the direct dependencies required by the project.
+# uv will use these to determine the full set of packages to install.
+dependencies = [
+    "flask",
+]
