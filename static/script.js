@@ -106,7 +106,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     label: currentDataset,
                     data: points,
                     backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                    borderColor: 'rgba(75, 192, 192, 1)'
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    // Add the trendline configuration
+                    trendlineLinear: {
+                        style: "rgba(255, 105, 180, 0.8)", // Hot pink for visibility
+                        lineStyle: "dotted",
+                        width: 2
+                    }
                 }
             ]
         };
