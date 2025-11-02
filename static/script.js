@@ -13,9 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const yInput = document.getElementById('y-input');
     const addPointBtn = document.getElementById('add-point-btn');
     const ctx = document.getElementById('myChart').getContext('2d');
+    const drawAllBtn = document.getElementById('draw-all-btn');
+    const ctx_all = document.getElementById('totalChart');
 
     // --- State ---
     let chart;
+    let totalChart;
     let currentDataset = null;
 
     // --- View Navigation ---
@@ -35,17 +38,100 @@ document.addEventListener('DOMContentLoaded', () => {
         editView.style.display = 'block';
         currentDataset = datasetName;
         currentDatasetNameH1.textContent = datasetName;
+        if (totalChart) {
+            totalChart.destroy();
+            totalChart = null;
+        }
         await loadPointsForCurrentDataset();
+    }
+
+    async function drawAllDataset() {
+        try {
+            const response = await fetch('/api/datasets');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const datasets = await response.json();
+            const chartData = { datasets: []
+            };
+            for (const [index, name] of datasets.entries()) {
+                const response = await fetch(`/api/datasets/${name}`);
+                if (!response.ok) {
+                  throw new Error(`Failed to fetch points for dataset: ${name}`);
+                }
+                const points = await response.json();
+                console.log(`Received ${points.length} points for ${name}`); //Example
+                for (const p in points) {
+                    console.log(points[p]["x"], points[p]["y"]);
+                }
+
+                const inner_dataset = {
+                    label: name,
+                    data: points,
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)'
+                };
+                chartData.datasets.push(inner_dataset);
+            }
+            if (totalChart) {
+                totalChart.data = chartData;
+                totalChart.update();
+            } else {
+                totalChart = new Chart(
+                    ctx_all,
+                    {
+                        type: 'scatter',
+                        data: chartData,
+                        options: {
+                            scales: {
+                                x: {
+                                    type: 'linear',
+                                    position: 'bottom',
+                                    title: { display: true, text: 'X' }
+                                },
+                                y: {
+                                    title: { display: true, text: 'Y' }
+                                }
+                            }
+                        }
+                    });
+            }
+            } catch (error) {
+                console.error('Error loading datasets:', error);
+            }
     }
 
     // --- Charting & Rendering ---
     function initializeOrUpdateChart(points) {
-        const chartData = { datasets: [{ label: currentDataset, data: points, backgroundColor: 'rgba(75, 192, 192, 0.5)', borderColor: 'rgba(75, 192, 192, 1)' }] };
+        const chartData = { datasets: [
+                {
+                    label: currentDataset,
+                    data: points,
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)'
+                }
+            ]
+        };
         if (chart) {
             chart.data = chartData;
             chart.update();
         } else {
-            chart = new Chart(ctx, { type: 'scatter', data: chartData, options: { scales: { x: { type: 'linear', position: 'bottom', title: { display: true, text: 'X' } }, y: { title: { display: true, text: 'Y' } } } } });
+            chart = new Chart(
+                ctx,
+                {
+                    type: 'scatter',
+                    data: chartData,
+                    options: {
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                title: { display: true, text: 'X' }
+                            },
+                            y: {
+                                title: { display: true, text: 'Y' }
+                            }
+                        }
+                    }
+                });
         }
     }
 
@@ -193,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createDatasetBtn.addEventListener('click', createDataset);
     backToDashboardBtn.addEventListener('click', showDashboard);
     addPointBtn.addEventListener('click', addPoint);
+    drawAllBtn.addEventListener('click', drawAllDataset);
 
     // --- Initial Load ---
     showDashboard();

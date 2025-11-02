@@ -5,12 +5,12 @@ app = Flask(__name__)
 # In-memory data store (for now)
 datasets = {
     "Sample Dataset A": [
-        {"x": 1, "y": 5},
-        {"x": 2, "y": 8},
+        {"x": 1.0, "y": 5.0},
+        {"x": 2.0, "y": 8.0},
     ],
     "Sample Dataset B": [
-        {"x": 10, "y": 15},
-        {"x": 12, "y": 9},
+        {"x": 10.0, "y": 15.0},
+        {"x": 12.0, "y": 9.0},
     ]
 }
 
