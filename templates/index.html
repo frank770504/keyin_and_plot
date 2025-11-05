@@ -36,6 +36,18 @@
                 <input type="number" id="y-input" placeholder="Y value">
                 <button id="add-point-btn">Add Point</button>
 
+                <h2>Trend Line</h2>
+                <div id="trendline-controls">
+                    <button id="trendline-linear-btn">Linear</button>
+                    <button id="trendline-exp-btn">Exponential</button>
+                    <button id="trendline-log-btn">Logarithmic</button>
+                    <button id="trendline-power-btn">Power</button>
+                    <button id="trendline-poly-btn">Polynomial</button>
+                    <button id="trendline-hide-btn">Hide</button>
+                </div>
+
+                <button id="reset-zoom-btn">Reset Zoom</button>
+
                 <h2>Points</h2>
                 <ul id="points-list">
                     <!-- Points will be loaded here -->
@@ -46,11 +58,10 @@
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Add regression-js and the trendline plugin -->
-    <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-trendline@2.0.3/src/chartjs-plugin-trendline.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-regression-trendline/dist/chartjs-plugin-regression-trendline.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

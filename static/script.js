@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
             totalChart.destroy();
             totalChart = null;
         }
+        if (chart) {
+            updateTrendline(null);
+        }
         await loadPointsForCurrentDataset();
     }
 
@@ -107,12 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: points,
                     backgroundColor: 'rgba(75, 192, 192, 0.5)',
                     borderColor: 'rgba(75, 192, 192, 1)',
-                    // Add the trendline configuration
-                    trendlineLinear: {
-                        style: "rgba(255, 105, 180, 0.8)", // Hot pink for visibility
-                        lineStyle: "dotted",
-                        width: 2
-                    }
                 }
             ]
         };
@@ -135,10 +132,28 @@ document.addEventListener('DOMContentLoaded', () => {
                             y: {
                                 title: { display: true, text: 'Y' }
                             }
+                        },
+                        plugins: {
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'xy',
+                                },
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy',
+                                }
+                            }
                         }
                     }
                 });
         }
+        updateTrendline('linear'); // Set default trendline
     }
 
     function renderPointsList(points) {
@@ -286,6 +301,47 @@ document.addEventListener('DOMContentLoaded', () => {
     backToDashboardBtn.addEventListener('click', showDashboard);
     addPointBtn.addEventListener('click', addPoint);
     drawAllBtn.addEventListener('click', drawAllDataset);
+
+    document.getElementById('trendline-linear-btn').addEventListener('click', () => updateTrendline('linear'));
+    document.getElementById('trendline-exp-btn').addEventListener('click', () => updateTrendline('exponential'));
+    document.getElementById('trendline-log-btn').addEventListener('click', () => updateTrendline('logarithmic'));
+    document.getElementById('trendline-power-btn').addEventListener('click', () => updateTrendline('power'));
+    document.getElementById('trendline-poly-btn').addEventListener('click', () => updateTrendline('polynomial'));
+    document.getElementById('trendline-hide-btn').addEventListener('click', () => updateTrendline(null));
+
+    document.getElementById('reset-zoom-btn').addEventListener('click', () => {
+        if (chart) {
+            chart.resetZoom();
+        }
+    });
+
+
+    // --- Trendline ---
+    function updateTrendline(type) {
+        if (!chart || !chart.data.datasets[0]) return;
+
+        // Remove all existing trendline properties
+        const dataset = chart.data.datasets[0];
+        for (const prop in dataset) {
+            if (prop.startsWith('trendline')) {
+                delete dataset[prop];
+            }
+        }
+
+        // Add the new trendline type if one is selected
+        if (type) {
+            dataset[`trendline${type.charAt(0).toUpperCase() + type.slice(1)}`] = {
+                style: "rgba(255, 105, 180, 0.8)",
+                lineStyle: "dotted",
+                width: 2,
+                // For polynomial, you might want to specify an order
+                order: (type === 'polynomial') ? 2 : undefined
+            };
+        }
+
+        chart.update();
+    }
+
 
     // --- Initial Load ---
     showDashboard();
