@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPointsList(points) {
         pointsList.innerHTML = '';
-        points.forEach((point, index) => {
+        points.forEach(point => {
             const li = document.createElement('li');
             const textSpan = document.createElement('span');
             textSpan.textContent = `(x: ${point.x}, y: ${point.y})`;
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = 'Delete';
             deleteBtn.className = 'delete-btn';
-            deleteBtn.onclick = () => deletePoint(index);
+            deleteBtn.onclick = () => deletePoint(point.id);
             li.appendChild(deleteBtn);
 
             pointsList.appendChild(li);
@@ -160,11 +160,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- API Communication ---
-    async function deletePoint(index) {
-        if (!confirm(`Are you sure you want to delete point #${index + 1}?`)) return;
+    async function deletePoint(pointId) {
+        if (!confirm(`Are you sure you want to delete this point?`)) return;
 
         try {
-            const response = await fetch(`/api/datasets/${currentDataset}/points/${index}`, { method: 'DELETE' });
+            const response = await fetch(`/api/datasets/${currentDataset}/points/${pointId}`, { method: 'DELETE' });
             if (response.ok) {
                 await loadPointsForCurrentDataset(); // Refresh the view
             } else {
