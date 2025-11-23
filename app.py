@@ -52,7 +52,9 @@ def index():
 @app.route('/api/datasets', methods=['GET'])
 def get_datasets():
     """Return a list of all dataset names."""
-    return jsonify(list(datasets.keys()))
+    all_datasets = Dataset.query.all()
+    dataset_names = [d.name for d in all_datasets]
+    return jsonify(dataset_names)
 
 @app.route('/api/datasets', methods=['POST'])
 def create_dataset():
@@ -65,16 +67,25 @@ def create_dataset():
     if dataset_name in datasets:
         return jsonify({"error": "Dataset with this name already exists"}), 409
 
-    datasets[dataset_name] = []
+    # --- Sync write to both stores ---
+    datasets[dataset_name] = []  # In-memory
+    new_dataset_db = Dataset(name=dataset_name)  # DB
+    db.session.add(new_dataset_db)
+    db.session.commit()
+    # ---------------------------------
+
     print(f"Created new dataset: '{dataset_name}'")
     return jsonify({"message": f"Dataset '{dataset_name}' created successfully"}), 201
 
 @app.route('/api/datasets/<string:name>', methods=['GET'])
 def get_dataset(name):
     """Return the points for a specific dataset."""
-    if name not in datasets:
+    dataset = Dataset.query.filter_by(name=name).first()
+    if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
-    return jsonify(datasets[name])
+
+    points = [{"x": p.x, "y": p.y} for p in dataset.points]
+    return jsonify(points)
 
 @app.route('/api/datasets/<string:name>', methods=['DELETE'])
 def delete_dataset(name):
@@ -82,7 +93,14 @@ def delete_dataset(name):
     if name not in datasets:
         return jsonify({"error": "Dataset not found"}), 404
 
-    del datasets[name]
+    # --- Sync write to both stores ---
+    del datasets[name]  # In-memory
+    dataset_to_delete = Dataset.query.filter_by(name=name).first()
+    if dataset_to_delete:
+        db.session.delete(dataset_to_delete)
+        db.session.commit()
+    # ---------------------------------
+
     print(f"Deleted dataset: '{name}'")
     return jsonify({"message": f"Dataset '{name}' deleted"}), 200
 
@@ -102,8 +120,17 @@ def add_point(name):
     except (ValueError, TypeError):
         return jsonify({"error": "x and y must be valid numbers"}), 400
 
+    # --- Sync write to both stores ---
     new_point = {"x": x, "y": y}
-    datasets[name].append(new_point)
+    datasets[name].append(new_point)  # In-memory
+
+    dataset_db = Dataset.query.filter_by(name=name).first()
+    if dataset_db:
+        new_point_db = Point(x=x, y=y, dataset=dataset_db)
+        db.session.add(new_point_db)
+        db.session.commit()
+    # ---------------------------------
+
     print(f"Added point {new_point} to dataset '{name}'")
     return jsonify({"message": "Point added successfully"}), 201
 
@@ -114,8 +141,18 @@ def delete_point(name, index):
         return jsonify({"error": "Dataset not found"}), 404
 
     try:
+        # --- Sync write to both stores ---
         point_to_delete = datasets[name][index]
-        del datasets[name][index]
+        del datasets[name][index]  # In-memory
+
+        dataset_db = Dataset.query.filter_by(name=name).first()
+        if dataset_db:
+            # This is inefficient but necessary for this transitional phase
+            point_to_delete_db = dataset_db.points[index]
+            db.session.delete(point_to_delete_db)
+            db.session.commit()
+        # ---------------------------------
+
         print(f"Deleted point {point_to_delete} from dataset '{name}'")
         return jsonify({"message": "Point deleted"}), 200
     except IndexError:
