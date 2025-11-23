@@ -1,6 +1,10 @@
 Changelog
 =========
 
+- **Refactor:** Implemented an application factory (`create_app`) in `app.py` and registered the API blueprint, completing the Flask Blueprint refactoring.
+
+- **Refactor:** Moved database models (`Dataset`, `Point`) and the SQLAlchemy `db` instance to a new `models.py` file for better organization.
+
 - **Refactor:** Defined the API blueprint in `api.py` and moved all API-related routes into it.
 
 Version 0.4.0 (Unreleased)
