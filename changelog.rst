@@ -1,6 +1,13 @@
 Changelog
 =========
 
+- **Refactor:** Defined the API blueprint in `api.py` and moved all API-related routes into it.
+
+Version 0.4.0 (Unreleased)
+--------------------------
+
+- **Refactor:** Started Flask Blueprint refactoring by creating `api.py` to house API endpoints.
+
 Version 0.3.0 (Unreleased)
 --------------------------
 
