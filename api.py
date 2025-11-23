@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from .models import db, Dataset, Point
+from models import db, Dataset, Point
 
 api_bp = Blueprint('api', __name__)
 

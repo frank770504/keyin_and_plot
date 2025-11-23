@@ -4,8 +4,8 @@ import os
 
 from flask import Flask, render_template
 import os
-from .models import db
-from .api import api_bp
+from models import db
+from api import api_bp
 
 def create_app():
     app = Flask(__name__)
@@ -14,7 +14,7 @@ def create_app():
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'project.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
+
     db.init_app(app) # Initialize db with app
 
     # Register blueprints
