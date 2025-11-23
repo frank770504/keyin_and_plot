@@ -9,4 +9,6 @@ readme = "README.md"
 # uv will use these to determine the full set of packages to install.
 dependencies = [
     "flask",
+    "Flask-SQLAlchemy",
+    "SQLAlchemy",
 ]

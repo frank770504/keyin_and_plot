@@ -1,6 +1,34 @@
 from flask import Flask, render_template, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
+import os
 
 app = Flask(__name__)
+
+# --- Database Configuration ---
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'project.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
+# --- Database Models ---
+class Dataset(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    points = db.relationship('Point', backref='dataset', cascade="all, delete-orphan", lazy=True)
+
+    def __repr__(self):
+        return f'<Dataset {self.name}>'
+
+class Point(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    x = db.Column(db.Float, nullable=False)
+    y = db.Column(db.Float, nullable=False)
+    dataset_id = db.Column(db.Integer, db.ForeignKey('dataset.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<Point(x={self.x}, y={self.y})>'
+
 
 # In-memory data store (for now)
 datasets = {
@@ -95,4 +123,20 @@ def delete_point(name, index):
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+
+        # Initial data sync from in-memory to DB
+        # This is for bootstrapping and will be removed in a later phase.
+        if not Dataset.query.first():
+            print("Performing initial data sync to database...")
+            for name, points_list in datasets.items():
+                new_dataset = Dataset(name=name)
+                db.session.add(new_dataset)
+                for p in points_list:
+                    new_point = Point(x=p['x'], y=p['y'], dataset=new_dataset)
+                    db.session.add(new_point)
+            db.session.commit()
+            print("Initial data sync complete.")
+
     app.run(debug=True, port=5001)
