@@ -138,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 pan: {
                                     enabled: true,
                                     mode: 'xy',
+                                    drag: {
+                                        enabled: true,
+                                    }
                                 },
                                 zoom: {
                                     wheel: {
