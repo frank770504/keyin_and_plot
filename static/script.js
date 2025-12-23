@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const yInput = document.getElementById('y-input');
     const addPointBtn = document.getElementById('add-point-btn');
     const regressionBtn = document.getElementById('regression-btn');
+    const powerRegressionBtn = document.getElementById('power-regression-btn');
     const ctx = document.getElementById('myChart').getContext('2d');
     const drawAllBtn = document.getElementById('draw-all-btn');
     const ctx_all = document.getElementById('totalChart');
@@ -194,18 +195,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- API Communication ---
-    async function calculateAndDrawRegression() {
+    async function drawRegression(type) {
         if (!currentDataset) return;
 
         try {
-            // Fetch original points
-            const pointsResponse = await fetch(`/api/datasets/${currentDataset}`);
-            if (!pointsResponse.ok) throw new Error('Failed to fetch points');
-            const points = await pointsResponse.json();
+            const url = type === 'linear'
+                ? `/api/datasets/${currentDataset}/regression`
+                : `/api/datasets/${currentDataset}/power-regression`;
 
-            // Fetch regression line
-            const regressionResponse = await fetch(`/api/datasets/${currentDataset}/regression`);
+            const regressionResponse = await fetch(url);
             if (!regressionResponse.ok) {
                 const errorData = await regressionResponse.json();
                 alert(`Error: ${errorData.error}`);
@@ -213,40 +211,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const regressionData = await regressionResponse.json();
             const regressionPoints = regressionData.regression_points;
-            const { r_squared, slope, intercept } = regressionData;
-            const equation = `y = ${slope.toFixed(2)}x + ${intercept.toFixed(2)}`;
-            const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
 
-            const datasets = [
-                {
-                    label: currentDataset,
-                    data: points,
-                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    type: 'scatter'
-                },
-                {
-                    label: `Regression: ${equation}, ${rSquaredInfo}`,
-                    data: regressionPoints,
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                    type: 'line',
-                    showLine: true,
-                    fill: false
-                }
-            ];
+            let label;
+            if (type === 'linear') {
+                const { r_squared, slope, intercept } = regressionData;
+                const equation = `y = ${slope.toFixed(2)}x + ${intercept.toFixed(2)}`;
+                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
+                label = `Linear: ${equation}, ${rSquaredInfo}`;
+            } else {
+                const { r_squared, a, b } = regressionData;
+                const equation = `y = ${a.toFixed(2)}x^${b.toFixed(2)}`;
+                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
+                label = `Power: ${equation}, ${rSquaredInfo}`;
+            }
 
-            initializeOrUpdateChart(datasets);
+            const newDataset = {
+                label: label,
+                data: regressionPoints,
+                borderColor: type === 'linear' ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)',
+                backgroundColor: type === 'linear' ? 'rgba(255, 99, 132, 0.5)' : 'rgba(54, 162, 235, 0.5)',
+                type: 'line',
+                showLine: true,
+                fill: false
+            };
 
-            // No longer needed
-            // regressionInfo.innerHTML = `
-            //     <p><strong>R-squared:</strong> ${r_squared.toFixed(4)}</p>
-            //     <p><strong>Equation:</strong> ${equation}</p>
-            // `;
-            regressionInfo.innerHTML = '';
+            // Keep existing datasets, but remove old regression line of the same type
+            const otherDatasets = chart.data.datasets.filter(d => !d.label.startsWith(type === 'linear' ? 'Linear:' : 'Power:'));
+            initializeOrUpdateChart([...otherDatasets, newDataset]);
 
         } catch (error) {
-            console.error('Error calculating regression:', error);
+            console.error(`Error calculating ${type} regression:`, error);
         }
     }
 
@@ -383,7 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
     createDatasetBtn.addEventListener('click', createDataset);
     backToDashboardBtn.addEventListener('click', showDashboard);
     addPointBtn.addEventListener('click', addPoint);
-    regressionBtn.addEventListener('click', calculateAndDrawRegression);
+    regressionBtn.addEventListener('click', () => drawRegression('linear'));
+    powerRegressionBtn.addEventListener('click', () => drawRegression('power'));
     drawAllBtn.addEventListener('click', drawAllDataset);
 
     // --- Initial Load ---

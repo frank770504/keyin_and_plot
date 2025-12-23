@@ -44,6 +44,47 @@ def get_regression(name):
         "intercept": intercept
     })
 
+@api_bp.route('/datasets/<string:name>/power-regression', methods=['GET'])
+def get_power_regression(name):
+    """Calculate and return a power law regression for the dataset."""
+    dataset = Dataset.query.filter_by(name=name).first()
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    points = dataset.points
+    # Filter for points where x and y are positive for log transformation
+    positive_points = [p for p in points if p.x > 0 and p.y > 0]
+
+    if len(positive_points) < 2:
+        return jsonify({"error": "Not enough positive data points for power law regression"}), 400
+
+    # Prepare data for log-log linear regression
+    log_x_values = np.log(np.array([p.x for p in positive_points])).reshape(-1, 1)
+    log_y_values = np.log(np.array([p.y for p in positive_points]))
+
+    model = LinearRegression()
+    model.fit(log_x_values, log_y_values)
+
+    r_squared = model.score(log_x_values, log_y_values)
+    log_a = model.intercept_
+    b = model.coef_[0]
+    a = np.exp(log_a)
+
+    # Generate points for the power law curve
+    x_min = np.min([p.x for p in positive_points])
+    x_max = np.max([p.x for p in positive_points])
+    x_line = np.linspace(x_min, x_max, 100)
+    y_line = a * (x_line ** b)
+
+    regression_points = [{"x": x_line[i], "y": y_line[i]} for i in range(len(x_line))]
+
+    return jsonify({
+        "regression_points": regression_points,
+        "r_squared": r_squared,
+        "a": a,
+        "b": b
+    })
+
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
     """Return a list of all dataset names."""
