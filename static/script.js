@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addPointBtn = document.getElementById('add-point-btn');
     const regressionBtn = document.getElementById('regression-btn');
     const powerRegressionBtn = document.getElementById('power-regression-btn');
+    const clearRegressionBtn = document.getElementById('clear-regression-btn');
     const ctx = document.getElementById('myChart').getContext('2d');
     const drawAllBtn = document.getElementById('draw-all-btn');
     const ctx_all = document.getElementById('totalChart');
@@ -193,6 +194,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             pointsList.appendChild(li);
         });
+    }
+
+    function clearRegressions() {
+        if (!chart) return;
+        const originalDataset = chart.data.datasets.filter(d => !d.label.startsWith('Linear:') && !d.label.startsWith('Power:'));
+        initializeOrUpdateChart(originalDataset);
     }
 
     async function drawRegression(type) {
@@ -379,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addPointBtn.addEventListener('click', addPoint);
     regressionBtn.addEventListener('click', () => drawRegression('linear'));
     powerRegressionBtn.addEventListener('click', () => drawRegression('power'));
+    clearRegressionBtn.addEventListener('click', clearRegressions);
     drawAllBtn.addEventListener('click', drawAllDataset);
 
     // --- Initial Load ---
