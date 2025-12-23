@@ -1,16 +1,45 @@
-body {
+html, body {
+    height: 100%;
+    margin: 0;
     font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+#dashboard-view, #edit-view {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden; /* Prevent scrollbars on the view itself */
 }
 
 .container {
     display: flex;
     flex-direction: row;
+    flex-grow: 1;
+    height: 100%; /* Ensure container fills the view */
 }
 
 .input-area {
     padding: 20px;
+    overflow-y: auto; /* Allow scrolling for points list */
+    flex-shrink: 0; /* Prevent input area from shrinking */
 }
 
 .plot-area {
     padding: 20px;
+    position: relative;
+    flex-grow: 1; /* Allow plot area to take up remaining space */
+    display: flex;
+    flex-direction: column;
+}
+
+.plot-area canvas {
+    /* Let Chart.js handle the size */
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#regression-info {
+    display: none;
 }

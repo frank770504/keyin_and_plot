@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.destroy();
             chart = null;
         }
+        regressionInfo.innerHTML = '';
         loadDatasets();
     }
 
@@ -48,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chart.destroy();
             chart = null;
         }
+        regressionInfo.innerHTML = '';
         await loadPointsForCurrentDataset();
     }
 
@@ -211,6 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const regressionData = await regressionResponse.json();
             const regressionPoints = regressionData.regression_points;
+            const { r_squared, slope, intercept } = regressionData;
+            const equation = `y = ${slope.toFixed(2)}x + ${intercept.toFixed(2)}`;
+            const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
 
             const datasets = [
                 {
@@ -221,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'scatter'
                 },
                 {
-                    label: 'Regression Line',
+                    label: `Regression: ${equation}, ${rSquaredInfo}`,
                     data: regressionPoints,
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.5)',
@@ -233,13 +238,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             initializeOrUpdateChart(datasets);
 
-            // Display regression info
-            const { r_squared, slope, intercept } = regressionData;
-            const equation = `y = ${slope.toFixed(4)}x + ${intercept.toFixed(4)}`;
-            regressionInfo.innerHTML = `
-                <p><strong>R-squared:</strong> ${r_squared.toFixed(4)}</p>
-                <p><strong>Equation:</strong> ${equation}</p>
-            `;
+            // No longer needed
+            // regressionInfo.innerHTML = `
+            //     <p><strong>R-squared:</strong> ${r_squared.toFixed(4)}</p>
+            //     <p><strong>Equation:</strong> ${equation}</p>
+            // `;
+            regressionInfo.innerHTML = '';
 
         } catch (error) {
             console.error('Error calculating regression:', error);
