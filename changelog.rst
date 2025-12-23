@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.5.0 (Unreleased)
+--------------------------
+
+- **Feature:** Improved chart UX by adding zoom, pan (drag), and hover-to-view-value tooltips using the `chartjs-plugin-zoom` library.
+
 - **Refactor:** Implemented an application factory (`create_app`) in `app.py` and registered the API blueprint, completing the Flask Blueprint refactoring.
 
 - **Refactor:** Moved database models (`Dataset`, `Point`) and the SQLAlchemy `db` instance to a new `models.py` file for better organization.

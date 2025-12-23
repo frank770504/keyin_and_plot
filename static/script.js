@@ -90,6 +90,26 @@ document.addEventListener('DOMContentLoaded', () => {
                                 y: {
                                     title: { display: true, text: 'Y' }
                                 }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    enabled: true
+                                },
+                                zoom: {
+                                    pan: {
+                                        enabled: true,
+                                        mode: 'xy',
+                                    },
+                                    zoom: {
+                                        wheel: {
+                                            enabled: true,
+                                        },
+                                        pinch: {
+                                            enabled: true
+                                        },
+                                        mode: 'xy',
+                                    }
+                                }
                             }
                         }
                     });
@@ -134,6 +154,26 @@ document.addEventListener('DOMContentLoaded', () => {
                             },
                             y: {
                                 title: { display: true, text: 'Y' }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                enabled: true
+                            },
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'xy'
+                                },
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy',
+                                }
                             }
                         }
                     }
