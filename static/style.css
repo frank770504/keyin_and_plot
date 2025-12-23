@@ -8,31 +8,26 @@ html, body {
 
 #dashboard-view, #edit-view {
     display: flex;
-    flex-direction: column;
     flex-grow: 1;
-    overflow: hidden; /* Prevent scrollbars on the view itself */
+    /* Removed overflow: hidden; */
 }
 
-.container {
-    display: flex;
+#dashboard-view {
     flex-direction: row;
-    flex-grow: 1;
-    height: 100%; /* Ensure container fills the view */
 }
 
-.input-area {
-    padding: 20px;
-    overflow-y: auto; /* Allow scrolling for points list */
-    flex-shrink: 0; /* Prevent input area from shrinking */
+#edit-view {
+    flex-direction: column;
 }
-
 .plot-area {
     padding: 20px;
     position: relative;
     flex-grow: 1; /* Allow plot area to take up remaining space */
     display: flex;
     flex-direction: column;
+    overflow-y: auto; /* Added for dashboard plot area */
 }
+
 
 .plot-area canvas {
     /* Let Chart.js handle the size */
@@ -42,4 +37,39 @@ html, body {
 
 #regression-info {
     display: none;
+}
+
+/* New Dashboard Layout */
+#dashboard-view {
+    flex-direction: row; /* Two-column layout */
+}
+
+.dashboard-sidebar {
+    width: 350px;
+    flex-shrink: 0;
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.dashboard-sidebar h1 {
+    flex-shrink: 0;
+}
+
+.dashboard-sidebar #dataset-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.dashboard-sidebar .input-area {
+    flex-shrink: 0;
+    padding: 20px 0 0 0; /* Adjust padding */
+}
+
+#dashboard-view .plot-area {
+    flex-grow: 1;
+    padding: 20px;
 }
