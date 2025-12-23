@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const xInput = document.getElementById('x-input');
     const yInput = document.getElementById('y-input');
     const addPointBtn = document.getElementById('add-point-btn');
+    const regressionBtn = document.getElementById('regression-btn');
     const ctx = document.getElementById('myChart').getContext('2d');
     const drawAllBtn = document.getElementById('draw-all-btn');
     const ctx_all = document.getElementById('totalChart');
@@ -41,6 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (totalChart) {
             totalChart.destroy();
             totalChart = null;
+        }
+        if (chart) {
+            chart.destroy();
+            chart = null;
         }
         await loadPointsForCurrentDataset();
     }
@@ -120,21 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Charting & Rendering ---
-    function initializeOrUpdateChart(points) {
-        const chartData = { datasets: [
-                {
-                    label: currentDataset,
-                    data: points,
-                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    // Add the trendline configuration
-                    trendlineLinear: {
-                        style: "rgba(255, 105, 180, 0.8)", // Hot pink for visibility
-                        lineStyle: "dotted",
-                        width: 2
-                    }
-                }
-            ]
+    function initializeOrUpdateChart(datasets) {
+        const chartData = { datasets: datasets
         };
         if (chart) {
             chart.data = chartData;
@@ -200,6 +192,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- API Communication ---
+    async function calculateAndDrawRegression() {
+        if (!currentDataset) return;
+
+        try {
+            // Fetch original points
+            const pointsResponse = await fetch(`/api/datasets/${currentDataset}`);
+            if (!pointsResponse.ok) throw new Error('Failed to fetch points');
+            const points = await pointsResponse.json();
+
+            // Fetch regression line
+            const regressionResponse = await fetch(`/api/datasets/${currentDataset}/regression`);
+            if (!regressionResponse.ok) {
+                const errorData = await regressionResponse.json();
+                alert(`Error: ${errorData.error}`);
+                return;
+            }
+            const regressionPoints = await regressionResponse.json();
+
+            const datasets = [
+                {
+                    label: currentDataset,
+                    data: points,
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    type: 'scatter'
+                },
+                {
+                    label: 'Regression Line',
+                    data: regressionPoints,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    type: 'line',
+                    showLine: true,
+                    fill: false
+                }
+            ];
+
+            initializeOrUpdateChart(datasets);
+
+        } catch (error) {
+            console.error('Error calculating regression:', error);
+        }
+    }
+
     async function deletePoint(pointId) {
         if (!confirm(`Are you sure you want to delete this point?`)) return;
 
@@ -249,7 +285,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`/api/datasets/${currentDataset}`);
             if (!response.ok) throw new Error('Failed to fetch points');
             const points = await response.json();
-            initializeOrUpdateChart(points);
+            const datasets = [
+                {
+                    label: currentDataset,
+                    data: points,
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)'
+                }
+            ];
+            initializeOrUpdateChart(datasets);
             renderPointsList(points);
         } catch (error) {
             console.error('Error loading points:', error);
@@ -325,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createDatasetBtn.addEventListener('click', createDataset);
     backToDashboardBtn.addEventListener('click', showDashboard);
     addPointBtn.addEventListener('click', addPoint);
+    regressionBtn.addEventListener('click', calculateAndDrawRegression);
     drawAllBtn.addEventListener('click', drawAllDataset);
 
     // --- Initial Load ---

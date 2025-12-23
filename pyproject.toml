@@ -11,4 +11,6 @@ dependencies = [
     "flask",
     "Flask-SQLAlchemy",
     "SQLAlchemy",
+    "scikit-learn",
+    "numpy",
 ]

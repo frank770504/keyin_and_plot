@@ -1,7 +1,38 @@
 from flask import Blueprint, jsonify, request
 from models import db, Dataset, Point
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
 api_bp = Blueprint('api', __name__)
+
+@api_bp.route('/datasets/<string:name>/regression', methods=['GET'])
+def get_regression(name):
+    """Calculate and return a linear regression for the dataset."""
+    dataset = Dataset.query.filter_by(name=name).first()
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    points = dataset.points
+    if len(points) < 2:
+        return jsonify({"error": "Not enough data points to calculate regression"}), 400
+
+    # Prepare data for scikit-learn
+    x_values = np.array([p.x for p in points]).reshape(-1, 1)
+    y_values = np.array([p.y for p in points])
+
+    # Perform linear regression
+    model = LinearRegression()
+    model.fit(x_values, y_values)
+
+    # Generate points for the regression line
+    x_min = np.min(x_values)
+    x_max = np.max(x_values)
+    x_line = np.linspace(x_min, x_max, 100).reshape(-1, 1)
+    y_line = model.predict(x_line)
+
+    regression_points = [{"x": x_line[i][0], "y": y_line[i]} for i in range(len(x_line))]
+
+    return jsonify(regression_points)
 
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
