@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = document.getElementById('myChart').getContext('2d');
     const drawAllBtn = document.getElementById('draw-all-btn');
     const ctx_all = document.getElementById('totalChart');
+    const regressionInfo = document.getElementById('regression-info');
 
     // --- State ---
     let chart;
@@ -208,7 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(`Error: ${errorData.error}`);
                 return;
             }
-            const regressionPoints = await regressionResponse.json();
+            const regressionData = await regressionResponse.json();
+            const regressionPoints = regressionData.regression_points;
 
             const datasets = [
                 {
@@ -230,6 +232,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
 
             initializeOrUpdateChart(datasets);
+
+            // Display regression info
+            const { r_squared, slope, intercept } = regressionData;
+            const equation = `y = ${slope.toFixed(4)}x + ${intercept.toFixed(4)}`;
+            regressionInfo.innerHTML = `
+                <p><strong>R-squared:</strong> ${r_squared.toFixed(4)}</p>
+                <p><strong>Equation:</strong> ${equation}</p>
+            `;
 
         } catch (error) {
             console.error('Error calculating regression:', error);

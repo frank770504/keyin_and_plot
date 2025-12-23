@@ -24,6 +24,11 @@ def get_regression(name):
     model = LinearRegression()
     model.fit(x_values, y_values)
 
+    # Calculate R-squared
+    r_squared = model.score(x_values, y_values)
+    slope = model.coef_[0]
+    intercept = model.intercept_
+
     # Generate points for the regression line
     x_min = np.min(x_values)
     x_max = np.max(x_values)
@@ -32,7 +37,12 @@ def get_regression(name):
 
     regression_points = [{"x": x_line[i][0], "y": y_line[i]} for i in range(len(x_line))]
 
-    return jsonify(regression_points)
+    return jsonify({
+        "regression_points": regression_points,
+        "r_squared": r_squared,
+        "slope": slope,
+        "intercept": intercept
+    })
 
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
