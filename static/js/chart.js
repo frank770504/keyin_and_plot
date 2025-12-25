@@ -1,5 +1,5 @@
 // static/js/chart.js
-import { getRegressionData, getAllDatasetsForChart } from './api.js';
+import { getRegressionData, getSelectedDatasetsForChart } from './api.js';
 
 let chart;
 let totalChart;
@@ -114,9 +114,9 @@ export function clearRegressions() {
     chart.update();
 }
 
-export async function drawAllDatasetsChart(ctx_all) {
+export async function drawSelectedDatasetsChart(ctx_all, selectedDatasets) {
     try {
-        const chartData = await getAllDatasetsForChart();
+        const chartData = await getSelectedDatasetsForChart(selectedDatasets);
         if (totalChart) {
             totalChart.data = chartData;
             totalChart.update();

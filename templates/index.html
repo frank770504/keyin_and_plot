@@ -21,7 +21,11 @@
             </div>
         </div>
         <div class="plot-area">
-            <button id="draw-all-btn">Draw All Dataset</button>
+            <div class="selection-area">
+                <label for="dataset-selector">Select Datasets:</label>
+                <select id="dataset-selector" multiple></select>
+            </div>
+            <button id="draw-all-btn">Draw Selected Datasets</button>
             <canvas id="totalChart"></canvas>
         </div>
     </div>

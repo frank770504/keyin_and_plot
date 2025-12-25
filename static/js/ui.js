@@ -8,6 +8,23 @@ export function showDashboard(elements) {
     destroyChart();
     destroyTotalChart();
     loadAndRenderDatasets(elements);
+    populateDatasetSelector(elements);
+}
+
+async function populateDatasetSelector(elements) {
+    try {
+        const datasets = await getDatasets();
+        console.log(datasets)
+        elements.datasetSelector.innerHTML = '';
+        datasets.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            elements.datasetSelector.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error loading datasets for selector:', error);
+    }
 }
 
 export async function showEditView(elements, datasetName) {

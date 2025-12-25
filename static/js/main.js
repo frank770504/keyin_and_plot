@@ -1,7 +1,7 @@
 // static/js/main.js
 import { showDashboard, showEditView } from './ui.js';
 import { createDataset, addPoint, deleteDataset, deletePoint } from './api.js';
-import { drawRegression, clearRegressions, drawAllDatasetsChart } from './chart.js';
+import { drawRegression, clearRegressions, drawSelectedDatasetsChart } from './chart.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         powerRegressionBtn: document.getElementById('power-regression-btn'),
         clearRegressionBtn: document.getElementById('clear-regression-btn'),
         drawAllBtn: document.getElementById('draw-all-btn'),
+        datasetSelector: document.getElementById('dataset-selector'),
         ctx: document.getElementById('myChart').getContext('2d'),
         ctx_all: document.getElementById('totalChart').getContext('2d'),
         setCurrentDataset,
@@ -71,7 +72,15 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
     elements.addPointBtn.addEventListener('click', handleAddPoint);
     elements.backToDashboardBtn.addEventListener('click', () => showDashboard(elements));
-    elements.drawAllBtn.addEventListener('click', () => drawAllDatasetsChart(elements.ctx_all));
+    elements.drawAllBtn.addEventListener('click', () => {
+        const selectedDatasets = Array.from(elements.datasetSelector.selectedOptions).map(option => option.value);
+        console.log(selectedDatasets);
+        if (selectedDatasets.length === 0) {
+            alert('Please select at least one dataset to draw.');
+            return;
+        }
+        drawSelectedDatasetsChart(elements.ctx_all, selectedDatasets);
+    });
     elements.regressionBtn.addEventListener('click', () => drawRegression(currentDataset, 'linear'));
     elements.powerRegressionBtn.addEventListener('click', () => drawRegression(currentDataset, 'power'));
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);
