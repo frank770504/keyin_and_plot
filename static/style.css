@@ -10,10 +10,57 @@ body {
 }
 
 .column {
-    padding: 20px;
+    position: relative;
+    transition: width 0.3s ease, padding 0.3s ease;
+    overflow: visible; /* Ensure button is not clipped */
     box-sizing: border-box;
-    overflow-y: auto;
 }
+
+#left-column, #center-column {
+    flex-grow: 0;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+#right-column {
+    flex-grow: 1;
+}
+
+#left-column.collapsed,
+#center-column.collapsed {
+    width: 40px !important; /* Keep space for the button */
+    padding: 0;
+}
+
+#left-column.collapsed .column-content-wrapper,
+#center-column.collapsed .column-content-wrapper {
+    overflow: hidden;
+    opacity: 0;
+}
+
+.column-content-wrapper {
+    transition: opacity 0.3s ease;
+}
+
+.collapse-btn {
+    position: absolute;
+    top: 10px;
+    right: -12.5px; /* Center on the border */
+    z-index: 10;
+    width: 25px;
+    height: 25px;
+    line-height: 25px;
+    text-align: center;
+    padding: 0;
+    border-radius: 50%;
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
+#left-column.collapsed .collapse-btn,
+#center-column.collapsed .collapse-btn {
+    transform: rotate(180deg);
+}
+
 
 #left-column {
     width: 20%;

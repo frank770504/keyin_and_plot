@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
         datasetSelector: document.getElementById('dataset-selector'),
         drawSelectedBtn: document.getElementById('draw-selected-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
+
+        // Collapse Buttons
+        collapseLeftBtn: document.getElementById('collapse-left'),
+        collapseCenterBtn: document.getElementById('collapse-center'),
     };
 
     // --- Functions ---
@@ -72,8 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.datasetList.appendChild(li);
         });
     }
-
-    // ... (rest of the file)
 
     async function handleDeleteDataset(name) {
         if (confirm(`Are you sure you want to delete the dataset "${name}"?`)) {
@@ -225,12 +227,27 @@ document.addEventListener('DOMContentLoaded', () => {
         renderComparisonChart(selectedDatasets);
     }
 
+    function handleCollapse(columnId) {
+        document.getElementById(columnId).classList.toggle('collapsed');
+        console.log("collapsed button")
+        setTimeout(() => {
+            if (activeChart) {
+                activeChart.resize();
+            }
+            if (comparisonChart) {
+                comparisonChart.resize();
+            }
+        }, 300);
+    }
+
 
     // --- Event Listeners ---
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
     elements.addPointBtn.addEventListener('click', handleAddPoint);
     elements.tabs.forEach(tab => tab.addEventListener('click', handleTabClick));
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
+    elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column'));
+    elements.collapseCenterBtn.addEventListener('click', () => handleCollapse('center-column'));
 
 
     // --- Initial Load ---

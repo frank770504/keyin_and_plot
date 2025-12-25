@@ -10,45 +10,50 @@
     <div class="container">
         <!-- Left Column: Dataset List -->
         <div class="column" id="left-column">
-            <h1>My Datasets</h1>
-            <ul id="dataset-list">
-                <!-- Datasets will be loaded here -->
-            </ul>
-            <div class="input-area">
-                <input type="text" id="new-dataset-name" placeholder="Enter new dataset name">
-                <button id="create-dataset-btn">Create Dataset</button>
+            <button class="collapse-btn" id="collapse-left">&laquo;</button>
+            <div class="column-content-wrapper">
+                <h1>My Datasets</h1>
+                <ul id="dataset-list">
+                    <!-- Datasets will be loaded here -->
+                </ul>
+                <div class="input-area">
+                    <input type="text" id="new-dataset-name" placeholder="Enter new dataset name">
+                    <button id="create-dataset-btn">Create Dataset</button>
+                </div>
             </div>
         </div>
 
         <!-- Center Column: Workspace -->
         <div class="column" id="center-column">
-            <h1 id="active-dataset-name">No Dataset Selected</h1>
-            <div class="tabs">
-                <button class="tab-link active" data-tab="data-tab">Data</button>
-                <button class="tab-link" data-tab="analysis-tab">Analysis</button>
-            </div>
-
-            <!-- Data Tab -->
-            <div id="data-tab" class="tab-content active">
-                <h2>Add a Point</h2>
-                <div class="input-area">
-                    <input type="number" id="x-input" placeholder="X value">
-                    <input type="number" id="y-input" placeholder="Y value">
-                    <button id="add-point-btn">Add Point</button>
+            <button class="collapse-btn" id="collapse-center">&laquo;</button>
+            <div class="column-content-wrapper">
+                <h1 id="active-dataset-name">No Dataset Selected</h1>
+                <div class="tabs">
+                    <button class="tab-link active" data-tab="data-tab">Data</button>
+                    <button class="tab-link" data-tab="analysis-tab">Analysis</button>
                 </div>
-                <h2>Points</h2>
-                <ul id="points-list">
-                    <!-- Points will be loaded here -->
-                </ul>
-            </div>
+                <!-- Data Tab -->
+                <div id="data-tab" class="tab-content active">
+                    <h2>Add a Point</h2>
+                    <div class="input-area">
+                        <input type="number" id="x-input" placeholder="X value">
+                        <input type="number" id="y-input" placeholder="Y value">
+                        <button id="add-point-btn">Add Point</button>
+                    </div>
+                    <h2>Points</h2>
+                    <ul id="points-list">
+                        <!-- Points will be loaded here -->
+                    </ul>
+                </div>
 
-            <!-- Analysis Tab -->
-            <div id="analysis-tab" class="tab-content">
-                <canvas id="active-chart"></canvas>
-                <div class="controls">
-                    <button id="regression-btn">Calculate Regression</button>
-                    <button id="power-regression-btn">Power Law Regression</button>
-                    <button id="clear-regression-btn">Clear Regressions</button>
+                <!-- Analysis Tab -->
+                <div id="analysis-tab" class="tab-content">
+                    <canvas id="active-chart"></canvas>
+                    <div class="controls">
+                        <button id="regression-btn">Calculate Regression</button>
+                        <button id="power-regression-btn">Power Law Regression</button>
+                        <button id="clear-regression-btn">Clear Regressions</button>
+                    </div>
                 </div>
             </div>
         </div>
