@@ -91,13 +91,48 @@ export async function getSelectedDatasetsForChart(datasets) {
     for (let i = 0; i < datasets.length; i++) {
         const name = datasets[i];
         const points = await getDatasetPoints(name);
-        const inner_dataset = {
+        const colorIndex = i % colors.length;
+
+        // Add raw data points
+        chartData.datasets.push({
             label: name,
             data: points,
-            backgroundColor: colors[i % colors.length],
-            borderColor: borderColors[i % borderColors.length]
-        };
-        chartData.datasets.push(inner_dataset);
+            backgroundColor: colors[colorIndex],
+            borderColor: borderColors[colorIndex],
+            pointRadius: 3,
+            type: 'scatter'
+        });
+
+        // Fetch and add power law regression data
+        try {
+            const regressionData = await getRegressionData(name, 'power');
+            const regressionPoints = regressionData.regression_points;
+
+            let label;
+            const { r_squared, a, b } = regressionData;
+            if (r_squared !== undefined && a !== undefined && b !== undefined) {
+                const equation = `y = ${a.toFixed(2)}x^${b.toFixed(2)}`;
+                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
+                label = `Power: ${equation}, ${rSquaredInfo}`;
+            } else {
+                label = `Power Regression for ${name}`;
+            }
+
+            chartData.datasets.push({
+                label: label,
+                data: regressionPoints,
+                borderColor: borderColors[colorIndex], // Use same color but dashed
+                borderDash: [5, 5],
+                backgroundColor: 'rgba(0,0,0,0)', // Transparent fill
+                type: 'line',
+                showLine: true,
+                fill: false,
+                pointRadius: 0
+            });
+        } catch (error) {
+            console.warn(`Could not get power regression for dataset ${name}:`, error.message);
+            // Optionally add a placeholder dataset or just skip it
+        }
     }
     return chartData;
 }

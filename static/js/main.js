@@ -229,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleCollapse(columnId) {
         document.getElementById(columnId).classList.toggle('collapsed');
-        console.log("collapsed button")
         setTimeout(() => {
             if (activeChart) {
                 activeChart.resize();
@@ -240,6 +239,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     }
 
+    async function handleRegression(type) {
+        if (!activeDataset || !activeChart) return;
+
+        try {
+            const regressionData = await getRegressionData(activeDataset, type);
+            const regressionPoints = regressionData.regression_points;
+
+            let label;
+            if (type === 'linear') {
+                const { r_squared, slope, intercept } = regressionData;
+                const equation = `y = ${slope.toFixed(2)}x + ${intercept.toFixed(2)}`;
+                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
+                label = `Linear: ${equation}, ${rSquaredInfo}`;
+            } else {
+                const { r_squared, a, b } = regressionData;
+                const equation = `y = ${a.toFixed(2)}x^${b.toFixed(2)}`;
+                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
+                label = `Power: ${equation}, ${rSquaredInfo}`;
+            }
+
+            const newDataset = {
+                label: label,
+                data: regressionPoints,
+                borderColor: type === 'linear' ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)',
+                backgroundColor: type === 'linear' ? 'rgba(255, 99, 132, 0.5)' : 'rgba(54, 162, 235, 0.5)',
+                type: 'line',
+                showLine: true,
+                fill: false
+            };
+
+            // Remove previous regression line of the same type
+            const otherDatasets = activeChart.data.datasets.filter(d => d.label !== label && !d.label.startsWith(type === 'linear' ? 'Linear:' : 'Power:'));
+            activeChart.data.datasets = [...otherDatasets, newDataset];
+            activeChart.update();
+
+        } catch (error) {
+            console.error(`Error calculating ${type} regression:`, error);
+            alert(error.message);
+        }
+    }
+
+    function clearRegressions() {
+        if (!activeChart) return;
+        const originalDataset = activeChart.data.datasets.filter(d => !d.label.startsWith('Linear:') && !d.label.startsWith('Power:'));
+        activeChart.data.datasets = originalDataset;
+        activeChart.update();
+    }
+
 
     // --- Event Listeners ---
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
@@ -248,7 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
     elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column'));
     elements.collapseCenterBtn.addEventListener('click', () => handleCollapse('center-column'));
-
+    elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
+    elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
+    elements.clearRegressionBtn.addEventListener('click', clearRegressions);
 
     // --- Initial Load ---
     loadAndRenderDatasets();
