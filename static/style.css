@@ -19,17 +19,21 @@ body {
     width: 20%;
     background-color: #fff;
     border-right: 1px solid #ddd;
+    height: 100%;
 }
 
 #center-column {
-    width: 50%;
+    width: 20%;
     background-color: #fafafa;
+    border-right: 1px solid #ddd;
+    height: 100%;
 }
 
 #right-column {
-    width: 30%;
+    width: 60%;
     background-color: #fff;
     border-left: 1px solid #ddd;
+    height: 100%;
 }
 
 h1, h2 {
