@@ -1,7 +1,22 @@
 # Key-in and Plot
 
-A simple web application for creating and managing multiple datasets of (x, y) coordinates and visualizing them as scatter plots.
+An interactive web application for managing and visualizing 2D datasets. It provides a multi-column interface to create datasets, add data points, and perform regression analysis.
 
+## Features
+
+*   **Three-Column Layout**: A flexible interface with collapsible sidebars.
+    *   **Left Column**: Manage your datasets (create, delete, and select an active dataset).
+    *   **Center Column**: A workspace for the active dataset, with tabs for viewing raw data points and for visualizing the data with regression analysis.
+    *   **Right Column**: A comparison tool to select and plot multiple datasets and their power law regressions on a single chart.
+*   **Data Management**:
+    *   Create and delete datasets.
+    *   Add and delete (x, y) data points for any dataset.
+*   **Analysis and Visualization**:
+    *   View scatter plots for individual datasets.
+    *   Calculate and display **Linear** and **Power Law** regression lines on the plot for the active dataset.
+*   **Comparison View**:
+    *   Select multiple datasets to render them on a shared comparison chart.
+    *   Automatically displays the power law regression line for each selected dataset in the comparison view.
 
 ## Tech Stack
 
@@ -9,8 +24,6 @@ A simple web application for creating and managing multiple datasets of (x, y) c
 *   **Frontend:** HTML5, CSS, JavaScript
 *   **Charting:** Chart.js
 *   **Dependency Management:** `uv`
-
----
 
 ## Setup and Installation
 
@@ -24,15 +37,9 @@ Follow these steps to set up and run the project locally.
 
 1.  **Clone the repository (or ensure you are in the project root directory).**
 
-2.  **Create a virtual environment:**
-    This command creates a local `.venv` directory to store the project's dependencies.
+2.  **Create and sync the Python virtual environment:**
     ```bash
     uv venv
-    ```
-
-3.  **Install dependencies:**
-    This command reads the `pyproject.toml` file and installs Flask into the virtual environment.
-    ```bash
     uv pip sync
     ```
 
