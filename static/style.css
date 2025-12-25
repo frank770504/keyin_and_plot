@@ -1,75 +1,105 @@
-html, body {
-    height: 100%;
-    margin: 0;
+body {
     font-family: sans-serif;
-    display: flex;
-    flex-direction: column;
-}
-
-#dashboard-view, #edit-view {
-    display: flex;
-    flex-grow: 1;
-    /* Removed overflow: hidden; */
-}
-
-#dashboard-view {
-    flex-direction: row;
-}
-
-#edit-view {
-    flex-direction: column;
-}
-.plot-area {
-    padding: 20px;
-    position: relative;
-    flex-grow: 1; /* Allow plot area to take up remaining space */
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto; /* Added for dashboard plot area */
-}
-
-
-.plot-area canvas {
-    /* Let Chart.js handle the size */
-    max-width: 100%;
-    max-height: 100%;
-}
-
-#regression-info {
-    display: none;
-}
-
-/* New Dashboard Layout */
-#dashboard-view {
-    flex-direction: row; /* Two-column layout */
-}
-
-.dashboard-sidebar {
-    width: 350px;
-    flex-shrink: 0;
-    border-right: 1px solid #ccc;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-}
-
-.dashboard-sidebar h1 {
-    flex-shrink: 0;
-}
-
-.dashboard-sidebar #dataset-list {
-    flex-grow: 1;
-    overflow-y: auto;
     margin: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+.column {
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+#left-column {
+    width: 20%;
+    background-color: #fff;
+    border-right: 1px solid #ddd;
+}
+
+#center-column {
+    width: 50%;
+    background-color: #fafafa;
+}
+
+#right-column {
+    width: 30%;
+    background-color: #fff;
+    border-left: 1px solid #ddd;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+ul {
+    list-style: none;
     padding: 0;
 }
 
-.dashboard-sidebar .input-area {
-    flex-shrink: 0;
-    padding: 20px 0 0 0; /* Adjust padding */
+#dataset-list li, #points-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
 }
 
-#dashboard-view .plot-area {
-    flex-grow: 1;
-    padding: 20px;
+.input-area {
+    margin: 20px 0;
+}
+
+input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-link {
+    background-color: #f1f1f1;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+}
+
+.tab-link.active {
+    background-color: #ddd;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px 0;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+canvas {
+    max-width: 100%;
+    margin-top: 20px;
 }

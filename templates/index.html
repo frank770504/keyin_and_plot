@@ -3,57 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Dataset Plotter</title>
+    <title>Experiment Data Plotter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
-    <!-- View for the main dataset list -->
-    <div id="dashboard-view">
-        <div class="dashboard-sidebar">
+    <div class="container">
+        <!-- Left Column: Dataset List -->
+        <div class="column" id="left-column">
             <h1>My Datasets</h1>
             <ul id="dataset-list">
-                <li>Loading...</li>
+                <!-- Datasets will be loaded here -->
             </ul>
             <div class="input-area">
                 <input type="text" id="new-dataset-name" placeholder="Enter new dataset name">
                 <button id="create-dataset-btn">Create Dataset</button>
             </div>
         </div>
-        <div class="plot-area">
-            <div class="selection-area">
-                <label for="dataset-selector">Select Datasets:</label>
-                <select id="dataset-selector" multiple></select>
+
+        <!-- Center Column: Workspace -->
+        <div class="column" id="center-column">
+            <h1 id="active-dataset-name">No Dataset Selected</h1>
+            <div class="tabs">
+                <button class="tab-link active" data-tab="data-tab">Data</button>
+                <button class="tab-link" data-tab="analysis-tab">Analysis</button>
             </div>
-            <button id="draw-all-btn">Draw Selected Datasets</button>
-            <canvas id="totalChart"></canvas>
-        </div>
-    </div>
 
-    <!-- View for editing a single dataset (initially hidden) -->
-    <div id="edit-view" style="display: none;">
-        <h1 id="current-dataset-name"></h1>
-        <button id="back-to-dashboard-btn">&larr; Back to Dashboard</button>
-
-        <div class="container">
-            <div class="input-area">
+            <!-- Data Tab -->
+            <div id="data-tab" class="tab-content active">
                 <h2>Add a Point</h2>
-                <input type="number" id="x-input" placeholder="X value">
-                <input type="number" id="y-input" placeholder="Y value">
-                <button id="add-point-btn">Add Point</button>
-                <button id="regression-btn">Calculate Regression</button>
-                <button id="power-regression-btn">Power Law Regression</button>
-                <button id="clear-regression-btn">Clear Regressions</button>
-
+                <div class="input-area">
+                    <input type="number" id="x-input" placeholder="X value">
+                    <input type="number" id="y-input" placeholder="Y value">
+                    <button id="add-point-btn">Add Point</button>
+                </div>
                 <h2>Points</h2>
                 <ul id="points-list">
                     <!-- Points will be loaded here -->
                 </ul>
             </div>
-            <div class="plot-area">
-                <canvas id="myChart"></canvas>
-                <div id="regression-info"></div>
+
+            <!-- Analysis Tab -->
+            <div id="analysis-tab" class="tab-content">
+                <canvas id="active-chart"></canvas>
+                <div class="controls">
+                    <button id="regression-btn">Calculate Regression</button>
+                    <button id="power-regression-btn">Power Law Regression</button>
+                    <button id="clear-regression-btn">Clear Regressions</button>
+                </div>
             </div>
+        </div>
+
+        <!-- Right Column: Comparison Chart -->
+        <div class="column" id="right-column">
+            <h1>Compare Datasets</h1>
+            <div class="selection-area">
+                <label for="dataset-selector">Select Datasets:</label>
+                <select id="dataset-selector" multiple></select>
+            </div>
+            <button id="draw-selected-btn">Draw Selected Datasets</button>
+            <canvas id="comparison-chart"></canvas>
         </div>
     </div>
 
