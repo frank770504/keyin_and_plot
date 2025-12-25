@@ -40,7 +40,6 @@ Follow these steps to set up and run the project locally.
 2.  **Create and sync the Python virtual environment:**
     ```bash
     uv venv
-    uv pip sync
     ```
 
 ## Running the Application
