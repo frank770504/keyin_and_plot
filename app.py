@@ -1,11 +1,8 @@
 from flask import Flask, render_template
 import os
-
-
-from flask import Flask, render_template
-import os
 from models import db
 from api import api_bp
+import argparse
 
 def create_app():
     app = Flask(__name__)
@@ -28,7 +25,12 @@ def create_app():
     return app
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url")
+    parser.add_argument("--port")
+    args = parser.parse_args()
+
     app = create_app()
     with app.app_context():
         db.create_all()
-    app.run(debug=True, port=5001)
+    app.run(debug=True, host=args.url, port=args.port)
