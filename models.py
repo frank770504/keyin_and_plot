@@ -5,6 +5,7 @@ db = SQLAlchemy()
 class Dataset(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
+    date = db.Column(db.String(20), nullable=True) # Added date column
     points = db.relationship('Point', backref='dataset', cascade="all, delete-orphan", lazy=True)
 
     def __repr__(self):

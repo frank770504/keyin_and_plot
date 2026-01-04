@@ -152,6 +152,25 @@ ul {
     background-color: #eef;
 }
 
+.metadata-area {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #eee;
+    border-radius: 4px;
+}
+
+.metadata-area label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.metadata-area input[type="date"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: auto; /* Override general input width */
+}
+
 .input-area {
     margin: 20px 0;
 }

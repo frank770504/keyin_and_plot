@@ -1,4 +1,4 @@
-import { getDatasets, createDataset, deleteDataset, getDatasetPoints, addPoint, deletePoint, getRegressionData, getSelectedDatasetsForChart, updatePoint } from './api.js';
+import { getDatasets, createDataset, deleteDataset, getDatasetPoints, addPoint, deletePoint, getRegressionData, getSelectedDatasetsForChart, updatePoint, updateDataset } from './api.js';
 import { initializeOrUpdateChart, destroyChart } from './chart.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Center Column
         activeDatasetName: document.getElementById('active-dataset-name'),
+        datasetDateInput: document.getElementById('dataset-date'), // Date Input
         tabs: document.querySelectorAll('.tab-link'),
         tableTab: document.getElementById('table-tab'),
         analysisTab: document.getElementById('analysis-tab'),
@@ -128,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activeDataset === name) {
                     activeDataset = null;
                     elements.activeDatasetName.textContent = 'No Dataset Selected';
+                    elements.datasetDateInput.value = ''; // Clear date
                     elements.pointsTableBody.innerHTML = '';
                     if (activeChart) {
                         destroyChart(activeChart);
@@ -162,7 +164,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!activeDataset) return;
 
         try {
-            const points = await getDatasetPoints(activeDataset);
+            // Updated to handle object response { points: [], date: "..." }
+            const data = await getDatasetPoints(activeDataset);
+            const points = data.points; 
+            
+            // Set date
+            elements.datasetDateInput.value = data.date || '';
+
             renderPointsTable(points);
             renderActiveChart(points);
         } catch (error) {
@@ -271,6 +279,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function handleDateChange() {
+        if (!activeDataset) return;
+        const date = elements.datasetDateInput.value;
+        try {
+            await updateDataset(activeDataset, { date: date });
+        } catch (error) {
+            console.error('Failed to update date:', error);
+            alert('Failed to save date.');
+        }
+    }
+
     function renderActiveChart(points) {
         const chartData = {
             datasets: [{
@@ -288,6 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function renderComparisonChart(datasetNames) {
         try {
+            // Note: getSelectedDatasetsForChart calls getDatasetPoints internally.
+            // Since getDatasetPoints now returns {points: [...], date: ...},
+            // we need to check if getSelectedDatasetsForChart needs updating.
+            // Checking api.js... it uses getDatasetPoints(name) and expects an array.
+            // We need to update api.js or handle it here? 
+            // Better to update api.js to handle the new return type.
+            
             const chartData = await getSelectedDatasetsForChart(datasetNames);
             if (comparisonChart) {
                 destroyChart(comparisonChart);
@@ -417,6 +443,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.addRowBtn.addEventListener('click', handleTableAddRow);
     // Use 'change' event which fires on blur/enter. 'input' would be too aggressive.
     elements.pointsTableBody.addEventListener('change', handleTableInput);
+
+    // Date Input Event
+    elements.datasetDateInput.addEventListener('change', handleDateChange);
 
     // --- Initial Load ---
     loadAndRenderDatasets();

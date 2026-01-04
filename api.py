@@ -118,7 +118,24 @@ def get_dataset(name):
         return jsonify({"error": "Dataset not found"}), 404
 
     points = [{"id": p.id, "x": p.x, "y": p.y} for p in dataset.points]
-    return jsonify(points)
+    return jsonify({
+        "points": points,
+        "date": dataset.date
+    })
+
+@api_bp.route('/datasets/<string:name>', methods=['PUT'])
+def update_dataset(name):
+    """Update dataset metadata (like date)."""
+    dataset = Dataset.query.filter_by(name=name).first()
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    data = request.get_json()
+    if 'date' in data:
+        dataset.date = data['date']
+    
+    db.session.commit()
+    return jsonify({"message": "Dataset updated successfully"}), 200
 
 @api_bp.route('/datasets/<string:name>', methods=['DELETE'])
 def delete_dataset(name):

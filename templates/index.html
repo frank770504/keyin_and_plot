@@ -29,12 +29,16 @@
             <div class="column-content-wrapper">
                 <h1 id="active-dataset-name">No Dataset Selected</h1>
                 <div class="tabs">
-                    <button class="tab-link active" data-tab="table-tab">Table</button>
+                    <button class="tab-link active" data-tab="table-tab">Input</button>
                     <button class="tab-link" data-tab="analysis-tab">Analysis</button>
                 </div>
 
                 <!-- Table Tab -->
                 <div id="table-tab" class="tab-content active">
+                    <div class="metadata-area">
+                        <label for="dataset-date">Experiment Date:</label>
+                        <input type="date" id="dataset-date">
+                    </div>
                     <h2>Editable Table</h2>
                     <table id="points-table">
                         <thead>

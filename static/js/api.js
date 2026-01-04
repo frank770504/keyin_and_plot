@@ -28,6 +28,18 @@ export async function deleteDataset(name) {
     }
 }
 
+export async function updateDataset(name, data) {
+    const response = await fetch(`/api/datasets/${name}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+    }
+}
+
 export async function getDatasetPoints(datasetName) {
     const response = await fetch(`/api/datasets/${datasetName}`);
     if (!response.ok) {
