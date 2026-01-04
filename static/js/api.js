@@ -46,10 +46,23 @@ export async function addPoint(datasetName, x, y) {
         const errorData = await response.json();
         throw new Error(errorData.error);
     }
+    return await response.json();
 }
 
 export async function deletePoint(datasetName, pointId) {
     const response = await fetch(`/api/datasets/${datasetName}/points/${pointId}`, { method: 'DELETE' });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+    }
+}
+
+export async function updatePoint(datasetName, pointId, x, y) {
+    const response = await fetch(`/api/datasets/${datasetName}/points/${pointId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ x, y }),
+    });
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error);

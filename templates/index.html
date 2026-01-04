@@ -30,6 +30,7 @@
                 <h1 id="active-dataset-name">No Dataset Selected</h1>
                 <div class="tabs">
                     <button class="tab-link active" data-tab="data-tab">Data</button>
+                    <button class="tab-link" data-tab="table-tab">Table</button>
                     <button class="tab-link" data-tab="analysis-tab">Analysis</button>
                 </div>
                 <!-- Data Tab -->
@@ -44,6 +45,24 @@
                     <ul id="points-list">
                         <!-- Points will be loaded here -->
                     </ul>
+                </div>
+
+                <!-- Table Tab -->
+                <div id="table-tab" class="tab-content">
+                    <h2>Editable Table</h2>
+                    <table id="points-table">
+                        <thead>
+                            <tr>
+                                <th>X</th>
+                                <th>Y</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Table rows will be loaded here -->
+                        </tbody>
+                    </table>
+                    <button id="add-row-btn" style="margin-top: 10px;">Add Row</button>
                 </div>
 
                 <!-- Analysis Tab -->

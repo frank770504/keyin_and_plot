@@ -122,6 +122,36 @@ ul {
     border-left: 4px solid #ffb6c1; /* Light Pink accent */
 }
 
+/* Table Styles */
+#points-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#points-table th, #points-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+#points-table th {
+    background-color: #f2f2f2;
+}
+
+#points-table input {
+    width: 100%;
+    border: none;
+    padding: 5px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#points-table input:focus {
+    outline: 2px solid #007bff;
+    background-color: #eef;
+}
+
 .input-area {
     margin: 20px 0;
 }

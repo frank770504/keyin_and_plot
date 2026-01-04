@@ -155,7 +155,7 @@ def add_point(name):
     db.session.commit()
 
     print(f"Added point ({x}, {y}) to dataset '{name}'")
-    return jsonify({"message": "Point added successfully"}), 201
+    return jsonify({"message": "Point added successfully", "id": new_point_db.id}), 201
 
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['DELETE'])
 def delete_point(name, point_id):
@@ -173,3 +173,35 @@ def delete_point(name, point_id):
 
     print(f"Deleted point {point_to_delete} from dataset '{name}'")
     return jsonify({"message": "Point deleted"}), 200
+
+@api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['PUT'])
+def update_point(name, point_id):
+    """Update a point in a dataset."""
+    dataset = Dataset.query.filter_by(name=name).first()
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    point_to_update = Point.query.get(point_id)
+    if not point_to_update or point_to_update.dataset_id != dataset.id:
+        return jsonify({"error": "Point not found in this dataset"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    if 'x' in data:
+        try:
+            point_to_update.x = float(data['x'])
+        except (ValueError, TypeError):
+             return jsonify({"error": "x must be a valid number"}), 400
+
+    if 'y' in data:
+        try:
+            point_to_update.y = float(data['y'])
+        except (ValueError, TypeError):
+             return jsonify({"error": "y must be a valid number"}), 400
+
+    db.session.commit()
+
+    print(f"Updated point {point_id} in dataset '{name}' to ({point_to_update.x}, {point_to_update.y})")
+    return jsonify({"message": "Point updated successfully"}), 200

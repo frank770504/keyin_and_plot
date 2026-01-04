@@ -1,4 +1,4 @@
-import { getDatasets, createDataset, deleteDataset, getDatasetPoints, addPoint, deletePoint, getRegressionData, getSelectedDatasetsForChart } from './api.js';
+import { getDatasets, createDataset, deleteDataset, getDatasetPoints, addPoint, deletePoint, getRegressionData, getSelectedDatasetsForChart, updatePoint } from './api.js';
 import { initializeOrUpdateChart, destroyChart } from './chart.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,11 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
         activeDatasetName: document.getElementById('active-dataset-name'),
         tabs: document.querySelectorAll('.tab-link'),
         dataTab: document.getElementById('data-tab'),
+        tableTab: document.getElementById('table-tab'),
         analysisTab: document.getElementById('analysis-tab'),
         xInput: document.getElementById('x-input'),
         yInput: document.getElementById('y-input'),
         addPointBtn: document.getElementById('add-point-btn'),
         pointsList: document.getElementById('points-list'),
+        pointsTableBody: document.querySelector('#points-table tbody'),
+        addRowBtn: document.getElementById('add-row-btn'),
         activeChartCanvas: document.getElementById('active-chart').getContext('2d'),
         regressionBtn: document.getElementById('regression-btn'),
         powerRegressionBtn: document.getElementById('power-regression-btn'),
@@ -166,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const points = await getDatasetPoints(activeDataset);
             renderPointsList(points);
+            renderPointsTable(points);
             renderActiveChart(points);
         } catch (error) {
             console.error(`Error loading data for ${activeDataset}:`, error);
@@ -183,6 +187,107 @@ document.addEventListener('DOMContentLoaded', () => {
             li.appendChild(deleteBtn);
             elements.pointsList.appendChild(li);
         });
+    }
+
+    function renderPointsTable(points) {
+        elements.pointsTableBody.innerHTML = '';
+        points.forEach(point => {
+            const tr = createTableRow(point.id, point.x, point.y);
+            elements.pointsTableBody.appendChild(tr);
+        });
+    }
+
+    function createTableRow(id, x, y) {
+        const tr = document.createElement('tr');
+        if (id) tr.dataset.id = id;
+
+        const tdX = document.createElement('td');
+        const inputX = document.createElement('input');
+        inputX.type = 'number';
+        inputX.value = x !== undefined ? x : '';
+        inputX.placeholder = 'X';
+        inputX.dataset.field = 'x';
+        tdX.appendChild(inputX);
+
+        const tdY = document.createElement('td');
+        const inputY = document.createElement('input');
+        inputY.type = 'number';
+        inputY.value = y !== undefined ? y : '';
+        inputY.placeholder = 'Y';
+        inputY.dataset.field = 'y';
+        tdY.appendChild(inputY);
+
+        const tdAction = document.createElement('td');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        // Use a generic delete handler
+        deleteBtn.addEventListener('click', () => {
+            if (id) {
+                handleDeletePoint(id);
+            } else {
+                tr.remove(); // Remove unsaved row
+            }
+        });
+        tdAction.appendChild(deleteBtn);
+
+        tr.appendChild(tdX);
+        tr.appendChild(tdY);
+        tr.appendChild(tdAction);
+
+        return tr;
+    }
+
+    function handleTableAddRow() {
+        const tr = createTableRow(null, undefined, undefined);
+        elements.pointsTableBody.appendChild(tr);
+        // Focus on the first input
+        tr.querySelector('input[data-field="x"]').focus();
+    }
+
+    async function handleTableInput(e) {
+        if (e.target.tagName !== 'INPUT') return;
+        
+        const input = e.target;
+        const tr = input.closest('tr');
+        const id = tr.dataset.id;
+        const xInput = tr.querySelector('input[data-field="x"]');
+        const yInput = tr.querySelector('input[data-field="y"]');
+        
+        const xVal = xInput.value;
+        const yVal = yInput.value;
+
+        // If both empty, do nothing (or maybe delete if existing?)
+        if (xVal === '' && yVal === '') return;
+
+        if (id) {
+            // Update existing point
+            // Only update if the changed value is valid
+            if (input.value === '') return; // Don't update with empty string
+            
+            try {
+                await updatePoint(activeDataset, id, xVal, yVal);
+                // No need to reload everything, silent update
+                // But we should update the chart and list to reflect changes
+                // Doing a full reload is safest for consistency
+                loadActiveDatasetData();
+            } catch (error) {
+                console.error('Update failed:', error);
+                // Optionally revert value or show error
+            }
+        } else {
+            // New point
+            if (xVal !== '' && yVal !== '') {
+                try {
+                    const result = await addPoint(activeDataset, xVal, yVal);
+                    // Update the row with the new ID so it becomes an "existing" point
+                    tr.dataset.id = result.id;
+                    // Reload to update chart and list
+                    loadActiveDatasetData();
+                } catch (error) {
+                    console.error('Add failed:', error);
+                }
+            }
+        }
     }
 
     function renderActiveChart(points) {
@@ -344,6 +449,11 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
     elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);
+    
+    // Table Events
+    elements.addRowBtn.addEventListener('click', handleTableAddRow);
+    // Use 'change' event which fires on blur/enter. 'input' would be too aggressive.
+    elements.pointsTableBody.addEventListener('change', handleTableInput);
 
     // --- Initial Load ---
     loadAndRenderDatasets();
