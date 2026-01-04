@@ -98,6 +98,13 @@ h1, h2 {
     color: #333;
 }
 
+h2 {
+    font-size: 1.5rem;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding-left: 5px; /* Aligns with the legend's padding */
+}
+
 ul {
     list-style: none;
     padding: 0;
@@ -156,19 +163,40 @@ ul {
     margin: 15px 0;
     padding: 10px;
     background-color: #eee;
+    border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-.metadata-area label {
+.metadata-area legend {
     font-weight: bold;
-    margin-right: 10px;
+    padding: 0 5px; /* Matches h2 padding-left for alignment */
+    font-size: 1.5rem; /* Consistent font size with h2 */
 }
 
-.metadata-area input[type="date"] {
+.metadata-row {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.metadata-row:last-child {
+    margin-bottom: 0;
+}
+
+.metadata-row label {
+    font-weight: bold;
+    margin-right: 10px;
+    width: 150px; /* Fixed width for labels ensures left-edge alignment of inputs */
+    flex-shrink: 0;
+}
+
+.metadata-row input[type="date"],
+.metadata-row input[type="text"] {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: auto; /* Override general input width */
+    width: 250px; /* Consistent fixed width for all input boxes */
+    box-sizing: border-box;
 }
 
 .input-area {

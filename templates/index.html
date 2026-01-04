@@ -35,10 +35,17 @@
 
                 <!-- Table Tab -->
                 <div id="table-tab" class="tab-content active">
-                    <div class="metadata-area">
-                        <label for="dataset-date">Experiment Date:</label>
-                        <input type="date" id="dataset-date">
-                    </div>
+                    <fieldset class="metadata-area">
+                        <legend>Metadata</legend>
+                        <div class="metadata-row">
+                            <label for="dataset-date">Experiment Date:</label>
+                            <input type="date" id="dataset-date">
+                        </div>
+                        <div class="metadata-row">
+                            <label for="dataset-serial-id">Serial ID:</label>
+                            <input type="text" id="dataset-serial-id" placeholder="Enter Serial ID">
+                        </div>
+                    </fieldset>
                     <h2>Editable Table</h2>
                     <table id="points-table">
                         <thead>

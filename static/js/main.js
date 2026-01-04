@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Center Column
         activeDatasetName: document.getElementById('active-dataset-name'),
-        datasetDateInput: document.getElementById('dataset-date'), // Date Input
+        datasetDateInput: document.getElementById('dataset-date'),
+        datasetSerialIdInput: document.getElementById('dataset-serial-id'),
         tabs: document.querySelectorAll('.tab-link'),
         tableTab: document.getElementById('table-tab'),
         analysisTab: document.getElementById('analysis-tab'),
@@ -130,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     activeDataset = null;
                     elements.activeDatasetName.textContent = 'No Dataset Selected';
                     elements.datasetDateInput.value = ''; // Clear date
+                    elements.datasetSerialIdInput.value = ''; // Clear serial ID
                     elements.pointsTableBody.innerHTML = '';
                     if (activeChart) {
                         destroyChart(activeChart);
@@ -164,12 +166,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!activeDataset) return;
 
         try {
-            // Updated to handle object response { points: [], date: "..." }
+            // Updated to handle object response { points: [], date: "...", serial_id: "..." }
             const data = await getDatasetPoints(activeDataset);
             const points = data.points; 
             
-            // Set date
+            // Set metadata
             elements.datasetDateInput.value = data.date || '';
+            elements.datasetSerialIdInput.value = data.serial_id || '';
 
             renderPointsTable(points);
             renderActiveChart(points);
@@ -279,14 +282,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function handleDateChange() {
+    async function handleMetadataChange() {
         if (!activeDataset) return;
         const date = elements.datasetDateInput.value;
+        const serialId = elements.datasetSerialIdInput.value;
         try {
-            await updateDataset(activeDataset, { date: date });
+            await updateDataset(activeDataset, { date: date, serial_id: serialId });
         } catch (error) {
-            console.error('Failed to update date:', error);
-            alert('Failed to save date.');
+            console.error('Failed to update metadata:', error);
+            alert('Failed to save metadata.');
         }
     }
 
@@ -444,8 +448,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Use 'change' event which fires on blur/enter. 'input' would be too aggressive.
     elements.pointsTableBody.addEventListener('change', handleTableInput);
 
-    // Date Input Event
-    elements.datasetDateInput.addEventListener('change', handleDateChange);
+    // Metadata Input Events
+    elements.datasetDateInput.addEventListener('change', handleMetadataChange);
+    elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
 
     // --- Initial Load ---
     loadAndRenderDatasets();

@@ -120,12 +120,13 @@ def get_dataset(name):
     points = [{"id": p.id, "x": p.x, "y": p.y} for p in dataset.points]
     return jsonify({
         "points": points,
-        "date": dataset.date
+        "date": dataset.date,
+        "serial_id": dataset.serial_id
     })
 
 @api_bp.route('/datasets/<string:name>', methods=['PUT'])
 def update_dataset(name):
-    """Update dataset metadata (like date)."""
+    """Update dataset metadata (like date, serial_id)."""
     dataset = Dataset.query.filter_by(name=name).first()
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
@@ -133,6 +134,8 @@ def update_dataset(name):
     data = request.get_json()
     if 'date' in data:
         dataset.date = data['date']
+    if 'serial_id' in data:
+        dataset.serial_id = data['serial_id']
     
     db.session.commit()
     return jsonify({"message": "Dataset updated successfully"}), 200
