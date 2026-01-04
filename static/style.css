@@ -28,6 +28,15 @@ body {
     box-sizing: border-box;
 }
 
+.search-bar {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
 #left-column, #center-column {
     flex-grow: 0;
     flex-shrink: 0;

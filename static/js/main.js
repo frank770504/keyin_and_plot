@@ -6,11 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeDataset = null;
     let activeChart = null;
     let comparisonChart = null;
+    let allDatasets = []; // Store all datasets for filtering
 
     // --- DOM Elements ---
     const elements = {
         // Left Column
         datasetList: document.getElementById('dataset-list'),
+        datasetSearchInput: document.getElementById('dataset-search'), // Search Input
         newDatasetNameInput: document.getElementById('new-dataset-name'),
         createDatasetBtn: document.getElementById('create-dataset-btn'),
 
@@ -90,11 +92,18 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadAndRenderDatasets() {
         try {
             const datasets = await getDatasets();
+            allDatasets = datasets; // Save to state
             renderDatasetList(datasets);
             populateDatasetSelector(datasets);
         } catch (error) {
             console.error('Error loading datasets:', error);
         }
+    }
+
+    function handleDatasetSearch() {
+        const searchTerm = elements.datasetSearchInput.value.toLowerCase();
+        const filteredDatasets = allDatasets.filter(name => name.toLowerCase().includes(searchTerm));
+        renderDatasetList(filteredDatasets);
     }
 
     function renderDatasetList(datasets) {
@@ -434,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Event Listeners ---
+    elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
     elements.tabs.forEach(tab => tab.addEventListener('click', handleTabClick));
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
