@@ -29,26 +29,12 @@
             <div class="column-content-wrapper">
                 <h1 id="active-dataset-name">No Dataset Selected</h1>
                 <div class="tabs">
-                    <button class="tab-link active" data-tab="data-tab">Data</button>
-                    <button class="tab-link" data-tab="table-tab">Table</button>
+                    <button class="tab-link active" data-tab="table-tab">Table</button>
                     <button class="tab-link" data-tab="analysis-tab">Analysis</button>
-                </div>
-                <!-- Data Tab -->
-                <div id="data-tab" class="tab-content active">
-                    <h2>Add a Point</h2>
-                    <div class="input-area">
-                        <input type="number" id="x-input" placeholder="X value">
-                        <input type="number" id="y-input" placeholder="Y value">
-                        <button id="add-point-btn">Add Point</button>
-                    </div>
-                    <h2>Points</h2>
-                    <ul id="points-list">
-                        <!-- Points will be loaded here -->
-                    </ul>
                 </div>
 
                 <!-- Table Tab -->
-                <div id="table-tab" class="tab-content">
+                <div id="table-tab" class="tab-content active">
                     <h2>Editable Table</h2>
                     <table id="points-table">
                         <thead>

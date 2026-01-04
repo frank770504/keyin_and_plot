@@ -17,13 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Center Column
         activeDatasetName: document.getElementById('active-dataset-name'),
         tabs: document.querySelectorAll('.tab-link'),
-        dataTab: document.getElementById('data-tab'),
         tableTab: document.getElementById('table-tab'),
         analysisTab: document.getElementById('analysis-tab'),
-        xInput: document.getElementById('x-input'),
-        yInput: document.getElementById('y-input'),
-        addPointBtn: document.getElementById('add-point-btn'),
-        pointsList: document.getElementById('points-list'),
         pointsTableBody: document.querySelector('#points-table tbody'),
         addRowBtn: document.getElementById('add-row-btn'),
         activeChartCanvas: document.getElementById('active-chart').getContext('2d'),
@@ -133,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activeDataset === name) {
                     activeDataset = null;
                     elements.activeDatasetName.textContent = 'No Dataset Selected';
-                    elements.pointsList.innerHTML = '';
+                    elements.pointsTableBody.innerHTML = '';
                     if (activeChart) {
                         destroyChart(activeChart);
                         activeChart = null;
@@ -168,25 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const points = await getDatasetPoints(activeDataset);
-            renderPointsList(points);
             renderPointsTable(points);
             renderActiveChart(points);
         } catch (error) {
             console.error(`Error loading data for ${activeDataset}:`, error);
         }
-    }
-
-    function renderPointsList(points) {
-        elements.pointsList.innerHTML = '';
-        points.forEach(point => {
-            const li = document.createElement('li');
-            li.textContent = `(x: ${point.x}, y: ${point.y})`;
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.addEventListener('click', () => handleDeletePoint(point.id));
-            li.appendChild(deleteBtn);
-            elements.pointsList.appendChild(li);
-        });
     }
 
     function renderPointsTable(points) {
@@ -331,23 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function handleAddPoint() {
-        if (!activeDataset) return alert('Please select a dataset first.');
-        const x = elements.xInput.value;
-        const y = elements.yInput.value;
-        if (x === '' || y === '') {
-            return alert('Please enter both X and Y values.');
-        }
-        try {
-            await addPoint(activeDataset, x, y);
-            elements.xInput.value = '';
-            elements.yInput.value = '';
-            loadActiveDatasetData();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
     async function handleDeletePoint(pointId) {
         if (!activeDataset) return;
         if (confirm('Are you sure you want to delete this point?')) {
@@ -441,7 +405,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
-    elements.addPointBtn.addEventListener('click', handleAddPoint);
     elements.tabs.forEach(tab => tab.addEventListener('click', handleTabClick));
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
     elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column'));
