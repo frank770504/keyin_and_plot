@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // Right Column
+        comparisonSearchInput: document.getElementById('comparison-search'), // Comparison Search
         datasetSelector: document.getElementById('dataset-selector'),
         drawSelectedBtn: document.getElementById('draw-selected-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
@@ -104,6 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchTerm = elements.datasetSearchInput.value.toLowerCase();
         const filteredDatasets = allDatasets.filter(name => name.toLowerCase().includes(searchTerm));
         renderDatasetList(filteredDatasets);
+    }
+
+    function handleComparisonSearch() {
+        const searchTerm = elements.comparisonSearchInput.value.toLowerCase();
+        const filteredDatasets = allDatasets.filter(name => name.toLowerCase().includes(searchTerm));
+        populateDatasetSelector(filteredDatasets);
     }
 
     function renderDatasetList(datasets) {
@@ -444,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
+    elements.comparisonSearchInput.addEventListener('input', handleComparisonSearch);
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
     elements.tabs.forEach(tab => tab.addEventListener('click', handleTabClick));
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
