@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let newCenterWidth = e.clientX - leftColumnWidth;
 
         // Constraints
-        const minCenterWidth = 200;
+        const minCenterWidth = 450;
         const maxCenterWidth = containerRect.width - leftColumnWidth - 200; // Leave space for right column
 
         if (newCenterWidth < minCenterWidth) newCenterWidth = minCenterWidth;

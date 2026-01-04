@@ -96,7 +96,8 @@ body {
 }
 
 #center-column {
-    width: 20%;
+    width: 450px; /* Set a default reasonable width */
+    min-width: 450px; /* Ensure it's not smaller than the metadata area */
     background-color: #fafafa;
     /* border-right: 1px solid #ddd; Removed for gutter */
     height: 100%;
