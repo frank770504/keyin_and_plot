@@ -12,13 +12,25 @@ body {
 .column {
     position: relative;
     transition: width 0.3s ease, padding 0.3s ease;
-    overflow: visible; /* Ensure button is not clipped */
+    overflow: visible; /* Keeps buttons visible */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.column-content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    transition: opacity 0.3s ease;
     box-sizing: border-box;
 }
 
 #left-column, #center-column {
     flex-grow: 0;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
 }
 
 #right-column {
@@ -26,17 +38,13 @@ body {
 }
 
 #left-column.collapsed {
-    width: 40px !important; /* Keep space for the button */
+    width: 40px !important;
     padding: 0;
 }
 
 #left-column.collapsed .column-content-wrapper {
     overflow: hidden;
     opacity: 0;
-}
-
-.column-content-wrapper {
-    transition: opacity 0.3s ease;
 }
 
 .collapse-btn {
