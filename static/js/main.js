@@ -34,12 +34,57 @@ document.addEventListener('DOMContentLoaded', () => {
         drawSelectedBtn: document.getElementById('draw-selected-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
 
-        // Collapse Buttons
+        // Collapse Buttons / Drag Handle
         collapseLeftBtn: document.getElementById('collapse-left'),
-        collapseCenterBtn: document.getElementById('collapse-center'),
+        dragHandle: document.getElementById('drag-handle'),
     };
 
     // --- Functions ---
+    // --- Drag Logic ---
+    let isDragging = false;
+
+    function startDrag(e) {
+        isDragging = true;
+        document.body.style.cursor = 'col-resize';
+        elements.dragHandle.classList.add('dragging');
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', stopDrag);
+        // Prevent text selection during drag
+        e.preventDefault();
+    }
+
+    function handleDrag(e) {
+        if (!isDragging) return;
+
+        const containerRect = document.querySelector('.container').getBoundingClientRect();
+        const leftColumn = document.getElementById('left-column');
+        const leftColumnWidth = leftColumn.getBoundingClientRect().width;
+
+        // Calculate new width for the center column
+        // We subtract the left column width from the mouse X position
+        let newCenterWidth = e.clientX - leftColumnWidth;
+
+        // Constraints
+        const minCenterWidth = 200;
+        const maxCenterWidth = containerRect.width - leftColumnWidth - 200; // Leave space for right column
+
+        if (newCenterWidth < minCenterWidth) newCenterWidth = minCenterWidth;
+        if (newCenterWidth > maxCenterWidth) newCenterWidth = maxCenterWidth;
+
+        document.getElementById('center-column').style.width = `${newCenterWidth}px`;
+
+        // Resize charts to fit new container dimensions
+        if (activeChart) activeChart.resize();
+        if (comparisonChart) comparisonChart.resize();
+    }
+
+    function stopDrag() {
+        isDragging = false;
+        document.body.style.cursor = '';
+        elements.dragHandle.classList.remove('dragging');
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDrag);
+    }
 
     // --- Data Loading and Rendering ---
     async function loadAndRenderDatasets() {
@@ -294,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.tabs.forEach(tab => tab.addEventListener('click', handleTabClick));
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
     elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column'));
-    elements.collapseCenterBtn.addEventListener('click', () => handleCollapse('center-column'));
+    elements.dragHandle.addEventListener('mousedown', startDrag);
     elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
     elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);

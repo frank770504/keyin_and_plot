@@ -25,14 +25,12 @@ body {
     flex-grow: 1;
 }
 
-#left-column.collapsed,
-#center-column.collapsed {
+#left-column.collapsed {
     width: 40px !important; /* Keep space for the button */
     padding: 0;
 }
 
-#left-column.collapsed .column-content-wrapper,
-#center-column.collapsed .column-content-wrapper {
+#left-column.collapsed .column-content-wrapper {
     overflow: hidden;
     opacity: 0;
 }
@@ -56,11 +54,22 @@ body {
     transition: transform 0.3s ease;
 }
 
-#left-column.collapsed .collapse-btn,
-#center-column.collapsed .collapse-btn {
+#left-column.collapsed .collapse-btn {
     transform: rotate(180deg);
 }
 
+.gutter {
+    width: 5px;
+    cursor: col-resize;
+    background-color: #e0e0e0;
+    flex-shrink: 0;
+    z-index: 5;
+    transition: background-color 0.2s;
+}
+
+.gutter:hover, .gutter.dragging {
+    background-color: #007bff;
+}
 
 #left-column {
     width: 20%;
@@ -72,15 +81,17 @@ body {
 #center-column {
     width: 20%;
     background-color: #fafafa;
-    border-right: 1px solid #ddd;
+    /* border-right: 1px solid #ddd; Removed for gutter */
     height: 100%;
 }
 
 #right-column {
-    width: 60%;
+    /* width: 60%; Removed to allow flex-grow to handle remaining space naturally */
+    flex-grow: 1;
     background-color: #fff;
-    border-left: 1px solid #ddd;
+    /* border-left: 1px solid #ddd; Removed for gutter */
     height: 100%;
+    width: auto; /* Allow flex to control width */
 }
 
 h1, h2 {
