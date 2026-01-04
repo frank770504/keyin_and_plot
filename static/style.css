@@ -109,6 +109,17 @@ ul {
     align-items: center;
     padding: 10px;
     border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#dataset-list li:hover {
+    background-color: #f0f0f0;
+}
+
+#dataset-list li.active {
+    background-color: #ffe4e1; /* Light Pink (MistyRose) */
+    border-left: 4px solid #ffb6c1; /* Light Pink accent */
 }
 
 .input-area {

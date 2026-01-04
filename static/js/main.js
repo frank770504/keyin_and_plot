@@ -101,9 +101,10 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.datasetList.innerHTML = '';
         datasets.forEach(name => {
             const li = document.createElement('li');
+            li.addEventListener('click', () => setActiveDataset(name));
+
             const nameSpan = document.createElement('span');
             nameSpan.textContent = name;
-            nameSpan.addEventListener('click', () => setActiveDataset(name));
             li.appendChild(nameSpan);
 
             if (name === activeDataset) {
