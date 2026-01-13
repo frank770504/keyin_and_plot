@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
         pointsTableBody: document.querySelector('#points-table tbody'),
-        addRowBtn: document.getElementById('add-row-btn'),
         openAnalysisBtn: document.getElementById('open-analysis-btn'), // New button
 
         // Floating Window
@@ -129,6 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.activeDatasetName.style.display = 'none';
             elements.activeDatasetNameInput.style.display = 'block';
             elements.activeDatasetNameInput.value = activeDataset;
+            
+            ensureEmptyRow(); // Add empty row when entering edit mode
         } else {
             elements.centerColumn.classList.add('read-only-mode');
             elements.editToggleBtn.textContent = 'Edit';
@@ -137,6 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Hide input, show h1
             elements.activeDatasetName.style.display = 'block';
             elements.activeDatasetNameInput.style.display = 'none';
+
+            // Reload to clean up empty unsaved rows
+            loadActiveDatasetData();
         }
 
         // Disable/Enable inputs
@@ -284,6 +288,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = createTableRow(point.id, point.x, point.y);
             elements.pointsTableBody.appendChild(tr);
         });
+        if (isEditing) {
+            ensureEmptyRow();
+        }
+    }
+
+    function ensureEmptyRow() {
+        const rows = elements.pointsTableBody.querySelectorAll('tr');
+        const lastRow = rows[rows.length - 1];
+
+        // If no rows, or last row has data, add a new one
+        let needsRow = false;
+        if (!lastRow) {
+            needsRow = true;
+        } else {
+            const xInput = lastRow.querySelector('input[data-field="x"]');
+            const yInput = lastRow.querySelector('input[data-field="y"]');
+            // If inputs exist and have values
+            if (xInput && yInput && (xInput.value !== '' || yInput.value !== '')) {
+                needsRow = true;
+            }
+        }
+
+        if (needsRow) {
+            const tr = createTableRow(null, undefined, undefined);
+            elements.pointsTableBody.appendChild(tr);
+        }
     }
 
     function createTableRow(id, x, y) {
@@ -330,13 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return tr;
     }
 
-    function handleTableAddRow() {
-        const tr = createTableRow(null, undefined, undefined);
-        elements.pointsTableBody.appendChild(tr);
-        // Focus on the first input
-        tr.querySelector('input[data-field="x"]').focus();
-    }
-
     async function handleTableInput(e) {
         if (e.target.tagName !== 'INPUT') return;
 
@@ -349,23 +372,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const xVal = xInput.value;
         const yVal = yInput.value;
 
-        // If both empty, do nothing (or maybe delete if existing?)
+        // If both empty, do nothing
         if (xVal === '' && yVal === '') return;
+
+        let chartNeedsUpdate = false;
 
         if (id) {
             // Update existing point
-            // Only update if the changed value is valid
             if (input.value === '') return; // Don't update with empty string
 
             try {
                 await updatePoint(activeDataset, id, xVal, yVal);
-                // No need to reload everything, silent update
-                // But we should update the chart and list to reflect changes
-                // Doing a full reload is safest for consistency
-                loadActiveDatasetData();
+                chartNeedsUpdate = true;
             } catch (error) {
                 console.error('Update failed:', error);
-                // Optionally revert value or show error
             }
         } else {
             // New point
@@ -374,11 +394,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await addPoint(activeDataset, xVal, yVal);
                     // Update the row with the new ID so it becomes an "existing" point
                     tr.dataset.id = result.id;
-                    // Reload to update chart and list
-                    loadActiveDatasetData();
+                    ensureEmptyRow();
+                    chartNeedsUpdate = true;
                 } catch (error) {
                     console.error('Add failed:', error);
                 }
+            }
+        }
+
+        if (chartNeedsUpdate) {
+            try {
+                const data = await getDatasetPoints(activeDataset);
+                renderActiveChart(data.points);
+            } catch (error) {
+                console.error('Failed to update chart:', error);
             }
         }
     }
@@ -571,7 +600,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);
 
     // Table Events
-    elements.addRowBtn.addEventListener('click', handleTableAddRow);
     // Use 'change' event which fires on blur/enter. 'input' would be too aggressive.
     elements.pointsTableBody.addEventListener('change', handleTableInput);
 
