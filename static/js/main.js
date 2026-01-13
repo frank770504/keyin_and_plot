@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Center Column
         centerColumn: document.getElementById('center-column'), // Added reference
         activeDatasetName: document.getElementById('active-dataset-name'),
+        activeDatasetNameInput: document.getElementById('active-dataset-name-input'),
         editToggleBtn: document.getElementById('edit-toggle-btn'),
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
@@ -123,10 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.centerColumn.classList.remove('read-only-mode');
             elements.editToggleBtn.textContent = 'Done Editing';
             elements.editToggleBtn.classList.add('editing');
+
+            // Show input, hide h1
+            elements.activeDatasetName.style.display = 'none';
+            elements.activeDatasetNameInput.style.display = 'block';
+            elements.activeDatasetNameInput.value = activeDataset;
         } else {
             elements.centerColumn.classList.add('read-only-mode');
             elements.editToggleBtn.textContent = 'Edit';
             elements.editToggleBtn.classList.remove('editing');
+
+            // Hide input, show h1
+            elements.activeDatasetName.style.display = 'block';
+            elements.activeDatasetNameInput.style.display = 'none';
         }
 
         // Disable/Enable inputs
@@ -383,6 +393,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function handleDatasetRename() {
+        if (!activeDataset || !isEditing) return;
+        const newName = elements.activeDatasetNameInput.value.trim();
+
+        if (newName === activeDataset) return; // No change
+        if (!newName) {
+            alert("Dataset name cannot be empty.");
+            elements.activeDatasetNameInput.value = activeDataset;
+            return;
+        }
+
+        try {
+            await updateDataset(activeDataset, { name: newName });
+
+            // Update local state
+            const oldName = activeDataset;
+            activeDataset = newName;
+
+            // Update UI
+            elements.activeDatasetName.textContent = newName;
+
+            // Reload list to reflect name change and update selection
+            await loadAndRenderDatasets();
+
+            // If the user clicked away or pressed enter, they might want to continue editing
+            // The activeDataset global variable is updated, so subsequent calls should use the new name.
+
+        } catch (error) {
+            console.error('Failed to rename dataset:', error);
+            alert(error.message);
+            elements.activeDatasetNameInput.value = activeDataset; // Revert
+        }
+    }
+
     function renderActiveChart(points) {
         const chartData = {
             datasets: [{
@@ -532,6 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Metadata Input Events
     elements.datasetDateInput.addEventListener('change', handleMetadataChange);
     elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
+    elements.activeDatasetNameInput.addEventListener('change', handleDatasetRename);
 
     // Floating Window Events
     elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.show());

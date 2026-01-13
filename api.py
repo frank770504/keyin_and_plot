@@ -126,7 +126,7 @@ def get_dataset(name):
 
 @api_bp.route('/datasets/<string:name>', methods=['PUT'])
 def update_dataset(name):
-    """Update dataset metadata (like date, serial_id)."""
+    """Update dataset metadata (like date, serial_id, name)."""
     dataset = Dataset.query.filter_by(name=name).first()
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
@@ -136,7 +136,16 @@ def update_dataset(name):
         dataset.date = data['date']
     if 'serial_id' in data:
         dataset.serial_id = data['serial_id']
-    
+    if 'name' in data:
+        new_name = data['name'].strip()
+        if not new_name:
+             return jsonify({"error": "New name cannot be empty"}), 400
+
+        # Check if new name already exists and is not the current dataset
+        if new_name != name and Dataset.query.filter_by(name=new_name).first():
+            return jsonify({"error": "Dataset with this name already exists"}), 409
+        dataset.name = new_name
+
     db.session.commit()
     return jsonify({"message": "Dataset updated successfully"}), 200
 
