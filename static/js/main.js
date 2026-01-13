@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeChart = null;
     let comparisonChart = null;
     let allDatasets = []; // Store all datasets for filtering
+    let isEditing = false;
 
     // --- DOM Elements ---
     const elements = {
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Center Column
         centerColumn: document.getElementById('center-column'), // Added reference
         activeDatasetName: document.getElementById('active-dataset-name'),
+        editToggleBtn: document.getElementById('edit-toggle-btn'),
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
         pointsTableBody: document.querySelector('#points-table tbody'),
@@ -101,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.centerColumn.style.display !== displayValue) {
             elements.centerColumn.style.display = displayValue;
             elements.dragHandle.style.display = gutterDisplay;
+            elements.editToggleBtn.style.display = show ? 'block' : 'none';
 
             // Allow layout to update before resizing charts
             setTimeout(() => {
@@ -108,6 +111,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (comparisonChart) comparisonChart.resize();
             }, 0);
         }
+    }
+
+    function toggleEditMode() {
+        isEditing = !isEditing;
+        updateEditModeUI();
+    }
+
+    function updateEditModeUI() {
+        if (isEditing) {
+            elements.centerColumn.classList.remove('read-only-mode');
+            elements.editToggleBtn.textContent = 'Done Editing';
+            elements.editToggleBtn.classList.add('editing');
+        } else {
+            elements.centerColumn.classList.add('read-only-mode');
+            elements.editToggleBtn.textContent = 'Edit';
+            elements.editToggleBtn.classList.remove('editing');
+        }
+
+        // Disable/Enable inputs
+        elements.datasetDateInput.disabled = !isEditing;
+        elements.datasetSerialIdInput.disabled = !isEditing;
+
+        // Update all table inputs
+        const tableInputs = elements.pointsTableBody.querySelectorAll('input');
+        tableInputs.forEach(input => input.disabled = !isEditing);
     }
 
     // Initialize Floating Window
@@ -212,7 +240,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Select new dataset
             activeDataset = name;
+            isEditing = false; // Always start in read-only mode
             toggleCenterColumn(true);
+            updateEditModeUI();
             elements.activeDatasetName.textContent = name;
             loadActiveDatasetData();
         }
@@ -256,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputX.value = x !== undefined ? x : '';
         inputX.placeholder = 'X';
         inputX.dataset.field = 'x';
+        inputX.disabled = !isEditing;
         tdX.appendChild(inputX);
 
         const tdY = document.createElement('td');
@@ -264,6 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputY.value = y !== undefined ? y : '';
         inputY.placeholder = 'Y';
         inputY.dataset.field = 'y';
+        inputY.disabled = !isEditing;
         tdY.appendChild(inputY);
 
         const tdAction = document.createElement('td');
@@ -484,6 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
     elements.comparisonSearchInput.addEventListener('input', handleComparisonSearch);
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
+    elements.editToggleBtn.addEventListener('click', toggleEditMode);
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
     elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column'));
     elements.dragHandle.addEventListener('mousedown', startDrag);

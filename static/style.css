@@ -28,6 +28,37 @@ body {
     box-sizing: border-box;
 }
 
+.center-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.center-header h1 {
+    margin: 0;
+}
+
+.edit-btn {
+    background-color: #6c757d;
+}
+
+.edit-btn.editing {
+    background-color: #28a745;
+}
+
+/* Hide action elements in read-only mode */
+.read-only-mode .action-cell,
+.read-only-mode #add-row-btn,
+.read-only-mode .delete-dataset-btn-in-list { /* Wait, I didn't add this class yet */
+    display: none;
+}
+
+.read-only-mode #points-table th:last-child,
+.read-only-mode #points-table td:last-child {
+    display: none;
+}
+
 .search-bar {
     width: 100%;
     padding: 8px;
