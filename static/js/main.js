@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeDatasetName: document.getElementById('active-dataset-name'),
         activeDatasetNameInput: document.getElementById('active-dataset-name-input'),
         editToggleBtn: document.getElementById('edit-toggle-btn'),
+        deleteDatasetBtn: document.getElementById('delete-dataset-btn'),
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
         pointsTableBody: document.querySelector('#points-table tbody'),
@@ -128,7 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.activeDatasetName.style.display = 'none';
             elements.activeDatasetNameInput.style.display = 'block';
             elements.activeDatasetNameInput.value = activeDataset;
-            
+
+            elements.deleteDatasetBtn.style.display = 'inline-block'; // Show delete button
             ensureEmptyRow(); // Add empty row when entering edit mode
         } else {
             elements.centerColumn.classList.add('read-only-mode');
@@ -138,6 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Hide input, show h1
             elements.activeDatasetName.style.display = 'block';
             elements.activeDatasetNameInput.style.display = 'none';
+
+            elements.deleteDatasetBtn.style.display = 'none'; // Hide delete button
 
             // Reload to clean up empty unsaved rows
             loadActiveDatasetData();
@@ -199,14 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (name === activeDataset) {
                 li.classList.add('active');
             }
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleDeleteDataset(name);
-            });
-            li.appendChild(deleteBtn);
 
             elements.datasetList.appendChild(li);
         });
@@ -607,6 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetDateInput.addEventListener('change', handleMetadataChange);
     elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
     elements.activeDatasetNameInput.addEventListener('change', handleDatasetRename);
+    elements.deleteDatasetBtn.addEventListener('click', () => handleDeleteDataset(activeDataset));
 
     // Floating Window Events
     elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.show());
