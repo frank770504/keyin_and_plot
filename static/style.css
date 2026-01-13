@@ -214,6 +214,17 @@ ul {
 #dataset-list-table th {
     background-color: #f9f9f9;
     font-weight: bold;
+    cursor: pointer; /* Indicate clickable */
+    user-select: none; /* Prevent text selection */
+}
+
+#dataset-list-table th:hover {
+    background-color: #eee;
+}
+
+.sort-icon {
+    margin-left: 5px;
+    font-size: 0.8em;
 }
 
 #dataset-list-table tbody tr {

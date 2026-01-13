@@ -9,12 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let comparisonChart = null;
     let allDatasets = []; // Store all datasets for filtering
     let isEditing = false;
+    let sortState = { column: 'name', direction: 'asc' };
 
     // --- DOM Elements ---
     const elements = {
         // Left Column
         datasetListBody: document.getElementById('dataset-list-body'), // Changed from datasetList
         datasetSearchInput: document.getElementById('dataset-search'), // Search Input
+        datasetListHeaders: document.querySelectorAll('#dataset-list-table th[data-sort]'), // Sort headers
         newDatasetNameInput: document.getElementById('new-dataset-name'),
         createDatasetBtn: document.getElementById('create-dataset-btn'),
 
@@ -171,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const datasets = await getDatasets();
             allDatasets = datasets; // Save to state
-            renderDatasetList(datasets);
+            updateDatasetListUI();
             populateDatasetSelector(datasets);
         } catch (error) {
             console.error('Error loading datasets:', error);
@@ -179,19 +181,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleDatasetSearch() {
+        updateDatasetListUI();
+    }
+
+    function handleSort(e) {
+        const column = e.currentTarget.dataset.sort;
+        if (sortState.column === column) {
+            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortState.column = column;
+            sortState.direction = 'asc';
+        }
+        updateDatasetListUI();
+    }
+
+    function getProcessedDatasets() {
         const searchTerm = elements.datasetSearchInput.value.toLowerCase();
-        const filteredDatasets = allDatasets.filter(d =>
+        let filtered = allDatasets.filter(d =>
             d.name.toLowerCase().includes(searchTerm) ||
             (d.date && d.date.includes(searchTerm)) ||
             (d.serial_id && d.serial_id.toLowerCase().includes(searchTerm))
         );
-        renderDatasetList(filteredDatasets);
+
+        // Sort
+        filtered.sort((a, b) => {
+            let valA = a[sortState.column] || '';
+            let valB = b[sortState.column] || '';
+
+            // Case insensitive for strings
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+
+            if (valA < valB) return sortState.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortState.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        return filtered;
     }
 
-    function handleComparisonSearch() {
-        const searchTerm = elements.comparisonSearchInput.value.toLowerCase();
-        const filteredDatasets = allDatasets.filter(d => d.name.toLowerCase().includes(searchTerm));
-        populateDatasetSelector(filteredDatasets);
+    function updateDatasetListUI() {
+        const datasets = getProcessedDatasets();
+        renderDatasetList(datasets);
+        updateSortIcons();
+    }
+
+    function updateSortIcons() {
+        elements.datasetListHeaders.forEach(th => {
+            const column = th.dataset.sort;
+            const iconSpan = th.querySelector('.sort-icon');
+            th.classList.remove('sorted-asc', 'sorted-desc');
+            iconSpan.textContent = ''; // Clear icon
+
+            if (column === sortState.column) {
+                th.classList.add(sortState.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                iconSpan.textContent = sortState.direction === 'asc' ? '▲' : '▼';
+            }
+        });
+    }
+
+    function handleComparisonSearch() {        const searchTerm = elements.comparisonSearchInput.value.toLowerCase();
+    const filteredDatasets = allDatasets.filter(d => d.name.toLowerCase().includes(searchTerm));
+    populateDatasetSelector(filteredDatasets);
     }
 
     function renderDatasetList(datasets) {
@@ -576,6 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
+    elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
     elements.comparisonSearchInput.addEventListener('input', handleComparisonSearch);
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
     elements.editToggleBtn.addEventListener('click', toggleEditMode);
