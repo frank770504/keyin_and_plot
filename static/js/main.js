@@ -1,27 +1,23 @@
-import { getDatasets, createDataset, deleteDataset, getDatasetPoints, addPoint, deletePoint, getRegressionData, getSelectedDatasetsForChart, updatePoint, updateDataset } from './api.js';
-import { initializeOrUpdateChart, destroyChart } from './chart.js';
-import { FloatingWindow } from './floating_window.js';
+// static/js/main.js
+import * as api from './api.js';
+import * as chartService from './chart_service.js';
+import state, * as stateManager from './state.js';
+import * as layout from './ui/layout.js';
+import * as datasetUI from './ui/dataset_ui.js';
+import * as workspaceUI from './ui/workspace_ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- State ---
-    let activeDataset = null;
-    let activeChart = null;
-    let comparisonChart = null;
-    let allDatasets = []; // Store all datasets for filtering
-    let isEditing = false;
-    let sortState = { column: 'name', direction: 'asc' };
-
     // --- DOM Elements ---
     const elements = {
         // Left Column
-        datasetListBody: document.getElementById('dataset-list-body'), // Changed from datasetList
-        datasetSearchInput: document.getElementById('dataset-search'), // Search Input
-        datasetListHeaders: document.querySelectorAll('#dataset-list-table th[data-sort]'), // Sort headers
+        datasetListBody: document.getElementById('dataset-list-body'),
+        datasetSearchInput: document.getElementById('dataset-search'),
+        datasetListHeaders: document.querySelectorAll('#dataset-list-table th[data-sort]'),
         newDatasetNameInput: document.getElementById('new-dataset-name'),
         createDatasetBtn: document.getElementById('create-dataset-btn'),
 
         // Center Column
-        centerColumn: document.getElementById('center-column'), // Added reference
+        centerColumn: document.getElementById('center-column'),
         activeDatasetName: document.getElementById('active-dataset-name'),
         activeDatasetNameInput: document.getElementById('active-dataset-name-input'),
         editToggleBtn: document.getElementById('edit-toggle-btn'),
@@ -29,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
         pointsTableBody: document.querySelector('#points-table tbody'),
-        openAnalysisBtn: document.getElementById('open-analysis-btn'), // New button
+        openAnalysisBtn: document.getElementById('open-analysis-btn'),
 
         // Floating Window
         floatingWindow: document.getElementById('floating-chart-window'),
@@ -40,126 +36,27 @@ document.addEventListener('DOMContentLoaded', () => {
         powerRegressionBtn: document.getElementById('power-regression-btn'),
         clearRegressionBtn: document.getElementById('clear-regression-btn'),
 
-
         // Right Column
-        comparisonSearchInput: document.getElementById('comparison-search'), // Comparison Search
+        comparisonSearchInput: document.getElementById('comparison-search'),
         datasetSelector: document.getElementById('dataset-selector'),
         drawSelectedBtn: document.getElementById('draw-selected-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
 
-        // Collapse Buttons / Drag Handle
+        // Layout
         collapseLeftBtn: document.getElementById('collapse-left'),
         dragHandle: document.getElementById('drag-handle'),
     };
 
-    // --- Functions ---
-    // --- Drag Logic ---
-    let isDragging = false;
+    let activeChart = null;
+    let comparisonChart = null;
 
-    function startDrag(e) {
-        isDragging = true;
-        document.body.style.cursor = 'col-resize';
-        elements.dragHandle.classList.add('dragging');
-        document.addEventListener('mousemove', handleDrag);
-        document.addEventListener('mouseup', stopDrag);
-        // Prevent text selection during drag
-        e.preventDefault();
-    }
-
-    function handleDrag(e) {
-        if (!isDragging) return;
-
-        const containerRect = document.querySelector('.container').getBoundingClientRect();
-        const leftColumn = document.getElementById('left-column');
-        const leftColumnWidth = leftColumn.getBoundingClientRect().width;
-
-        // Calculate new width for the center column
-        // We subtract the left column width from the mouse X position
-        let newCenterWidth = e.clientX - leftColumnWidth;
-
-        // Constraints
-        const minCenterWidth = 450;
-        const maxCenterWidth = containerRect.width - leftColumnWidth - 200; // Leave space for right column
-
-        if (newCenterWidth < minCenterWidth) newCenterWidth = minCenterWidth;
-        if (newCenterWidth > maxCenterWidth) newCenterWidth = maxCenterWidth;
-
-        document.getElementById('center-column').style.width = `${newCenterWidth}px`;
-
-        // Resize charts to fit new container dimensions
+    // --- Layout Initialization ---
+    layout.initLayoutCorrected(elements, [() => {
         if (activeChart) activeChart.resize();
         if (comparisonChart) comparisonChart.resize();
-    }
+    }]);
 
-    function stopDrag() {
-        isDragging = false;
-        document.body.style.cursor = '';
-        elements.dragHandle.classList.remove('dragging');
-        document.removeEventListener('mousemove', handleDrag);
-        document.removeEventListener('mouseup', stopDrag);
-    }
-
-    function toggleCenterColumn(show) {
-        const displayValue = show ? 'flex' : 'none';
-        const gutterDisplay = show ? 'block' : 'none';
-
-        if (elements.centerColumn.style.display !== displayValue) {
-            elements.centerColumn.style.display = displayValue;
-            elements.dragHandle.style.display = gutterDisplay;
-            elements.editToggleBtn.style.display = show ? 'block' : 'none';
-
-            // Allow layout to update before resizing charts
-            setTimeout(() => {
-                if (activeChart) activeChart.resize();
-                if (comparisonChart) comparisonChart.resize();
-            }, 0);
-        }
-    }
-
-    function toggleEditMode() {
-        isEditing = !isEditing;
-        updateEditModeUI();
-    }
-
-    function updateEditModeUI() {
-        if (isEditing) {
-            elements.centerColumn.classList.remove('read-only-mode');
-            elements.editToggleBtn.textContent = 'Done Editing';
-            elements.editToggleBtn.classList.add('editing');
-
-            // Show input, hide h1
-            elements.activeDatasetName.style.display = 'none';
-            elements.activeDatasetNameInput.style.display = 'block';
-            elements.activeDatasetNameInput.value = activeDataset;
-
-            elements.deleteDatasetBtn.style.display = 'inline-block'; // Show delete button
-            ensureEmptyRow(); // Add empty row when entering edit mode
-        } else {
-            elements.centerColumn.classList.add('read-only-mode');
-            elements.editToggleBtn.textContent = 'Edit';
-            elements.editToggleBtn.classList.remove('editing');
-
-            // Hide input, show h1
-            elements.activeDatasetName.style.display = 'block';
-            elements.activeDatasetNameInput.style.display = 'none';
-
-            elements.deleteDatasetBtn.style.display = 'none'; // Hide delete button
-
-            // Reload to clean up empty unsaved rows
-            loadActiveDatasetData();
-        }
-
-        // Disable/Enable inputs
-        elements.datasetDateInput.disabled = !isEditing;
-        elements.datasetSerialIdInput.disabled = !isEditing;
-
-        // Update all table inputs
-        const tableInputs = elements.pointsTableBody.querySelectorAll('input');
-        tableInputs.forEach(input => input.disabled = !isEditing);
-    }
-
-    // Initialize Floating Window
-    const analysisWindow = new FloatingWindow(
+    const analysisWindow = new layout.FloatingWindow(
         'floating-chart-window',
         'chart-window-header',
         'close-chart-window',
@@ -168,234 +65,194 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     );
 
-    // --- Data Loading and Rendering ---
+    // --- Controller Functions ---
+
+    // 1. Data Loading & List Management
     async function loadAndRenderDatasets() {
         try {
-            const datasets = await getDatasets();
-            allDatasets = datasets; // Save to state
-            updateDatasetListUI();
-            populateDatasetSelector(datasets);
+            const datasets = await api.getDatasets();
+            stateManager.setAllDatasets(datasets);
+            refreshDatasetList();
+            datasetUI.populateDatasetSelector(elements, datasets); // Populate with all initially
         } catch (error) {
             console.error('Error loading datasets:', error);
         }
     }
 
-    function handleDatasetSearch() {
-        updateDatasetListUI();
+    function refreshDatasetList() {
+        datasetUI.renderDatasetList(elements, setActiveDataset);
+        datasetUI.updateSortIcons(elements);
     }
 
-    function handleSort(e) {
-        const column = e.currentTarget.dataset.sort;
-        if (sortState.column === column) {
-            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
-        } else {
-            sortState.column = column;
-            sortState.direction = 'asc';
-        }
-        updateDatasetListUI();
-    }
-
-    function getProcessedDatasets() {
-        const searchTerm = elements.datasetSearchInput.value.toLowerCase();
-        let filtered = allDatasets.filter(d =>
-            d.name.toLowerCase().includes(searchTerm) ||
-            (d.date && d.date.includes(searchTerm)) ||
-            (d.serial_id && d.serial_id.toLowerCase().includes(searchTerm))
-        );
-
-        // Sort
-        filtered.sort((a, b) => {
-            let valA = a[sortState.column] || '';
-            let valB = b[sortState.column] || '';
-
-            // Case insensitive for strings
-            if (typeof valA === 'string') valA = valA.toLowerCase();
-            if (typeof valB === 'string') valB = valB.toLowerCase();
-
-            if (valA < valB) return sortState.direction === 'asc' ? -1 : 1;
-            if (valA > valB) return sortState.direction === 'asc' ? 1 : -1;
-            return 0;
-        });
-
-        return filtered;
-    }
-
-    function updateDatasetListUI() {
-        const datasets = getProcessedDatasets();
-        renderDatasetList(datasets);
-        updateSortIcons();
-    }
-
-    function updateSortIcons() {
-        elements.datasetListHeaders.forEach(th => {
-            const column = th.dataset.sort;
-            const iconSpan = th.querySelector('.sort-icon');
-            th.classList.remove('sorted-asc', 'sorted-desc');
-            iconSpan.textContent = ''; // Clear icon
-
-            if (column === sortState.column) {
-                th.classList.add(sortState.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-                iconSpan.textContent = sortState.direction === 'asc' ? '▲' : '▼';
-            }
-        });
-    }
-
-    function handleComparisonSearch() {        const searchTerm = elements.comparisonSearchInput.value.toLowerCase();
-    const filteredDatasets = allDatasets.filter(d => d.name.toLowerCase().includes(searchTerm));
-    populateDatasetSelector(filteredDatasets);
-    }
-
-    function renderDatasetList(datasets) {
-        elements.datasetListBody.innerHTML = '';
-        datasets.forEach(dataset => {
-            const tr = document.createElement('tr');
-            tr.addEventListener('click', () => setActiveDataset(dataset.name));
-
-            const tdName = document.createElement('td');
-            tdName.textContent = dataset.name;
-            tr.appendChild(tdName);
-
-            const tdDate = document.createElement('td');
-            tdDate.textContent = dataset.date || '';
-            tr.appendChild(tdDate);
-
-            const tdSerial = document.createElement('td');
-            tdSerial.textContent = dataset.serial_id || '';
-            tr.appendChild(tdSerial);
-
-            if (dataset.name === activeDataset) {
-                tr.classList.add('active');
-            }
-
-            elements.datasetListBody.appendChild(tr);
-        });
-    }
-
-    // handleDeleteDataset logic moved to center column button, no changes needed here regarding delete button creation
-
-    function populateDatasetSelector(datasets) {
-        elements.datasetSelector.innerHTML = '';
-        datasets.forEach(dataset => {
-            const option = document.createElement('option');
-            option.value = dataset.name; // Use name property
-            option.textContent = dataset.name;
-            elements.datasetSelector.appendChild(option);
-        });
-    }
-
+    // 2. Workspace & Active Dataset
     async function setActiveDataset(name) {
-        if (activeDataset === name) {
-            // Toggle off: if already active, deselect it
-            activeDataset = null;
-            toggleCenterColumn(false);
+        if (state.activeDataset === name) {
+            // Deselect
+            stateManager.setActiveDataset(null);
+            workspaceUI.toggleCenterColumn(elements, false);
             elements.activeDatasetName.textContent = 'No Dataset Selected';
         } else {
-            // Select new dataset
-            activeDataset = name;
-            isEditing = false; // Always start in read-only mode
-            toggleCenterColumn(true);
-            updateEditModeUI();
+            // Select
+            stateManager.setActiveDataset(name);
+            stateManager.setEditing(false); // Reset edit mode
+            workspaceUI.toggleCenterColumn(elements, true, () => {
+                 if (activeChart) activeChart.resize();
+            });
+            workspaceUI.updateEditModeUI(elements);
             elements.activeDatasetName.textContent = name;
-            loadActiveDatasetData();
+            await loadActiveDatasetData();
         }
-        renderDatasetList(await getDatasets());
+        refreshDatasetList();
     }
 
     async function loadActiveDatasetData() {
-        if (!activeDataset) return;
+        if (!state.activeDataset) return;
 
         try {
-            // Updated to handle object response { points: [], date: "...", serial_id: "..." }
-            const data = await getDatasetPoints(activeDataset);
+            const data = await api.getDatasetPoints(state.activeDataset);
             const points = data.points;
 
-            // Set metadata
             elements.datasetDateInput.value = data.date || '';
             elements.datasetSerialIdInput.value = data.serial_id || '';
 
-            renderPointsTable(points);
+            workspaceUI.renderPointsTable(elements, points, handleDeletePoint);
             renderActiveChart(points);
         } catch (error) {
-            console.error(`Error loading data for ${activeDataset}:`, error);
+            console.error(`Error loading data for ${state.activeDataset}:`, error);
         }
     }
 
-    function renderPointsTable(points) {
-        elements.pointsTableBody.innerHTML = '';
-        points.forEach(point => {
-            const tr = createTableRow(point.id, point.x, point.y);
-            elements.pointsTableBody.appendChild(tr);
-        });
-        if (isEditing) {
-            ensureEmptyRow();
-        }
+    function renderActiveChart(points) {
+        const chartData = {
+            datasets: [{
+                label: state.activeDataset,
+                data: points,
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+            }]
+        };
+        if (activeChart) chartService.destroyChart(activeChart);
+        activeChart = chartService.initializeOrUpdateChart(elements.activeChartCanvas, chartData.datasets);
     }
 
-    function ensureEmptyRow() {
-        const rows = elements.pointsTableBody.querySelectorAll('tr');
-        const lastRow = rows[rows.length - 1];
+    // 3. User Actions
+    function handleSort(e) {
+        const column = e.currentTarget.dataset.sort;
+        let { direction } = state.sortState;
 
-        // If no rows, or last row has data, add a new one
-        let needsRow = false;
-        if (!lastRow) {
-            needsRow = true;
+        if (state.sortState.column === column) {
+            direction = direction === 'asc' ? 'desc' : 'asc';
         } else {
-            const xInput = lastRow.querySelector('input[data-field="x"]');
-            const yInput = lastRow.querySelector('input[data-field="y"]');
-            // If inputs exist and have values
-            if (xInput && yInput && (xInput.value !== '' || yInput.value !== '')) {
-                needsRow = true;
-            }
+            direction = 'asc';
         }
+        stateManager.setSortState(column, direction);
+        refreshDatasetList();
+    }
 
-        if (needsRow) {
-            const tr = createTableRow(null, undefined, undefined);
-            elements.pointsTableBody.appendChild(tr);
+    function handleDatasetSearch() {
+        stateManager.setDatasetFilter(elements.datasetSearchInput.value);
+        refreshDatasetList();
+    }
+
+    function handleComparisonSearch() {
+        // Reuse getProcessedDatasets logic or simple filter?
+        // Simple filter for now as per old logic
+        const searchTerm = elements.comparisonSearchInput.value.toLowerCase();
+        const filtered = state.allDatasets.filter(d => d.name.toLowerCase().includes(searchTerm));
+        datasetUI.populateDatasetSelector(elements, filtered);
+    }
+
+    async function handleCreateDataset() {
+        const name = elements.newDatasetNameInput.value.trim();
+        if (!name) return alert('Please enter a dataset name.');
+        try {
+            await api.createDataset(name);
+            elements.newDatasetNameInput.value = '';
+            loadAndRenderDatasets();
+        } catch (error) {
+            alert(error.message);
         }
     }
 
-    function createTableRow(id, x, y) {
-        const tr = document.createElement('tr');
-        if (id) tr.dataset.id = id;
+    async function handleDeleteDataset(name) {
+        // If name is passed (from list context? removed now), or use active
+        const targetName = name || state.activeDataset;
+        if (!targetName) return;
 
-        const tdAction = document.createElement('td');
-        tdAction.className = 'action-column';
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '×';
-        deleteBtn.className = 'delete-point-btn';
-        // Use a generic delete handler
-        deleteBtn.addEventListener('click', () => {
-            if (id) {
-                handleDeletePoint(id);
-            } else {
-                tr.remove(); // Remove unsaved row
+        if (confirm(`Are you sure you want to delete the dataset "${targetName}"?`)) {
+            try {
+                await api.deleteDataset(targetName);
+                if (state.activeDataset === targetName) {
+                    stateManager.setActiveDataset(null);
+                    workspaceUI.toggleCenterColumn(elements, false);
+                    elements.activeDatasetName.textContent = 'No Dataset Selected';
+                    if (activeChart) {
+                        chartService.destroyChart(activeChart);
+                        activeChart = null;
+                    }
+                }
+                loadAndRenderDatasets();
+            } catch (error) {
+                alert(error.message);
             }
-        });
-        tdAction.appendChild(deleteBtn);
+        }
+    }
 
-        const tdX = document.createElement('td');
-        const inputX = document.createElement('input');
-        inputX.type = 'number';
-        inputX.value = x !== undefined ? x : '';
-        inputX.placeholder = 'X';
-        inputX.dataset.field = 'x';
-        inputX.disabled = !isEditing;
-        tdX.appendChild(inputX);
+    function toggleEditMode() {
+        stateManager.setEditing(!state.isEditing);
+        workspaceUI.updateEditModeUI(elements);
+        if (state.isEditing) {
+            workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
+        } else {
+            loadActiveDatasetData(); // Reload to clear unsaved rows
+        }
+    }
 
-        const tdY = document.createElement('td');
-        const inputY = document.createElement('input');
-        inputY.type = 'number';
-        inputY.value = y !== undefined ? y : '';
-        inputY.placeholder = 'Y';
-        inputY.dataset.field = 'y';
-        inputY.disabled = !isEditing;
-        tdY.appendChild(inputY);
+    async function handleDatasetRename() {
+        if (!state.activeDataset || !state.isEditing) return;
+        const newName = elements.activeDatasetNameInput.value.trim();
+        if (newName === state.activeDataset) return;
+        if (!newName) {
+            alert("Dataset name cannot be empty.");
+            elements.activeDatasetNameInput.value = state.activeDataset;
+            return;
+        }
 
-        tr.appendChild(tdAction);
-        tr.appendChild(tdX);
-        tr.appendChild(tdY);
+        try {
+            await api.updateDataset(state.activeDataset, { name: newName });
+            stateManager.setActiveDataset(newName);
+            elements.activeDatasetName.textContent = newName;
+            loadAndRenderDatasets(); // Refresh list
+        } catch (error) {
+            console.error('Failed to rename:', error);
+            alert(error.message);
+            elements.activeDatasetNameInput.value = state.activeDataset;
+        }
+    }
 
-        return tr;
+    async function handleMetadataChange() {
+        if (!state.activeDataset) return;
+        const date = elements.datasetDateInput.value;
+        const serialId = elements.datasetSerialIdInput.value;
+        try {
+            await api.updateDataset(state.activeDataset, { date: date, serial_id: serialId });
+        } catch (error) {
+            console.error('Failed to update metadata:', error);
+            alert('Failed to save metadata.');
+        }
+    }
+
+    // Points Logic
+    async function handleDeletePoint(pointId) {
+        if (!state.activeDataset) return;
+        if (confirm('Are you sure you want to delete this point?')) {
+            try {
+                await api.deletePoint(state.activeDataset, pointId);
+                loadActiveDatasetData();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
     }
 
     async function handleTableInput(e) {
@@ -406,222 +263,100 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = tr.dataset.id;
         const xInput = tr.querySelector('input[data-field="x"]');
         const yInput = tr.querySelector('input[data-field="y"]');
-
         const xVal = xInput.value;
         const yVal = yInput.value;
 
-        // If both empty, do nothing
         if (xVal === '' && yVal === '') return;
 
         let chartNeedsUpdate = false;
 
         if (id) {
-            // Update existing point
-            if (input.value === '') return; // Don't update with empty string
-
+            if (input.value === '') return;
             try {
-                await updatePoint(activeDataset, id, xVal, yVal);
+                await api.updatePoint(state.activeDataset, id, xVal, yVal);
                 chartNeedsUpdate = true;
-            } catch (error) {
-                console.error('Update failed:', error);
-            }
+            } catch (error) { console.error(error); }
         } else {
-            // New point
             if (xVal !== '' && yVal !== '') {
                 try {
-                    const result = await addPoint(activeDataset, xVal, yVal);
-                    // Update the row with the new ID so it becomes an "existing" point
+                    const result = await api.addPoint(state.activeDataset, xVal, yVal);
                     tr.dataset.id = result.id;
-                    ensureEmptyRow();
+                    workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
                     chartNeedsUpdate = true;
-                } catch (error) {
-                    console.error('Add failed:', error);
-                }
+                } catch (error) { console.error(error); }
             }
         }
 
         if (chartNeedsUpdate) {
             try {
-                const data = await getDatasetPoints(activeDataset);
+                const data = await api.getDatasetPoints(state.activeDataset);
                 renderActiveChart(data.points);
-            } catch (error) {
-                console.error('Failed to update chart:', error);
-            }
+            } catch (error) { console.error(error); }
         }
     }
 
-    async function handleMetadataChange() {
-        if (!activeDataset) return;
-        const date = elements.datasetDateInput.value;
-        const serialId = elements.datasetSerialIdInput.value;
-        try {
-            await updateDataset(activeDataset, { date: date, serial_id: serialId });
-        } catch (error) {
-            console.error('Failed to update metadata:', error);
-            alert('Failed to save metadata.');
-        }
-    }
-
-    async function handleDatasetRename() {
-        if (!activeDataset || !isEditing) return;
-        const newName = elements.activeDatasetNameInput.value.trim();
-
-        if (newName === activeDataset) return; // No change
-        if (!newName) {
-            alert("Dataset name cannot be empty.");
-            elements.activeDatasetNameInput.value = activeDataset;
-            return;
-        }
-
-        try {
-            await updateDataset(activeDataset, { name: newName });
-
-            // Update local state
-            const oldName = activeDataset;
-            activeDataset = newName;
-
-            // Update UI
-            elements.activeDatasetName.textContent = newName;
-
-            // Reload list to reflect name change and update selection
-            await loadAndRenderDatasets();
-
-            // If the user clicked away or pressed enter, they might want to continue editing
-            // The activeDataset global variable is updated, so subsequent calls should use the new name.
-
-        } catch (error) {
-            console.error('Failed to rename dataset:', error);
-            alert(error.message);
-            elements.activeDatasetNameInput.value = activeDataset; // Revert
-        }
-    }
-
-    function renderActiveChart(points) {
-        const chartData = {
-            datasets: [{
-                label: activeDataset,
-                data: points,
-                backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-            }]
-        };
-        if (activeChart) {
-            destroyChart(activeChart);
-        }
-        activeChart = initializeOrUpdateChart(elements.activeChartCanvas, chartData.datasets);
-    }
-
-    async function renderComparisonChart(datasetNames) {
-        try {
-            // Note: getSelectedDatasetsForChart calls getDatasetPoints internally.
-            // Since getDatasetPoints now returns {points: [...], date: ...},
-            // we need to check if getSelectedDatasetsForChart needs updating.
-            // Checking api.js... it uses getDatasetPoints(name) and expects an array.
-            // We need to update api.js or handle it here?
-            // Better to update api.js to handle the new return type.
-
-            const chartData = await getSelectedDatasetsForChart(datasetNames);
-            if (comparisonChart) {
-                destroyChart(comparisonChart);
-            }
-            comparisonChart = initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets);
-        } catch (error) {
-            console.error('Error rendering comparison chart:', error);
-        }
-    }
-
-
-    // --- Event Handlers ---
-    async function handleCreateDataset() {
-        const name = elements.newDatasetNameInput.value.trim();
-        if (!name) return alert('Please enter a dataset name.');
-        try {
-            await createDataset(name);
-            elements.newDatasetNameInput.value = '';
-            loadAndRenderDatasets();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
-    async function handleDeletePoint(pointId) {
-        if (!activeDataset) return;
-        if (confirm('Are you sure you want to delete this point?')) {
-            try {
-                await deletePoint(activeDataset, pointId);
-                loadActiveDatasetData();
-            } catch (error) {
-                alert(error.message);
-            }
-        }
-    }
-
-    function handleDrawSelected() {
-        const selectedDatasets = Array.from(elements.datasetSelector.selectedOptions).map(option => option.value);
-        if (selectedDatasets.length === 0) {
-            return alert('Please select at least one dataset to draw.');
-        }
-        renderComparisonChart(selectedDatasets);
-    }
-
-    function handleCollapse(columnId) {
-        document.getElementById(columnId).classList.toggle('collapsed');
-        setTimeout(() => {
-            if (activeChart) {
-                activeChart.resize();
-            }
-            if (comparisonChart) {
-                comparisonChart.resize();
-            }
-        }, 300);
-    }
-
+    // Chart & Regression
     async function handleRegression(type) {
-        if (!activeDataset || !activeChart) return;
-
+        if (!state.activeDataset || !activeChart) return;
         try {
-            const regressionData = await getRegressionData(activeDataset, type);
-            const regressionPoints = regressionData.regression_points;
+            const regressionData = await api.getRegressionData(state.activeDataset, type);
+            // Logic to add regression dataset to chart...
+            // This logic is a bit tied to specific chart instance manipulation
+            // Ideally should be in chart_service, but passing the chart instance or managing it there is cleaner.
+            // For now, I'll inline the logic but adapt it.
 
+            const regressionPoints = regressionData.regression_points;
             let label;
             if (type === 'linear') {
                 const { r_squared, slope, intercept } = regressionData;
-                const equation = `y = ${slope.toFixed(2)}x + ${intercept.toFixed(2)}`;
-                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
-                label = `Linear: ${equation}, ${rSquaredInfo}`;
+                label = `Linear: y = ${slope.toFixed(2)}x + ${intercept.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
             } else {
                 const { r_squared, a, b } = regressionData;
-                const equation = `y = ${a.toFixed(2)}x^${b.toFixed(2)}`;
-                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
-                label = `Power: ${equation}, ${rSquaredInfo}`;
+                label = `Power: y = ${a.toFixed(2)}x^${b.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
             }
 
             const newDataset = {
                 label: label,
                 data: regressionPoints,
                 borderColor: type === 'linear' ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)',
-                backgroundColor: type === 'linear' ? 'rgba(255, 99, 132, 0.5)' : 'rgba(54, 162, 235, 0.5)',
+                backgroundColor: 'rgba(0,0,0,0)',
                 type: 'line',
                 showLine: true,
                 fill: false
             };
 
-            // Remove previous regression line of the same type
-            const otherDatasets = activeChart.data.datasets.filter(d => d.label !== label && !d.label.startsWith(type === 'linear' ? 'Linear:' : 'Power:'));
+            const otherDatasets = activeChart.data.datasets.filter(d =>
+                d.label !== label && !d.label.startsWith(type === 'linear' ? 'Linear:' : 'Power:')
+            );
             activeChart.data.datasets = [...otherDatasets, newDataset];
             activeChart.update();
 
         } catch (error) {
-            console.error(`Error calculating ${type} regression:`, error);
+            console.error(error);
             alert(error.message);
         }
     }
 
     function clearRegressions() {
         if (!activeChart) return;
-        const originalDataset = activeChart.data.datasets.filter(d => !d.label.startsWith('Linear:') && !d.label.startsWith('Power:'));
+        const originalDataset = activeChart.data.datasets.filter(d =>
+            !d.label.startsWith('Linear:') && !d.label.startsWith('Power:')
+        );
         activeChart.data.datasets = originalDataset;
         activeChart.update();
+    }
+
+    async function handleDrawSelected() {
+        const selectedNames = Array.from(elements.datasetSelector.selectedOptions).map(o => o.value);
+        if (selectedNames.length === 0) return alert('Select datasets.');
+
+        try {
+            const chartData = await chartService.getSelectedDatasetsForChart(selectedNames);
+            if (comparisonChart) chartService.destroyChart(comparisonChart);
+            comparisonChart = chartService.initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets);
+        } catch (error) {
+            console.error(error);
+        }
     }
 
 
@@ -630,26 +365,23 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
     elements.comparisonSearchInput.addEventListener('input', handleComparisonSearch);
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
+
     elements.editToggleBtn.addEventListener('click', toggleEditMode);
-    elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
-    elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column'));
-    elements.dragHandle.addEventListener('mousedown', startDrag);
+    elements.deleteDatasetBtn.addEventListener('click', () => handleDeleteDataset(state.activeDataset));
+    elements.activeDatasetNameInput.addEventListener('change', handleDatasetRename);
+
+    elements.datasetDateInput.addEventListener('change', handleMetadataChange);
+    elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
+
+    elements.pointsTableBody.addEventListener('change', handleTableInput);
+
+    elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.show());
     elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
     elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);
 
-    // Table Events
-    // Use 'change' event which fires on blur/enter. 'input' would be too aggressive.
-    elements.pointsTableBody.addEventListener('change', handleTableInput);
+    elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
 
-    // Metadata Input Events
-    elements.datasetDateInput.addEventListener('change', handleMetadataChange);
-    elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
-    elements.activeDatasetNameInput.addEventListener('change', handleDatasetRename);
-    elements.deleteDatasetBtn.addEventListener('click', () => handleDeleteDataset(activeDataset));
-
-    // Floating Window Events
-    elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.show());
 
     // --- Initial Load ---
     loadAndRenderDatasets();
