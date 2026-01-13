@@ -14,9 +14,20 @@
             <div class="column-content-wrapper">
                 <h1>My Datasets</h1>
                 <input type="text" id="dataset-search" placeholder="Search datasets..." class="search-bar">
-                <ul id="dataset-list">
-                    <!-- Datasets will be loaded here -->
-                </ul>
+                <div class="dataset-list-wrapper">
+                    <table id="dataset-list-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Date</th>
+                                <th>Serial ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataset-list-body">
+                            <!-- Datasets will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
                 <div class="input-area">
                     <input type="text" id="new-dataset-name" placeholder="Enter new dataset name">
                     <button id="create-dataset-btn">Create Dataset</button>

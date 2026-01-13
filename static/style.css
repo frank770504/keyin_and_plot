@@ -197,7 +197,40 @@ ul {
     padding: 0;
 }
 
-#dataset-list li, #points-list li {
+/* Dataset List Table Styles */
+#dataset-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+#dataset-list-table th,
+#dataset-list-table td {
+    border: 1px solid #eee;
+    padding: 8px;
+    text-align: left;
+}
+
+#dataset-list-table th {
+    background-color: #f9f9f9;
+    font-weight: bold;
+}
+
+#dataset-list-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#dataset-list-table tbody tr:hover {
+    background-color: #f0f0f0;
+}
+
+#dataset-list-table tbody tr.active {
+    background-color: #ffe4e1; /* Light Pink (MistyRose) */
+    border-left: 4px solid #ffb6c1; /* Light Pink accent */
+}
+
+#points-list li {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -205,15 +238,6 @@ ul {
     border-bottom: 1px solid #eee;
     cursor: pointer;
     transition: background-color 0.2s;
-}
-
-#dataset-list li:hover {
-    background-color: #f0f0f0;
-}
-
-#dataset-list li.active {
-    background-color: #ffe4e1; /* Light Pink (MistyRose) */
-    border-left: 4px solid #ffb6c1; /* Light Pink accent */
 }
 
 /* Table Styles */

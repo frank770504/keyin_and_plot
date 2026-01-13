@@ -87,10 +87,14 @@ def get_power_regression(name):
 
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
-    """Return a list of all dataset names."""
+    """Return a list of all datasets with metadata."""
     all_datasets = Dataset.query.all()
-    dataset_names = [d.name for d in all_datasets]
-    return jsonify(dataset_names)
+    datasets_data = [{
+        "name": d.name,
+        "date": d.date,
+        "serial_id": d.serial_id
+    } for d in all_datasets]
+    return jsonify(datasets_data)
 
 @api_bp.route('/datasets', methods=['POST'])
 def create_dataset():

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const elements = {
         // Left Column
-        datasetList: document.getElementById('dataset-list'),
+        datasetListBody: document.getElementById('dataset-list-body'), // Changed from datasetList
         datasetSearchInput: document.getElementById('dataset-search'), // Search Input
         newDatasetNameInput: document.getElementById('new-dataset-name'),
         createDatasetBtn: document.getElementById('create-dataset-btn'),
@@ -180,63 +180,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDatasetSearch() {
         const searchTerm = elements.datasetSearchInput.value.toLowerCase();
-        const filteredDatasets = allDatasets.filter(name => name.toLowerCase().includes(searchTerm));
+        const filteredDatasets = allDatasets.filter(d =>
+            d.name.toLowerCase().includes(searchTerm) ||
+            (d.date && d.date.includes(searchTerm)) ||
+            (d.serial_id && d.serial_id.toLowerCase().includes(searchTerm))
+        );
         renderDatasetList(filteredDatasets);
     }
 
     function handleComparisonSearch() {
         const searchTerm = elements.comparisonSearchInput.value.toLowerCase();
-        const filteredDatasets = allDatasets.filter(name => name.toLowerCase().includes(searchTerm));
+        const filteredDatasets = allDatasets.filter(d => d.name.toLowerCase().includes(searchTerm));
         populateDatasetSelector(filteredDatasets);
     }
 
     function renderDatasetList(datasets) {
-        elements.datasetList.innerHTML = '';
-        datasets.forEach(name => {
-            const li = document.createElement('li');
-            li.addEventListener('click', () => setActiveDataset(name));
+        elements.datasetListBody.innerHTML = '';
+        datasets.forEach(dataset => {
+            const tr = document.createElement('tr');
+            tr.addEventListener('click', () => setActiveDataset(dataset.name));
 
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = name;
-            li.appendChild(nameSpan);
+            const tdName = document.createElement('td');
+            tdName.textContent = dataset.name;
+            tr.appendChild(tdName);
 
-            if (name === activeDataset) {
-                li.classList.add('active');
+            const tdDate = document.createElement('td');
+            tdDate.textContent = dataset.date || '';
+            tr.appendChild(tdDate);
+
+            const tdSerial = document.createElement('td');
+            tdSerial.textContent = dataset.serial_id || '';
+            tr.appendChild(tdSerial);
+
+            if (dataset.name === activeDataset) {
+                tr.classList.add('active');
             }
 
-            elements.datasetList.appendChild(li);
+            elements.datasetListBody.appendChild(tr);
         });
     }
 
-    async function handleDeleteDataset(name) {
-        if (confirm(`Are you sure you want to delete the dataset "${name}"?`)) {
-            try {
-                await deleteDataset(name);
-                if (activeDataset === name) {
-                    activeDataset = null;
-                    toggleCenterColumn(false); // Hide the column
-                    elements.activeDatasetName.textContent = 'No Dataset Selected';
-                    elements.datasetDateInput.value = ''; // Clear date
-                    elements.datasetSerialIdInput.value = ''; // Clear serial ID
-                    elements.pointsTableBody.innerHTML = '';
-                    if (activeChart) {
-                        destroyChart(activeChart);
-                        activeChart = null;
-                    }
-                }
-                loadAndRenderDatasets();
-            } catch (error) {
-                alert(error.message);
-            }
-        }
-    }
+    // handleDeleteDataset logic moved to center column button, no changes needed here regarding delete button creation
 
     function populateDatasetSelector(datasets) {
         elements.datasetSelector.innerHTML = '';
-        datasets.forEach(name => {
+        datasets.forEach(dataset => {
             const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
+            option.value = dataset.name; // Use name property
+            option.textContent = dataset.name;
             elements.datasetSelector.appendChild(option);
         });
     }
