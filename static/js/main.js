@@ -290,6 +290,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const tr = document.createElement('tr');
         if (id) tr.dataset.id = id;
 
+        const tdAction = document.createElement('td');
+        tdAction.className = 'action-column';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '×';
+        deleteBtn.className = 'delete-point-btn';
+        // Use a generic delete handler
+        deleteBtn.addEventListener('click', () => {
+            if (id) {
+                handleDeletePoint(id);
+            } else {
+                tr.remove(); // Remove unsaved row
+            }
+        });
+        tdAction.appendChild(deleteBtn);
+
         const tdX = document.createElement('td');
         const inputX = document.createElement('input');
         inputX.type = 'number';
@@ -308,22 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
         inputY.disabled = !isEditing;
         tdY.appendChild(inputY);
 
-        const tdAction = document.createElement('td');
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        // Use a generic delete handler
-        deleteBtn.addEventListener('click', () => {
-            if (id) {
-                handleDeletePoint(id);
-            } else {
-                tr.remove(); // Remove unsaved row
-            }
-        });
-        tdAction.appendChild(deleteBtn);
-
+        tr.appendChild(tdAction);
         tr.appendChild(tdX);
         tr.appendChild(tdY);
-        tr.appendChild(tdAction);
 
         return tr;
     }

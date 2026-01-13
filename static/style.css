@@ -58,16 +58,41 @@ body {
     background-color: #28a745;
 }
 
+.delete-point-btn {
+    background-color: #dc3545; /* Red */
+    color: white;
+    border: none;
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    line-height: 25px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px; /* Slightly rounded square */
+    transition: background-color 0.2s;
+}
+
+.delete-point-btn:hover {
+    background-color: #c82333;
+}
+
 /* Hide action elements in read-only mode */
-.read-only-mode .action-cell,
 .read-only-mode #add-row-btn,
 .read-only-mode .delete-dataset-btn-in-list { /* Wait, I didn't add this class yet */
     display: none;
 }
 
-.read-only-mode #points-table th:last-child,
-.read-only-mode #points-table td:last-child {
+.read-only-mode #points-table .action-column {
     display: none;
+}
+
+#points-table th.action-column,
+#points-table td.action-column {
+    border: none;
+    background-color: transparent;
+    width: 80px;
 }
 
 .search-bar {
