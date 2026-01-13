@@ -246,6 +246,17 @@ ul {
     background-color: #eef;
 }
 
+/* Remove number input spinners */
+#points-table input[type="number"]::-webkit-outer-spin-button,
+#points-table input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#points-table input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 .metadata-area {
     margin: 15px 0;
     padding: 10px;
