@@ -5,6 +5,7 @@ export function initializeOrUpdateChart(ctx, datasets) {
         type: 'scatter',
         data: { datasets: datasets },
         options: {
+            maintainAspectRatio: true,
             scales: {
                 x: {
                     type: 'linear',
