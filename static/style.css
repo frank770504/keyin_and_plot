@@ -273,3 +273,68 @@ canvas {
     max-width: 100%;
     margin-top: 20px;
 }
+
+/* Floating Window */
+.floating-window {
+    display: none;
+    position: absolute;
+    top: 100px;
+    left: 60%; /* Position over right column approximately */
+    width: 500px;
+    height: 400px;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+    resize: both;
+    overflow: auto; /* Required for resize handle */
+    flex-direction: column;
+}
+
+.window-header {
+    background-color: #f1f1f1;
+    padding: 10px;
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+}
+
+.window-header span {
+    font-weight: bold;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #333;
+    padding: 0 5px;
+}
+
+.close-btn:hover {
+    color: red;
+    background: none;
+}
+
+.window-content {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent canvas overflow issues */
+}
+
+.window-content canvas {
+    flex-grow: 1;
+    min-height: 0; /* Important for flex container resizing */
+    margin-top: 0;
+}
+
+.window-content .controls {
+    margin-top: 10px;
+    flex-shrink: 0;
+}

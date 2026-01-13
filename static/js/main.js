@@ -26,6 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
         analysisTab: document.getElementById('analysis-tab'),
         pointsTableBody: document.querySelector('#points-table tbody'),
         addRowBtn: document.getElementById('add-row-btn'),
+        openAnalysisBtn: document.getElementById('open-analysis-btn'), // New button
+
+        // Floating Window
+        floatingWindow: document.getElementById('floating-chart-window'),
+        windowHeader: document.getElementById('chart-window-header'),
+        closeWindowBtn: document.getElementById('close-chart-window'),
         activeChartCanvas: document.getElementById('active-chart').getContext('2d'),
         regressionBtn: document.getElementById('regression-btn'),
         powerRegressionBtn: document.getElementById('power-regression-btn'),
@@ -83,17 +89,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopDrag() {
+
         isDragging = false;
+
         document.body.style.cursor = '';
+
         elements.dragHandle.classList.remove('dragging');
+
         document.removeEventListener('mousemove', handleDrag);
+
         document.removeEventListener('mouseup', stopDrag);
+
     }
 
     function toggleCenterColumn(show) {
         const displayValue = show ? 'flex' : 'none';
         const gutterDisplay = show ? 'block' : 'none';
-
         if (elements.centerColumn.style.display !== displayValue) {
             elements.centerColumn.style.display = displayValue;
             elements.dragHandle.style.display = gutterDisplay;
@@ -103,6 +114,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (activeChart) activeChart.resize();
                 if (comparisonChart) comparisonChart.resize();
             }, 0);
+        }
+    }
+
+    function toggleFloatingWindow(show) {
+        elements.floatingWindow.style.display = show ? 'flex' : 'none';
+        if (show && activeChart) {
+            activeChart.resize();
+        }
+    }
+
+    function makeDraggable(element, handle) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        handle.onmousedown = dragMouseDown;
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+
+            // Get the mouse cursor position at startup:
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+
+            // Call a function whenever the cursor moves:
+            document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+
+            // Calculate the new cursor position:
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+
+            // Set the element's new position:
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+
+            // Stop moving when mouse button is released:
+            document.onmouseup = null;
+            document.onmousemove = null;
         }
     }
 
@@ -496,6 +553,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Metadata Input Events
     elements.datasetDateInput.addEventListener('change', handleMetadataChange);
     elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
+
+    // Floating Window Events
+    elements.openAnalysisBtn.addEventListener('click', () => toggleFloatingWindow(true));
+    elements.closeWindowBtn.addEventListener('click', () => toggleFloatingWindow(false));
+    makeDraggable(elements.floatingWindow, elements.windowHeader);
 
     // --- Initial Load ---
     loadAndRenderDatasets();

@@ -65,12 +65,8 @@
 
                 <!-- Analysis Tab -->
                 <div id="analysis-tab" class="tab-content">
-                    <canvas id="active-chart"></canvas>
-                    <div class="controls">
-                        <button id="regression-btn">Calculate Regression</button>
-                        <button id="power-regression-btn">Power Law Regression</button>
-                        <button id="clear-regression-btn">Clear Regressions</button>
-                    </div>
+                    <p>The analysis chart is now in a floating window.</p>
+                    <button id="open-analysis-btn">Open Analysis Window</button>
                 </div>
             </div>
         </div>
@@ -87,6 +83,22 @@
             </div>
             <button id="draw-selected-btn">Draw Selected Datasets</button>
             <canvas id="comparison-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- Floating Analysis Window -->
+    <div id="floating-chart-window" class="floating-window">
+        <div class="window-header" id="chart-window-header">
+            <span id="window-title">Analysis Chart</span>
+            <button id="close-chart-window" class="close-btn">&times;</button>
+        </div>
+        <div class="window-content">
+            <canvas id="active-chart"></canvas>
+            <div class="controls">
+                <button id="regression-btn">Calculate Regression</button>
+                <button id="power-regression-btn">Power Law Regression</button>
+                <button id="clear-regression-btn">Clear Regressions</button>
+            </div>
         </div>
     </div>
 
