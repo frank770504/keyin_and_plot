@@ -82,6 +82,7 @@ body {
     flex-shrink: 0;
     z-index: 5;
     transition: background-color 0.2s;
+    display: none; /* Hidden by default */
 }
 
 .gutter:hover, .gutter.dragging {
@@ -96,6 +97,7 @@ body {
 }
 
 #center-column {
+    display: none; /* Hidden by default */
     width: 450px; /* Set a default reasonable width */
     min-width: 450px; /* Ensure it's not smaller than the metadata area */
     background-color: #fafafa;

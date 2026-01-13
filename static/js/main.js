@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createDatasetBtn: document.getElementById('create-dataset-btn'),
 
         // Center Column
+        centerColumn: document.getElementById('center-column'), // Added reference
         activeDatasetName: document.getElementById('active-dataset-name'),
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
@@ -89,6 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.removeEventListener('mouseup', stopDrag);
     }
 
+    function toggleCenterColumn(show) {
+        const displayValue = show ? 'flex' : 'none';
+        const gutterDisplay = show ? 'block' : 'none';
+
+        if (elements.centerColumn.style.display !== displayValue) {
+            elements.centerColumn.style.display = displayValue;
+            elements.dragHandle.style.display = gutterDisplay;
+
+            // Allow layout to update before resizing charts
+            setTimeout(() => {
+                if (activeChart) activeChart.resize();
+                if (comparisonChart) comparisonChart.resize();
+            }, 0);
+        }
+    }
+
     // --- Data Loading and Rendering ---
     async function loadAndRenderDatasets() {
         try {
@@ -145,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await deleteDataset(name);
                 if (activeDataset === name) {
                     activeDataset = null;
+                    toggleCenterColumn(false); // Hide the column
                     elements.activeDatasetName.textContent = 'No Dataset Selected';
                     elements.datasetDateInput.value = ''; // Clear date
                     elements.datasetSerialIdInput.value = ''; // Clear serial ID
@@ -172,10 +190,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function setActiveDataset(name) {
-        activeDataset = name;
-        elements.activeDatasetName.textContent = name;
+        if (activeDataset === name) {
+            // Toggle off: if already active, deselect it
+            activeDataset = null;
+            toggleCenterColumn(false);
+            elements.activeDatasetName.textContent = 'No Dataset Selected';
+        } else {
+            // Select new dataset
+            activeDataset = name;
+            toggleCenterColumn(true);
+            elements.activeDatasetName.textContent = name;
+            loadActiveDatasetData();
+        }
         renderDatasetList(await getDatasets());
-        loadActiveDatasetData();
     }
 
     async function loadActiveDatasetData() {
@@ -184,8 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Updated to handle object response { points: [], date: "...", serial_id: "..." }
             const data = await getDatasetPoints(activeDataset);
-            const points = data.points; 
-            
+            const points = data.points;
+
             // Set metadata
             elements.datasetDateInput.value = data.date || '';
             elements.datasetSerialIdInput.value = data.serial_id || '';
@@ -254,13 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleTableInput(e) {
         if (e.target.tagName !== 'INPUT') return;
-        
+
         const input = e.target;
         const tr = input.closest('tr');
         const id = tr.dataset.id;
         const xInput = tr.querySelector('input[data-field="x"]');
         const yInput = tr.querySelector('input[data-field="y"]');
-        
+
         const xVal = xInput.value;
         const yVal = yInput.value;
 
@@ -271,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update existing point
             // Only update if the changed value is valid
             if (input.value === '') return; // Don't update with empty string
-            
+
             try {
                 await updatePoint(activeDataset, id, xVal, yVal);
                 // No need to reload everything, silent update
@@ -331,9 +358,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Since getDatasetPoints now returns {points: [...], date: ...},
             // we need to check if getSelectedDatasetsForChart needs updating.
             // Checking api.js... it uses getDatasetPoints(name) and expects an array.
-            // We need to update api.js or handle it here? 
+            // We need to update api.js or handle it here?
             // Better to update api.js to handle the new return type.
-            
+
             const chartData = await getSelectedDatasetsForChart(datasetNames);
             if (comparisonChart) {
                 destroyChart(comparisonChart);
@@ -460,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
     elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);
-    
+
     // Table Events
     elements.addRowBtn.addEventListener('click', handleTableAddRow);
     // Use 'change' event which fires on blur/enter. 'input' would be too aggressive.
