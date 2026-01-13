@@ -243,32 +243,6 @@ button:hover {
     background-color: #0056b3;
 }
 
-.tabs {
-    display: flex;
-    border-bottom: 1px solid #ddd;
-}
-
-.tab-link {
-    background-color: #f1f1f1;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 4px 4px 0 0;
-}
-
-.tab-link.active {
-    background-color: #ddd;
-}
-
-.tab-content {
-    display: none;
-    padding: 20px 0;
-}
-
-.tab-content.active {
-    display: block;
-}
-
 canvas {
     max-width: 100%;
     margin-top: 20px;

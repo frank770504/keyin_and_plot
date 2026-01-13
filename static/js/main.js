@@ -22,9 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
         activeDatasetName: document.getElementById('active-dataset-name'),
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
-        tabs: document.querySelectorAll('.tab-link'),
-        tableTab: document.getElementById('table-tab'),
-        analysisTab: document.getElementById('analysis-tab'),
         pointsTableBody: document.querySelector('#points-table tbody'),
         addRowBtn: document.getElementById('add-row-btn'),
         openAnalysisBtn: document.getElementById('open-analysis-btn'), // New button
@@ -414,16 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleTabClick(event) {
-        elements.tabs.forEach(tab => tab.classList.remove('active'));
-        event.target.classList.add('active');
-
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(event.target.dataset.tab).classList.add('active');
-    }
-
     function handleDrawSelected() {
         const selectedDatasets = Array.from(elements.datasetSelector.selectedOptions).map(option => option.value);
         if (selectedDatasets.length === 0) {
@@ -497,7 +484,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
     elements.comparisonSearchInput.addEventListener('input', handleComparisonSearch);
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
-    elements.tabs.forEach(tab => tab.addEventListener('click', handleTabClick));
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
     elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column'));
     elements.dragHandle.addEventListener('mousedown', startDrag);
