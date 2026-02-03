@@ -18,6 +18,9 @@ export function initializeOrUpdateChart(ctx, datasets) {
                 }
             },
             plugins: {
+                legend: {
+                    display: false // Disable default legend
+                },
                 tooltip: {
                     enabled: true
                 },

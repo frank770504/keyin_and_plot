@@ -5,6 +5,7 @@ import state, * as stateManager from './state.js';
 import * as layout from './ui/layout.js';
 import * as datasetUI from './ui/dataset_ui.js';
 import * as workspaceUI from './ui/workspace_ui.js';
+import { createFloatingLegend, makeDraggable } from './ui/legend_ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Right Column
         drawSelectedBtn: document.getElementById('draw-selected-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
+        customLegend: document.getElementById('custom-legend'),
 
         // Layout
         collapseLeftBtn: document.getElementById('collapse-left'),
@@ -62,6 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (activeChart) activeChart.resize();
         }
     );
+
+    // Initialize Draggable Legend
+    makeDraggable(elements.customLegend);
 
     // --- Controller Functions ---
 
@@ -343,6 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const chartData = await chartService.getSelectedDatasetsForChart(selectedNames);
             if (comparisonChart) chartService.destroyChart(comparisonChart);
             comparisonChart = chartService.initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets);
+
+            // Generate Custom Legend
+            createFloatingLegend(comparisonChart, elements.customLegend);
         } catch (error) {
             console.error(error);
         }

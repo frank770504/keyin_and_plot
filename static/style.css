@@ -437,3 +437,70 @@ canvas {
     cursor: pointer;
     transform: scale(1.2); /* Make it slightly easier to click */
 }
+
+/* Floating Legend Styles */
+.floating-legend {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-size: 0.85rem;
+    z-index: 10;
+    width: 200px; /* Default width */
+    height: auto;
+    min-width: 150px;
+    min-height: 100px;
+    max-width: 400px;
+    max-height: 500px;
+    resize: both;
+    overflow: hidden; /* Required for resize handle to work correctly with flex children */
+    display: flex;
+    flex-direction: column;
+}
+
+.legend-header {
+    background-color: #f1f1f1;
+    padding: 5px 10px;
+    cursor: move;
+    font-weight: bold;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.legend-content {
+    padding: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.floating-legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    white-space: nowrap;
+}
+
+.legend-checkbox {
+    margin: 0 8px 0 0;
+    flex-shrink: 0;
+}
+
+.floating-legend-item:last-child {
+    margin-bottom: 0;
+}
+
+.legend-color-box {
+    width: 12px;
+    height: 12px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.floating-legend-item.hidden {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
