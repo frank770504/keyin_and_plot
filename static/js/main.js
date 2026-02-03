@@ -37,8 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clearRegressionBtn: document.getElementById('clear-regression-btn'),
 
         // Right Column
-        comparisonSearchInput: document.getElementById('comparison-search'),
-        datasetSelector: document.getElementById('dataset-selector'),
         drawSelectedBtn: document.getElementById('draw-selected-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
 
@@ -73,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const datasets = await api.getDatasets();
             stateManager.setAllDatasets(datasets);
             refreshDatasetList();
-            datasetUI.populateDatasetSelector(elements, datasets); // Populate with all initially
         } catch (error) {
             console.error('Error loading datasets:', error);
         }
@@ -152,14 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDatasetSearch() {
         stateManager.setDatasetFilter(elements.datasetSearchInput.value);
         refreshDatasetList();
-    }
-
-    function handleComparisonSearch() {
-        // Reuse getProcessedDatasets logic or simple filter?
-        // Simple filter for now as per old logic
-        const searchTerm = elements.comparisonSearchInput.value.toLowerCase();
-        const filtered = state.allDatasets.filter(d => d.name.toLowerCase().includes(searchTerm));
-        datasetUI.populateDatasetSelector(elements, filtered);
     }
 
     async function handleCreateDataset() {
@@ -347,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleDrawSelected() {
-        const selectedNames = Array.from(elements.datasetSelector.selectedOptions).map(o => o.value);
+        const selectedNames = Array.from(state.comparisonSelected);
         if (selectedNames.length === 0) return alert('Select datasets.');
 
         try {
@@ -363,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
     elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
-    elements.comparisonSearchInput.addEventListener('input', handleComparisonSearch);
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
 
     elements.editToggleBtn.addEventListener('click', toggleEditMode);

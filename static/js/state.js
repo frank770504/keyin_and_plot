@@ -6,7 +6,7 @@ const state = {
     isEditing: false,
     sortState: { column: 'name', direction: 'asc' },
     datasetFilter: '',
-    comparisonFilter: ''
+    comparisonSelected: new Set()
 };
 
 export default state;
@@ -31,6 +31,14 @@ export function setDatasetFilter(term) {
     state.datasetFilter = term;
 }
 
-export function setComparisonFilter(term) {
-    state.comparisonFilter = term;
+export function toggleComparisonSelection(name) {
+    if (state.comparisonSelected.has(name)) {
+        state.comparisonSelected.delete(name);
+    } else {
+        state.comparisonSelected.add(name);
+    }
+}
+
+export function clearComparisonSelection() {
+    state.comparisonSelected.clear();
 }

@@ -424,3 +424,16 @@ canvas {
     margin-top: 10px;
     flex-shrink: 0;
 }
+
+/* Checkbox Column Styles */
+#dataset-list-table th.checkbox-column,
+#dataset-list-table td:first-child {
+    width: 30px;
+    text-align: center;
+    padding: 8px 5px;
+}
+
+#dataset-list-table td:first-child input[type="checkbox"] {
+    cursor: pointer;
+    transform: scale(1.2); /* Make it slightly easier to click */
+}

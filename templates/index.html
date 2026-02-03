@@ -18,6 +18,7 @@
                     <table id="dataset-list-table">
                         <thead>
                             <tr>
+                                <th class="checkbox-column">Select</th>
                                 <th data-sort="name">Name <span class="sort-icon"></span></th>
                                 <th data-sort="date">Date <span class="sort-icon"></span></th>
                                 <th data-sort="serial_id">Serial ID <span class="sort-icon"></span></th>
@@ -86,11 +87,6 @@
         <!-- Right Column: Comparison Chart -->
         <div class="column" id="right-column">
             <h1>Compare Datasets</h1>
-            <div class="selection-area">
-                <label for="dataset-selector">Select Datasets:</label>
-                <input type="text" id="comparison-search" placeholder="Search datasets..." class="search-bar">
-                <select id="dataset-selector" multiple></select>
-            </div>
             <button id="draw-selected-btn">Draw Selected Datasets</button>
             <canvas id="comparison-chart"></canvas>
         </div>
