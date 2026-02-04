@@ -114,8 +114,9 @@ body {
 }
 
 #left-column.collapsed {
-    width: 40px !important;
+    width: 0 !important;
     padding: 0;
+    border-right: none; /* Remove border to regain space */
 }
 
 #left-column.collapsed .column-content-wrapper {
@@ -127,7 +128,7 @@ body {
     position: absolute;
     top: 10px;
     right: -12.5px; /* Center on the border */
-    z-index: 10;
+    z-index: 30;
     width: 25px;
     height: 25px;
     line-height: 25px;
@@ -135,11 +136,14 @@ body {
     padding: 0;
     border-radius: 50%;
     transform: rotate(0deg);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, right 0.3s ease; /* Animate position change */
 }
 
 #left-column.collapsed .collapse-btn {
     transform: rotate(180deg);
+    right: -30px; /* Push it out to be visible when width is 0 */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Add shadow for visibility */
+    background-color: #fff; /* Ensure it has background */
 }
 
 .gutter {
@@ -161,6 +165,7 @@ body {
     background-color: #fff;
     border-right: 1px solid #ddd;
     height: 100%;
+    z-index: 20; /* Ensure it stays on top of center column for the button overlap */
 }
 
 #center-column {
@@ -170,6 +175,7 @@ body {
     background-color: #fafafa;
     /* border-right: 1px solid #ddd; Removed for gutter */
     height: 100%;
+    z-index: 10;
 }
 
 #right-column {
