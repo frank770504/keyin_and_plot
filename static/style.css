@@ -124,6 +124,12 @@ body {
     opacity: 0;
 }
 
+/* Ensure the first visible column after a collapsed sidebar clears the floating button */
+#left-column.collapsed ~ .column .column-content-wrapper {
+    padding-left: 45px; /* 25px button + 20px safety margin */
+    transition: padding-left 0.3s ease;
+}
+
 .collapse-btn {
     position: absolute;
     top: 50%;
