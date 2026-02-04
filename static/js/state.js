@@ -6,7 +6,8 @@ const state = {
     isEditing: false,
     sortState: { column: 'name', direction: 'asc' },
     datasetFilter: '',
-    comparisonSelected: new Set()
+    comparisonSelected: new Set(),
+    centerColumnAutoHidden: false
 };
 
 export default state;
@@ -41,4 +42,8 @@ export function toggleComparisonSelection(name) {
 
 export function clearComparisonSelection() {
     state.comparisonSelected.clear();
+}
+
+export function setCenterColumnAutoHidden(isHidden) {
+    state.centerColumnAutoHidden = isHidden;
 }

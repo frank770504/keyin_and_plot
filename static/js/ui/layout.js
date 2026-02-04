@@ -1,4 +1,5 @@
 // static/js/ui/layout.js
+import state, { setCenterColumnAutoHidden } from '../state.js';
 
 export class FloatingWindow {
     constructor(windowId, headerId, closeBtnId, onResize = null) {
@@ -177,7 +178,34 @@ export function initLayoutCorrected(elements, resizeCallbacks) {
 }
 
 function handleCollapse(columnId, resizeCallbacks) {
-    document.getElementById(columnId).classList.toggle('collapsed');
+    const leftColumn = document.getElementById(columnId);
+    const centerColumn = document.getElementById('center-column');
+    const dragHandle = document.getElementById('drag-handle');
+    const isCollapsing = !leftColumn.classList.contains('collapsed');
+
+    leftColumn.classList.toggle('collapsed');
+
+    if (isCollapsing) {
+        // Collapsing Left Column
+        if (centerColumn.style.display !== 'none') {
+            // If center is visible, hide it and mark as auto-hidden
+            centerColumn.style.display = 'none';
+            if (dragHandle) dragHandle.style.display = 'none';
+            setCenterColumnAutoHidden(true);
+        } else {
+            // Center is already hidden manually, don't mark as auto-hidden
+            setCenterColumnAutoHidden(false);
+        }
+    } else {
+        // Expanding Left Column
+        if (state.centerColumnAutoHidden) {
+            // Restore center column if it was auto-hidden
+            centerColumn.style.display = 'block'; // Or flex/block depending on CSS, usually handled by toggleCenterColumn but simpler here
+            if (dragHandle) dragHandle.style.display = 'block';
+            setCenterColumnAutoHidden(false);
+        }
+    }
+
     setTimeout(() => {
         if (resizeCallbacks) resizeCallbacks.forEach(cb => cb());
     }, 300);
