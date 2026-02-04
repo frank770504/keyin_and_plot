@@ -126,24 +126,34 @@ body {
 
 .collapse-btn {
     position: absolute;
-    top: 10px;
+    top: 50%;
+    transform: translateY(-50%) rotate(0deg);
     right: -12.5px; /* Center on the border */
     z-index: 30;
     width: 25px;
-    height: 25px;
-    line-height: 25px;
+    height: 60px; /* Taller rounded rectangle */
+    line-height: 60px;
     text-align: center;
     padding: 0;
-    border-radius: 50%;
-    transform: rotate(0deg);
-    transition: transform 0.3s ease, right 0.3s ease; /* Animate position change */
+    border-radius: 4px; /* Slightly rounded corners */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, right 0.3s ease, background-color 0.2s;
+    cursor: pointer;
+    color: #555;
+    font-size: 1.2rem;
+}
+
+.collapse-btn:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
 }
 
 #left-column.collapsed .collapse-btn {
-    transform: rotate(180deg);
-    right: -30px; /* Push it out to be visible when width is 0 */
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Add shadow for visibility */
-    background-color: #fff; /* Ensure it has background */
+    transform: translateY(-50%) rotate(180deg);
+    right: -25px; /* Adjust to sit on edge when width is 0 */
+    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
 }
 
 .gutter {
