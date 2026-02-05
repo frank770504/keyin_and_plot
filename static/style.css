@@ -187,11 +187,26 @@ body {
 #center-column {
     display: none; /* Hidden by default */
     width: 450px; /* Set a default reasonable width */
-    min-width: 450px; /* Ensure it's not smaller than the metadata area */
+    min-width: 200px; /* Allow shrinking smaller */
     background-color: #fafafa;
     /* border-right: 1px solid #ddd; Removed for gutter */
     height: 100%;
     z-index: 10;
+}
+
+#center-column .column-content-wrapper {
+    overflow-x: auto; /* Enable horizontal scroll */
+}
+
+/* Ensure metadata and table have a stable width independent of column shrinking */
+#center-column .metadata-area {
+    min-width: 420px; /* Fits labels + inputs + padding */
+    width: fit-content;
+}
+
+#center-column #points-table {
+    min-width: 420px; /* Matches metadata width for consistency */
+    width: auto; /* Allow it to grow but not forced to shrink */
 }
 
 #right-column {

@@ -125,7 +125,7 @@ function handleDrag(e, centerColumn) {
 
     let newCenterWidth = e.clientX - leftColumnWidth;
 
-    const minCenterWidth = 450;
+    const minCenterWidth = 200;
     const maxCenterWidth = containerRect.width - leftColumnWidth - 200;
 
     if (newCenterWidth < minCenterWidth) newCenterWidth = minCenterWidth;
