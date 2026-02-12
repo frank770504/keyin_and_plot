@@ -7,6 +7,7 @@ class Dataset(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     date = db.Column(db.String(20), nullable=True)
     serial_id = db.Column(db.String(100), nullable=True) # Added serial_id column
+    spindle_id = db.Column(db.String(50), nullable=True) # Added spindle_id column
     points = db.relationship('Point', backref='dataset', cascade="all, delete-orphan", lazy=True)
 
     def __repr__(self):

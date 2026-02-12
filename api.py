@@ -100,7 +100,8 @@ def get_datasets():
     datasets_data = [{
         "name": d.name,
         "date": d.date,
-        "serial_id": d.serial_id
+        "serial_id": d.serial_id,
+        "spindle_id": d.spindle_id
     } for d in all_datasets]
     return jsonify(datasets_data)
 
@@ -135,7 +136,8 @@ def get_dataset(name):
     return jsonify({
         "points": points,
         "date": dataset.date,
-        "serial_id": dataset.serial_id
+        "serial_id": dataset.serial_id,
+        "spindle_id": dataset.spindle_id
     })
 
 
@@ -151,10 +153,12 @@ def update_dataset(name):
         dataset.date = data['date']
     if 'serial_id' in data:
         dataset.serial_id = data['serial_id']
+    if 'spindle_id' in data:
+        dataset.spindle_id = data['spindle_id']
     if 'name' in data:
         new_name = data['name'].strip()
         if not new_name:
-             return jsonify({"error": "New name cannot be empty"}), 400
+            return jsonify({"error": "New name cannot be empty"}), 400
 
         # Check if new name already exists and is not the current dataset
         if new_name != name and Dataset.query.filter_by(name=new_name).first():

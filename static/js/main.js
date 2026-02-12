@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteDatasetBtn: document.getElementById('delete-dataset-btn'),
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
+        datasetSpindleSelect: document.getElementById('dataset-spindle'),
         pointsTableBody: document.querySelector('#points-table tbody'),
         openAnalysisBtn: document.getElementById('open-analysis-btn'),
 
@@ -116,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             elements.datasetDateInput.value = data.date || '';
             elements.datasetSerialIdInput.value = data.serial_id || '';
+            elements.datasetSpindleSelect.value = data.spindle_id || '';
 
             workspaceUI.renderPointsTable(elements, points, handleDeletePoint);
             renderActiveChart(points);
@@ -228,8 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.activeDataset) return;
         const date = elements.datasetDateInput.value;
         const serialId = elements.datasetSerialIdInput.value;
+        const spindleId = elements.datasetSpindleSelect.value;
         try {
-            await api.updateDataset(state.activeDataset, { date: date, serial_id: serialId });
+            await api.updateDataset(state.activeDataset, {
+                date: date,
+                serial_id: serialId,
+                spindle_id: spindleId
+            });
         } catch (error) {
             console.error('Failed to update metadata:', error);
             alert('Failed to save metadata.');
@@ -368,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.datasetDateInput.addEventListener('change', handleMetadataChange);
     elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
+    elements.datasetSpindleSelect.addEventListener('change', handleMetadataChange);
 
     elements.pointsTableBody.addEventListener('change', handleTableInput);
 

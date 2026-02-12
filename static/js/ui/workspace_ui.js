@@ -104,6 +104,7 @@ export function updateEditModeUI(elements) {
 
     elements.datasetDateInput.disabled = !isEditing;
     elements.datasetSerialIdInput.disabled = !isEditing;
+    elements.datasetSpindleSelect.disabled = !isEditing;
 
     const tableInputs = elements.pointsTableBody.querySelectorAll('input');
     tableInputs.forEach(input => input.disabled = !isEditing);
