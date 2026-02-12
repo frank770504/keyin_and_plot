@@ -1,9 +1,15 @@
+"""
+APIs
+"""
+
 from flask import Blueprint, jsonify, request
-from models import db, Dataset, Point
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
+from models import db, Dataset, Point
+
 api_bp = Blueprint('api', __name__)
+
 
 @api_bp.route('/datasets/<string:name>/regression', methods=['GET'])
 def get_regression(name):
@@ -43,6 +49,7 @@ def get_regression(name):
         "slope": slope,
         "intercept": intercept
     })
+
 
 @api_bp.route('/datasets/<string:name>/power-regression', methods=['GET'])
 def get_power_regression(name):
@@ -85,6 +92,7 @@ def get_power_regression(name):
         "b": b
     })
 
+
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
     """Return a list of all datasets with metadata."""
@@ -95,6 +103,7 @@ def get_datasets():
         "serial_id": d.serial_id
     } for d in all_datasets]
     return jsonify(datasets_data)
+
 
 @api_bp.route('/datasets', methods=['POST'])
 def create_dataset():
@@ -114,6 +123,7 @@ def create_dataset():
     print(f"Created new dataset: '{dataset_name}'")
     return jsonify({"message": f"Dataset '{dataset_name}' created successfully"}), 201
 
+
 @api_bp.route('/datasets/<string:name>', methods=['GET'])
 def get_dataset(name):
     """Return the points for a specific dataset."""
@@ -127,6 +137,7 @@ def get_dataset(name):
         "date": dataset.date,
         "serial_id": dataset.serial_id
     })
+
 
 @api_bp.route('/datasets/<string:name>', methods=['PUT'])
 def update_dataset(name):
@@ -153,6 +164,7 @@ def update_dataset(name):
     db.session.commit()
     return jsonify({"message": "Dataset updated successfully"}), 200
 
+
 @api_bp.route('/datasets/<string:name>', methods=['DELETE'])
 def delete_dataset(name):
     """Delete a dataset."""
@@ -165,6 +177,7 @@ def delete_dataset(name):
 
     print(f"Deleted dataset: '{name}'")
     return jsonify({"message": f"Dataset '{name}' deleted"}), 200
+
 
 @api_bp.route('/datasets/<string:name>/points', methods=['POST'])
 def add_point(name):
@@ -190,6 +203,7 @@ def add_point(name):
     print(f"Added point ({x}, {y}) to dataset '{name}'")
     return jsonify({"message": "Point added successfully", "id": new_point_db.id}), 201
 
+
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['DELETE'])
 def delete_point(name, point_id):
     """Delete a point from a dataset by its unique ID."""
@@ -206,6 +220,7 @@ def delete_point(name, point_id):
 
     print(f"Deleted point {point_to_delete} from dataset '{name}'")
     return jsonify({"message": "Point deleted"}), 200
+
 
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['PUT'])
 def update_point(name, point_id):
@@ -226,13 +241,13 @@ def update_point(name, point_id):
         try:
             point_to_update.x = float(data['x'])
         except (ValueError, TypeError):
-             return jsonify({"error": "x must be a valid number"}), 400
+            return jsonify({"error": "x must be a valid number"}), 400
 
     if 'y' in data:
         try:
             point_to_update.y = float(data['y'])
         except (ValueError, TypeError):
-             return jsonify({"error": "y must be a valid number"}), 400
+            return jsonify({"error": "y must be a valid number"}), 400
 
     db.session.commit()
 

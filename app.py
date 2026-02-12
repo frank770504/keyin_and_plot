@@ -1,8 +1,10 @@
-from flask import Flask, render_template
+
 import os
+import argparse
+from flask import Flask, render_template
 from models import db
 from api import api_bp
-import argparse
+
 
 def create_app():
     app = Flask(__name__)
@@ -12,7 +14,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'project.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    db.init_app(app) # Initialize db with app
+    db.init_app(app)  # Initialize db with app
 
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix='/api')
@@ -24,13 +26,14 @@ def create_app():
 
     return app
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--url")
     parser.add_argument("--port")
     args = parser.parse_args()
 
-    app = create_app()
-    with app.app_context():
+    main_app = create_app()
+    with main_app.app_context():
         db.create_all()
-    app.run(debug=True, host=args.url, port=args.port)
+    main_app.run(debug=True, host=args.url, port=args.port)
