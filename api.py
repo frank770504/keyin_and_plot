@@ -132,7 +132,7 @@ def get_dataset(name):
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    points = [{"id": p.id, "x": p.x, "y": p.y} for p in dataset.points]
+    points = [{"id": p.id, "x": p.x, "y": p.y, "torque": p.torque} for p in dataset.points]
     return jsonify({
         "points": points,
         "date": dataset.date,
@@ -197,10 +197,11 @@ def add_point(name):
     try:
         x = float(data['x'])
         y = float(data['y'])
+        torque = float(data['torque']) if 'torque' in data and data['torque'] != '' else None
     except (ValueError, TypeError):
-        return jsonify({"error": "x and y must be valid numbers"}), 400
+        return jsonify({"error": "x, y and torque must be valid numbers"}), 400
 
-    new_point_db = Point(x=x, y=y, dataset=dataset_db)
+    new_point_db = Point(x=x, y=y, torque=torque, dataset=dataset_db)
     db.session.add(new_point_db)
     db.session.commit()
 
@@ -252,6 +253,12 @@ def update_point(name, point_id):
             point_to_update.y = float(data['y'])
         except (ValueError, TypeError):
             return jsonify({"error": "y must be a valid number"}), 400
+
+    if 'torque' in data:
+        try:
+            point_to_update.torque = float(data['torque']) if data['torque'] else None
+        except (ValueError, TypeError):
+            return jsonify({"error": "torque must be a valid number"}), 400
 
     db.session.commit()
 

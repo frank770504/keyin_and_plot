@@ -264,23 +264,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = tr.dataset.id;
         const xInput = tr.querySelector('input[data-field="x"]');
         const yInput = tr.querySelector('input[data-field="y"]');
+        const torqueInput = tr.querySelector('input[data-field="torque"]');
         const xVal = xInput.value;
         const yVal = yInput.value;
+        const torqueVal = torqueInput.value;
 
-        if (xVal === '' && yVal === '') return;
+        if (xVal === '' && yVal === '' && torqueVal === '') return;
 
         let chartNeedsUpdate = false;
 
         if (id) {
-            if (input.value === '') return;
+            if (input.value === '' && input.dataset.field !== 'torque') return;
             try {
-                await api.updatePoint(state.activeDataset, id, xVal, yVal);
+                await api.updatePoint(state.activeDataset, id, xVal, yVal, torqueVal);
                 chartNeedsUpdate = true;
             } catch (error) { console.error(error); }
         } else {
             if (xVal !== '' && yVal !== '') {
                 try {
-                    const result = await api.addPoint(state.activeDataset, xVal, yVal);
+                    const result = await api.addPoint(state.activeDataset, xVal, yVal, torqueVal);
                     tr.dataset.id = result.id;
                     workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
                     chartNeedsUpdate = true;

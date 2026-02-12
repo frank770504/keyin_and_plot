@@ -4,7 +4,7 @@ import state from '../state.js';
 export function renderPointsTable(elements, points, onDelete) {
     elements.pointsTableBody.innerHTML = '';
     points.forEach(point => {
-        const tr = createTableRow(point.id, point.x, point.y, onDelete);
+        const tr = createTableRow(point.id, point.x, point.y, onDelete, point.torque);
         elements.pointsTableBody.appendChild(tr);
     });
     if (state.isEditing) {
@@ -12,7 +12,7 @@ export function renderPointsTable(elements, points, onDelete) {
     }
 }
 
-export function createTableRow(id, x, y, onDelete) {
+export function createTableRow(id, x, y, onDelete, torque) {
     const tr = document.createElement('tr');
     if (id) tr.dataset.id = id;
 
@@ -49,9 +49,19 @@ export function createTableRow(id, x, y, onDelete) {
     inputY.disabled = !state.isEditing;
     tdY.appendChild(inputY);
 
+    const tdTorque = document.createElement('td');
+    const inputTorque = document.createElement('input');
+    inputTorque.type = 'number';
+    inputTorque.value = torque !== undefined && torque !== null ? torque : '';
+    inputTorque.placeholder = 'Torque (%)';
+    inputTorque.dataset.field = 'torque';
+    inputTorque.disabled = !state.isEditing;
+    tdTorque.appendChild(inputTorque);
+
     tr.appendChild(tdAction);
     tr.appendChild(tdX);
     tr.appendChild(tdY);
+    tr.appendChild(tdTorque);
 
     return tr;
 }
@@ -66,7 +76,8 @@ export function ensureEmptyRow(elements, onDelete) {
     } else {
         const xInput = lastRow.querySelector('input[data-field="x"]');
         const yInput = lastRow.querySelector('input[data-field="y"]');
-        if (xInput && yInput && (xInput.value !== '' || yInput.value !== '')) {
+        const torqueInput = lastRow.querySelector('input[data-field="torque"]');
+        if (xInput && yInput && (xInput.value !== '' || yInput.value !== '' || (torqueInput && torqueInput.value !== ''))) {
             needsRow = true;
         }
     }
