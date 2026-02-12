@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experiment Data Plotter</title>
+    <title>Rheology Plotter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -12,7 +12,7 @@
         <div class="column" id="left-column">
             <button class="collapse-btn" id="collapse-left">&laquo;</button>
             <div class="column-content-wrapper">
-                <h1>My Datasets</h1>
+                <h1>Datasets</h1>
                 <input type="text" id="dataset-search" placeholder="Search datasets..." class="search-bar">
                 <div class="dataset-list-wrapper">
                     <table id="dataset-list-table">
@@ -67,8 +67,8 @@
                     <thead>
                         <tr>
                             <th class="action-column"></th>
-                            <th>X</th>
-                            <th>Y</th>
+                            <th>N (RPM)</th>
+                            <th>η (mPa∙s)</th>
                         </tr>
                     </thead>
                     <tbody>

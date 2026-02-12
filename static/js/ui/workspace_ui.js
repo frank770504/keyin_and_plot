@@ -35,7 +35,7 @@ export function createTableRow(id, x, y, onDelete) {
     const inputX = document.createElement('input');
     inputX.type = 'number';
     inputX.value = x !== undefined ? x : '';
-    inputX.placeholder = 'X';
+    inputX.placeholder = 'N (RPM)';
     inputX.dataset.field = 'x';
     inputX.disabled = !state.isEditing;
     tdX.appendChild(inputX);
@@ -44,7 +44,7 @@ export function createTableRow(id, x, y, onDelete) {
     const inputY = document.createElement('input');
     inputY.type = 'number';
     inputY.value = y !== undefined ? y : '';
-    inputY.placeholder = 'Y';
+    inputY.placeholder = 'η (mPa∙s)';
     inputY.dataset.field = 'y';
     inputY.disabled = !state.isEditing;
     tdY.appendChild(inputY);

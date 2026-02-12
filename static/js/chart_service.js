@@ -11,10 +11,10 @@ export function initializeOrUpdateChart(ctx, datasets) {
                 x: {
                     type: 'linear',
                     position: 'bottom',
-                    title: { display: true, text: 'X' }
+                    title: { display: true, text: 'N' }
                 },
                 y: {
-                    title: { display: true, text: 'Y' }
+                    title: { display: true, text: 'η' }
                 }
             },
             plugins: {
@@ -101,7 +101,7 @@ export async function getSelectedDatasetsForChart(datasets) {
             let label;
             const { r_squared, a, b } = regressionData;
             if (r_squared !== undefined && a !== undefined && b !== undefined) {
-                const equation = `y = ${a.toFixed(2)}x^${b.toFixed(2)}`;
+                const equation = `η = ${a.toFixed(2)}N^${b.toFixed(2)}`;
                 const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
                 label = `Power: ${equation}, ${rSquaredInfo}`;
             } else {
