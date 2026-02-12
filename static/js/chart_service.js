@@ -86,7 +86,7 @@ export async function getSelectedDatasetsForChart(datasets) {
         // Add raw data points
         chartData.datasets.push({
             label: name,
-            data: pointsArray,
+            data: pointsArray.map(p => ({ x: p.N, y: p.eta })),
             backgroundColor: colors[colorIndex],
             borderColor: borderColors[colorIndex],
             pointRadius: 3,
@@ -96,7 +96,7 @@ export async function getSelectedDatasetsForChart(datasets) {
         // Fetch and add power law regression data
         try {
             const regressionData = await getRegressionData(name, 'power');
-            const regressionPoints = regressionData.regression_points;
+            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.N, y: p.eta }));
 
             let label;
             const { r_squared, a, b } = regressionData;

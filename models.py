@@ -17,10 +17,13 @@ class Dataset(db.Model):
 
 class Point(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    x = db.Column(db.Float, nullable=False)
-    y = db.Column(db.Float, nullable=False)
+    N = db.Column(db.Float, nullable=False)
+    eta = db.Column(db.Float, nullable=False)
     torque = db.Column(db.Float, nullable=True)  # Added torque column
     dataset_id = db.Column(db.Integer, db.ForeignKey('dataset.id'), nullable=False)
 
     def __repr__(self):
-        return f'<Point(x={self.x}, y={self.y})>'
+        return f'<Point(N={self.N}, eta={self.eta})>'
+
+
+

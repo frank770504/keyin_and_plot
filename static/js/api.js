@@ -48,11 +48,11 @@ export async function getDatasetPoints(datasetName) {
     return await response.json();
 }
 
-export async function addPoint(datasetName, x, y, torque) {
+export async function addPoint(datasetName, N, eta, torque) {
     const response = await fetch(`/api/datasets/${datasetName}/points`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ x, y, torque }),
+        body: JSON.stringify({ N, eta, torque }),
     });
     if (response.status !== 201) {
         const errorData = await response.json();
@@ -69,11 +69,11 @@ export async function deletePoint(datasetName, pointId) {
     }
 }
 
-export async function updatePoint(datasetName, pointId, x, y, torque) {
+export async function updatePoint(datasetName, pointId, N, eta, torque) {
     const response = await fetch(`/api/datasets/${datasetName}/points/${pointId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ x, y, torque }),
+        body: JSON.stringify({ N, eta, torque }),
     });
     if (!response.ok) {
         const errorData = await response.json();

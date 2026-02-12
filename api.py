@@ -23,25 +23,25 @@ def get_regression(name):
         return jsonify({"error": "Not enough data points to calculate regression"}), 400
 
     # Prepare data for scikit-learn
-    x_values = np.array([p.x for p in points]).reshape(-1, 1)
-    y_values = np.array([p.y for p in points])
+    N_values = np.array([p.N for p in points]).reshape(-1, 1)
+    eta_values = np.array([p.eta for p in points])
 
     # Perform linear regression
     model = LinearRegression()
-    model.fit(x_values, y_values)
+    model.fit(N_values, eta_values)
 
     # Calculate R-squared
-    r_squared = model.score(x_values, y_values)
+    r_squared = model.score(N_values, eta_values)
     slope = model.coef_[0]
     intercept = model.intercept_
 
     # Generate points for the regression line
-    x_min = np.min(x_values)
-    x_max = np.max(x_values)
-    x_line = np.linspace(x_min, x_max, 100).reshape(-1, 1)
-    y_line = model.predict(x_line)
+    N_min = np.min(N_values)
+    N_max = np.max(N_values)
+    N_line = np.linspace(N_min, N_max, 100).reshape(-1, 1)
+    eta_line = model.predict(N_line)
 
-    regression_points = [{"x": x_line[i][0], "y": y_line[i]} for i in range(len(x_line))]
+    regression_points = [{"N": N_line[i][0], "eta": eta_line[i]} for i in range(len(N_line))]
 
     return jsonify({
         "regression_points": regression_points,
@@ -59,31 +59,31 @@ def get_power_regression(name):
         return jsonify({"error": "Dataset not found"}), 404
 
     points = dataset.points
-    # Filter for points where x and y are positive for log transformation
-    positive_points = [p for p in points if p.x > 0 and p.y > 0]
+    # Filter for points where N and eta are positive for log transformation
+    positive_points = [p for p in points if p.N > 0 and p.eta > 0]
 
     if len(positive_points) < 2:
         return jsonify({"error": "Not enough positive data points for power law regression"}), 400
 
     # Prepare data for log-log linear regression
-    log_x_values = np.log(np.array([p.x for p in positive_points])).reshape(-1, 1)
-    log_y_values = np.log(np.array([p.y for p in positive_points]))
+    log_N_values = np.log(np.array([p.N for p in positive_points])).reshape(-1, 1)
+    log_eta_values = np.log(np.array([p.eta for p in positive_points]))
 
     model = LinearRegression()
-    model.fit(log_x_values, log_y_values)
+    model.fit(log_N_values, log_eta_values)
 
-    r_squared = model.score(log_x_values, log_y_values)
+    r_squared = model.score(log_N_values, log_eta_values)
     log_a = model.intercept_
     b = model.coef_[0]
     a = np.exp(log_a)
 
     # Generate points for the power law curve
-    x_min = np.min([p.x for p in positive_points])
-    x_max = np.max([p.x for p in positive_points])
-    x_line = np.linspace(x_min, x_max, 100)
-    y_line = a * (x_line ** b)
+    N_min = np.min([p.N for p in positive_points])
+    N_max = np.max([p.N for p in positive_points])
+    N_line = np.linspace(N_min, N_max, 100)
+    eta_line = a * (N_line ** b)
 
-    regression_points = [{"x": x_line[i], "y": y_line[i]} for i in range(len(x_line))]
+    regression_points = [{"N": N_line[i], "eta": eta_line[i]} for i in range(len(N_line))]
 
     return jsonify({
         "regression_points": regression_points,
@@ -132,7 +132,7 @@ def get_dataset(name):
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    points = [{"id": p.id, "x": p.x, "y": p.y, "torque": p.torque} for p in dataset.points]
+    points = [{"id": p.id, "N": p.N, "eta": p.eta, "torque": p.torque} for p in dataset.points]
     return jsonify({
         "points": points,
         "date": dataset.date,
@@ -191,21 +191,21 @@ def add_point(name):
         return jsonify({"error": "Dataset not found"}), 404
 
     data = request.get_json()
-    if not data or 'x' not in data or 'y' not in data:
-        return jsonify({"error": "Request must include x and y values"}), 400
+    if not data or 'N' not in data or 'eta' not in data:
+        return jsonify({"error": "Request must include N and eta values"}), 400
 
     try:
-        x = float(data['x'])
-        y = float(data['y'])
+        N = float(data['N'])
+        eta = float(data['eta'])
         torque = float(data['torque']) if 'torque' in data and data['torque'] != '' else None
     except (ValueError, TypeError):
-        return jsonify({"error": "x, y and torque must be valid numbers"}), 400
+        return jsonify({"error": "N, eta and torque must be valid numbers"}), 400
 
-    new_point_db = Point(x=x, y=y, torque=torque, dataset=dataset_db)
+    new_point_db = Point(N=N, eta=eta, torque=torque, dataset=dataset_db)
     db.session.add(new_point_db)
     db.session.commit()
 
-    print(f"Added point ({x}, {y}) to dataset '{name}'")
+    print(f"Added point ({N}, {eta}) to dataset '{name}'")
     return jsonify({"message": "Point added successfully", "id": new_point_db.id}), 201
 
 
@@ -242,17 +242,17 @@ def update_point(name, point_id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    if 'x' in data:
+    if 'N' in data:
         try:
-            point_to_update.x = float(data['x'])
+            point_to_update.N = float(data['N'])
         except (ValueError, TypeError):
-            return jsonify({"error": "x must be a valid number"}), 400
+            return jsonify({"error": "N must be a valid number"}), 400
 
-    if 'y' in data:
+    if 'eta' in data:
         try:
-            point_to_update.y = float(data['y'])
+            point_to_update.eta = float(data['eta'])
         except (ValueError, TypeError):
-            return jsonify({"error": "y must be a valid number"}), 400
+            return jsonify({"error": "eta must be a valid number"}), 400
 
     if 'torque' in data:
         try:

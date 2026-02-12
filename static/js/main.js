@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chartData = {
             datasets: [{
                 label: state.activeDataset,
-                data: points,
+                data: points.map(p => ({ x: p.N, y: p.eta })),
                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
                 borderColor: 'rgba(75, 192, 192, 1)',
             }]
@@ -262,27 +262,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = e.target;
         const tr = input.closest('tr');
         const id = tr.dataset.id;
-        const xInput = tr.querySelector('input[data-field="x"]');
-        const yInput = tr.querySelector('input[data-field="y"]');
+        const nInput = tr.querySelector('input[data-field="N"]');
+        const etaInput = tr.querySelector('input[data-field="eta"]');
         const torqueInput = tr.querySelector('input[data-field="torque"]');
-        const xVal = xInput.value;
-        const yVal = yInput.value;
+        const nVal = nInput.value;
+        const etaVal = etaInput.value;
         const torqueVal = torqueInput.value;
 
-        if (xVal === '' && yVal === '' && torqueVal === '') return;
+        if (nVal === '' && etaVal === '' && torqueVal === '') return;
 
         let chartNeedsUpdate = false;
 
         if (id) {
             if (input.value === '' && input.dataset.field !== 'torque') return;
             try {
-                await api.updatePoint(state.activeDataset, id, xVal, yVal, torqueVal);
+                await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
                 chartNeedsUpdate = true;
             } catch (error) { console.error(error); }
         } else {
-            if (xVal !== '' && yVal !== '') {
+            if (nVal !== '' && etaVal !== '') {
                 try {
-                    const result = await api.addPoint(state.activeDataset, xVal, yVal, torqueVal);
+                    const result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
                     tr.dataset.id = result.id;
                     workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
                     chartNeedsUpdate = true;
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ideally should be in chart_service, but passing the chart instance or managing it there is cleaner.
             // For now, I'll inline the logic but adapt it.
 
-            const regressionPoints = regressionData.regression_points;
+            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.N, y: p.eta }));
             let label;
             if (type === 'linear') {
                 const { r_squared, slope, intercept } = regressionData;

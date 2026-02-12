@@ -4,7 +4,7 @@ import state from '../state.js';
 export function renderPointsTable(elements, points, onDelete) {
     elements.pointsTableBody.innerHTML = '';
     points.forEach(point => {
-        const tr = createTableRow(point.id, point.x, point.y, onDelete, point.torque);
+        const tr = createTableRow(point.id, point.N, point.eta, onDelete, point.torque);
         elements.pointsTableBody.appendChild(tr);
     });
     if (state.isEditing) {
@@ -12,7 +12,7 @@ export function renderPointsTable(elements, points, onDelete) {
     }
 }
 
-export function createTableRow(id, x, y, onDelete, torque) {
+export function createTableRow(id, N, eta, onDelete, torque) {
     const tr = document.createElement('tr');
     if (id) tr.dataset.id = id;
 
@@ -31,23 +31,23 @@ export function createTableRow(id, x, y, onDelete, torque) {
     });
     tdAction.appendChild(deleteBtn);
 
-    const tdX = document.createElement('td');
-    const inputX = document.createElement('input');
-    inputX.type = 'number';
-    inputX.value = x !== undefined ? x : '';
-    inputX.placeholder = 'N (RPM)';
-    inputX.dataset.field = 'x';
-    inputX.disabled = !state.isEditing;
-    tdX.appendChild(inputX);
+    const tdN = document.createElement('td');
+    const inputN = document.createElement('input');
+    inputN.type = 'number';
+    inputN.value = N !== undefined ? N : '';
+    inputN.placeholder = 'N (RPM)';
+    inputN.dataset.field = 'N';
+    inputN.disabled = !state.isEditing;
+    tdN.appendChild(inputN);
 
-    const tdY = document.createElement('td');
-    const inputY = document.createElement('input');
-    inputY.type = 'number';
-    inputY.value = y !== undefined ? y : '';
-    inputY.placeholder = 'η (mPa∙s)';
-    inputY.dataset.field = 'y';
-    inputY.disabled = !state.isEditing;
-    tdY.appendChild(inputY);
+    const tdEta = document.createElement('td');
+    const inputEta = document.createElement('input');
+    inputEta.type = 'number';
+    inputEta.value = eta !== undefined ? eta : '';
+    inputEta.placeholder = 'η (mPa∙s)';
+    inputEta.dataset.field = 'eta';
+    inputEta.disabled = !state.isEditing;
+    tdEta.appendChild(inputEta);
 
     const tdTorque = document.createElement('td');
     const inputTorque = document.createElement('input');
@@ -59,8 +59,8 @@ export function createTableRow(id, x, y, onDelete, torque) {
     tdTorque.appendChild(inputTorque);
 
     tr.appendChild(tdAction);
-    tr.appendChild(tdX);
-    tr.appendChild(tdY);
+    tr.appendChild(tdN);
+    tr.appendChild(tdEta);
     tr.appendChild(tdTorque);
 
     return tr;
@@ -74,10 +74,10 @@ export function ensureEmptyRow(elements, onDelete) {
     if (!lastRow) {
         needsRow = true;
     } else {
-        const xInput = lastRow.querySelector('input[data-field="x"]');
-        const yInput = lastRow.querySelector('input[data-field="y"]');
+        const nInput = lastRow.querySelector('input[data-field="N"]');
+        const etaInput = lastRow.querySelector('input[data-field="eta"]');
         const torqueInput = lastRow.querySelector('input[data-field="torque"]');
-        if (xInput && yInput && (xInput.value !== '' || yInput.value !== '' || (torqueInput && torqueInput.value !== ''))) {
+        if (nInput && etaInput && (nInput.value !== '' || etaInput.value !== '' || (torqueInput && torqueInput.value !== ''))) {
             needsRow = true;
         }
     }
