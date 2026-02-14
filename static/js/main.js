@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chartData = {
             datasets: [{
                 label: state.activeDataset,
-                data: points.map(p => ({ x: p.N, y: p.eta })),
+                data: points.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
                 borderColor: 'rgba(75, 192, 192, 1)',
             }]
@@ -316,14 +316,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ideally should be in chart_service, but passing the chart instance or managing it there is cleaner.
             // For now, I'll inline the logic but adapt it.
 
-            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.N, y: p.eta }));
+            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
             let label;
             if (type === 'linear') {
                 const { r_squared, slope, intercept } = regressionData;
-                label = `Linear: η = ${slope.toFixed(2)}N + ${intercept.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
+                label = `Linear: σ = ${slope.toFixed(2)}γ̇ + ${intercept.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
             } else {
                 const { r_squared, a, b } = regressionData;
-                label = `Power: η = ${a.toFixed(2)}N^${b.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
+                label = `Power: σ = ${a.toFixed(2)}γ̇^${b.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
             }
 
             const newDataset = {

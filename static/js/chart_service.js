@@ -11,10 +11,10 @@ export function initializeOrUpdateChart(ctx, datasets) {
                 x: {
                     type: 'linear',
                     position: 'bottom',
-                    title: { display: true, text: 'N' }
+                    title: { display: true, text: 'Shear Rate (1/s)' }
                 },
                 y: {
-                    title: { display: true, text: 'η' }
+                    title: { display: true, text: 'Shear Stress (Pa)' }
                 }
             },
             plugins: {
@@ -86,7 +86,7 @@ export async function getSelectedDatasetsForChart(datasets) {
         // Add raw data points
         chartData.datasets.push({
             label: name,
-            data: pointsArray.map(p => ({ x: p.N, y: p.eta })),
+            data: pointsArray.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
             backgroundColor: colors[colorIndex],
             borderColor: borderColors[colorIndex],
             pointRadius: 3,
@@ -96,12 +96,12 @@ export async function getSelectedDatasetsForChart(datasets) {
         // Fetch and add power law regression data
         try {
             const regressionData = await getRegressionData(name, 'power');
-            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.N, y: p.eta }));
+            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
 
             let label;
             const { r_squared, a, b } = regressionData;
             if (r_squared !== undefined && a !== undefined && b !== undefined) {
-                const equation = `η = ${a.toFixed(2)}N^${b.toFixed(2)}`;
+                const equation = `σ = ${a.toFixed(2)}γ̇^${b.toFixed(2)}`;
                 const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
                 label = `Power: ${equation}, ${rSquaredInfo}`;
             } else {

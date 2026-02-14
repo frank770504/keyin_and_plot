@@ -18,35 +18,38 @@ SPINDLE_ID2FACTOR = {
 
 @api_bp.route('/datasets/<string:name>/regression', methods=['GET'])
 def get_regression(name):
-    """Calculate and return a linear regression for the dataset."""
+    """Calculate and return a linear regression for the dataset (Shear Stress vs Shear Rate)."""
     dataset = Dataset.query.filter_by(name=name).first()
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
     points = dataset.points
-    if len(points) < 2:
-        return jsonify({"error": "Not enough data points to calculate regression"}), 400
+    # Filter points where shear_rate and shear_stress are available
+    valid_points = [p for p in points if p.shear_rate is not None and p.shear_stress is not None]
+
+    if len(valid_points) < 2:
+        return jsonify({"error": "Not enough data points with shear rate/stress to calculate regression"}), 400
 
     # Prepare data for scikit-learn
-    N_values = np.array([p.N for p in points]).reshape(-1, 1)
-    eta_values = np.array([p.eta for p in points])
+    X_values = np.array([p.shear_rate for p in valid_points]).reshape(-1, 1)
+    Y_values = np.array([p.shear_stress for p in valid_points])
 
     # Perform linear regression
     model = LinearRegression()
-    model.fit(N_values, eta_values)
+    model.fit(X_values, Y_values)
 
     # Calculate R-squared
-    r_squared = model.score(N_values, eta_values)
+    r_squared = model.score(X_values, Y_values)
     slope = model.coef_[0]
     intercept = model.intercept_
 
     # Generate points for the regression line
-    N_min = np.min(N_values)
-    N_max = np.max(N_values)
-    N_line = np.linspace(N_min, N_max, 100).reshape(-1, 1)
-    eta_line = model.predict(N_line)
+    X_min = np.min(X_values)
+    X_max = np.max(X_values)
+    X_line = np.linspace(X_min, X_max, 100).reshape(-1, 1)
+    Y_line = model.predict(X_line)
 
-    regression_points = [{"N": N_line[i][0], "eta": eta_line[i]} for i in range(len(N_line))]
+    regression_points = [{"shear_rate": X_line[i][0], "shear_stress": Y_line[i]} for i in range(len(X_line))]
 
     return jsonify({
         "regression_points": regression_points,
@@ -58,37 +61,37 @@ def get_regression(name):
 
 @api_bp.route('/datasets/<string:name>/power-regression', methods=['GET'])
 def get_power_regression(name):
-    """Calculate and return a power law regression for the dataset."""
+    """Calculate and return a power law regression for the dataset (Shear Stress vs Shear Rate)."""
     dataset = Dataset.query.filter_by(name=name).first()
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
     points = dataset.points
-    # Filter for points where N and eta are positive for log transformation
-    positive_points = [p for p in points if p.N > 0 and p.eta > 0]
+    # Filter for points where shear_rate and shear_stress are positive for log transformation
+    positive_points = [p for p in points if p.shear_rate is not None and p.shear_stress is not None and p.shear_rate > 0 and p.shear_stress > 0]
 
     if len(positive_points) < 2:
         return jsonify({"error": "Not enough positive data points for power law regression"}), 400
 
     # Prepare data for log-log linear regression
-    log_N_values = np.log(np.array([p.N for p in positive_points])).reshape(-1, 1)
-    log_eta_values = np.log(np.array([p.eta for p in positive_points]))
+    log_X_values = np.log(np.array([p.shear_rate for p in positive_points])).reshape(-1, 1)
+    log_Y_values = np.log(np.array([p.shear_stress for p in positive_points]))
 
     model = LinearRegression()
-    model.fit(log_N_values, log_eta_values)
+    model.fit(log_X_values, log_Y_values)
 
-    r_squared = model.score(log_N_values, log_eta_values)
+    r_squared = model.score(log_X_values, log_Y_values)
     log_a = model.intercept_
     b = model.coef_[0]
     a = np.exp(log_a)
 
     # Generate points for the power law curve
-    N_min = np.min([p.N for p in positive_points])
-    N_max = np.max([p.N for p in positive_points])
-    N_line = np.linspace(N_min, N_max, 100)
-    eta_line = a * (N_line ** b)
+    X_min = np.min([p.shear_rate for p in positive_points])
+    X_max = np.max([p.shear_rate for p in positive_points])
+    X_line = np.linspace(X_min, X_max, 100)
+    Y_line = a * (X_line ** b)
 
-    regression_points = [{"N": N_line[i], "eta": eta_line[i]} for i in range(len(N_line))]
+    regression_points = [{"shear_rate": X_line[i], "shear_stress": Y_line[i]} for i in range(len(X_line))]
 
     return jsonify({
         "regression_points": regression_points,
