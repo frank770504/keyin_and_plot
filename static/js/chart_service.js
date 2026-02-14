@@ -101,8 +101,8 @@ export async function getSelectedDatasetsForChart(datasets) {
             let label;
             const { r_squared, a, b } = regressionData;
             if (r_squared !== undefined && a !== undefined && b !== undefined) {
-                const equation = `σ = ${a.toFixed(2)}γ̇^${b.toFixed(2)}`;
-                const rSquaredInfo = `R² = ${r_squared.toFixed(2)}`;
+                const equation = `σ = ${a.toFixed(3)}γ̇^${b.toFixed(3)}`;
+                const rSquaredInfo = `R² = ${r_squared.toFixed(3)}`;
                 label = `Power: ${equation}, ${rSquaredInfo}`;
             } else {
                 label = `Power Regression for ${name}`;

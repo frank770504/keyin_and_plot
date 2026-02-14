@@ -294,8 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (result && result.shear_rate !== undefined && result.shear_stress !== undefined) {
-             if (shearRateInput) shearRateInput.value = parseFloat(result.shear_rate).toFixed(2);
-             if (shearStressInput) shearStressInput.value = parseFloat(result.shear_stress).toFixed(2);
+             if (shearRateInput) shearRateInput.value = parseFloat(result.shear_rate).toFixed(3);
+             if (shearStressInput) shearStressInput.value = parseFloat(result.shear_stress).toFixed(3);
         }
 
         if (chartNeedsUpdate) {
@@ -320,10 +320,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let label;
             if (type === 'linear') {
                 const { r_squared, slope, intercept } = regressionData;
-                label = `Linear: σ = ${slope.toFixed(2)}γ̇ + ${intercept.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
+                label = `Linear: σ = ${slope.toFixed(3)}γ̇ + ${intercept.toFixed(3)}, R² = ${r_squared.toFixed(3)}`;
             } else {
                 const { r_squared, a, b } = regressionData;
-                label = `Power: σ = ${a.toFixed(2)}γ̇^${b.toFixed(2)}, R² = ${r_squared.toFixed(2)}`;
+                label = `Power: σ = ${a.toFixed(3)}γ̇^${b.toFixed(3)}, R² = ${r_squared.toFixed(3)}`;
             }
 
             const newDataset = {

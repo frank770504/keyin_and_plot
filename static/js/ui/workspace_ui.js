@@ -63,7 +63,7 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
     const inputShearRate = document.createElement('input');
     inputShearRate.type = 'number';
     // Use toFixed for display if it's a number
-    inputShearRate.value = (shearRate !== undefined && shearRate !== null) ? parseFloat(shearRate).toFixed(2) : '';
+    inputShearRate.value = (shearRate !== undefined && shearRate !== null) ? parseFloat(shearRate).toFixed(3) : '';
     inputShearRate.placeholder = 'Read-only';
     inputShearRate.dataset.field = 'shear_rate';
     inputShearRate.disabled = true; // Always disabled as it's calculated
@@ -74,7 +74,7 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
     const inputShearStress = document.createElement('input');
     inputShearStress.type = 'number';
     // Use toFixed for display if it's a number
-    inputShearStress.value = (shearStress !== undefined && shearStress !== null) ? parseFloat(shearStress).toFixed(2) : '';
+    inputShearStress.value = (shearStress !== undefined && shearStress !== null) ? parseFloat(shearStress).toFixed(3) : '';
     inputShearStress.placeholder = 'Read-only';
     inputShearStress.dataset.field = 'shear_stress';
     inputShearStress.disabled = true; // Always disabled as it's calculated
