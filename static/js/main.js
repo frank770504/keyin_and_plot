@@ -265,6 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const nInput = tr.querySelector('input[data-field="N"]');
         const etaInput = tr.querySelector('input[data-field="eta"]');
         const torqueInput = tr.querySelector('input[data-field="torque"]');
+        const shearRateInput = tr.querySelector('input[data-field="shear_rate"]');
+        const shearStressInput = tr.querySelector('input[data-field="shear_stress"]');
         const nVal = nInput.value;
         const etaVal = etaInput.value;
         const torqueVal = torqueInput.value;
@@ -272,22 +274,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nVal === '' && etaVal === '' && torqueVal === '') return;
 
         let chartNeedsUpdate = false;
+        let result = null;
 
         if (id) {
             if (input.value === '' && input.dataset.field !== 'torque') return;
             try {
-                await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
+                result = await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
                 chartNeedsUpdate = true;
             } catch (error) { console.error(error); }
         } else {
             if (nVal !== '' && etaVal !== '') {
                 try {
-                    const result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
+                    result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
                     tr.dataset.id = result.id;
                     workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
                     chartNeedsUpdate = true;
                 } catch (error) { console.error(error); }
             }
+        }
+
+        if (result && result.shear_rate !== undefined && result.shear_stress !== undefined) {
+             if (shearRateInput) shearRateInput.value = parseFloat(result.shear_rate).toFixed(2);
+             if (shearStressInput) shearStressInput.value = parseFloat(result.shear_stress).toFixed(2);
         }
 
         if (chartNeedsUpdate) {

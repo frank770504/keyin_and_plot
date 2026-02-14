@@ -79,6 +79,7 @@ export async function updatePoint(datasetName, pointId, N, eta, torque) {
         const errorData = await response.json();
         throw new Error(errorData.error);
     }
+    return await response.json();
 }
 
 export async function getRegressionData(datasetName, type) {

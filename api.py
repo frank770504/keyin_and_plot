@@ -172,7 +172,7 @@ def update_dataset(name):
             factor = SPINDLE_ID2FACTOR[dataset.spindle_id]
             for point in dataset.points:
                 point.shear_rate = factor * point.N
-                point.shear_stress = point.eta * point.shear_rate
+                point.shear_stress = point.eta * point.shear_rate * 0.001
         else:
             for point in dataset.points:
                 point.shear_rate = None
@@ -229,7 +229,7 @@ def add_point(name):
     if dataset_db.spindle_id and dataset_db.spindle_id in SPINDLE_ID2FACTOR:
         factor = SPINDLE_ID2FACTOR[dataset_db.spindle_id]
         shear_rate = factor * N
-        shear_stress = eta * shear_rate
+        shear_stress = eta * shear_rate * 0.001
 
     new_point_db = Point(
         N=N,
@@ -306,7 +306,8 @@ def update_point(name, point_id):
     if dataset.spindle_id and dataset.spindle_id in SPINDLE_ID2FACTOR:
         factor = SPINDLE_ID2FACTOR[dataset.spindle_id]
         point_to_update.shear_rate = factor * point_to_update.N
-        point_to_update.shear_stress = point_to_update.eta * point_to_update.shear_rate
+        point_to_update.shear_stress = point_to_update.eta * point_to_update.shear_rate * 0.001
+
     else:
         point_to_update.shear_rate = None
         point_to_update.shear_stress = None
@@ -314,4 +315,8 @@ def update_point(name, point_id):
     db.session.commit()
 
     print(f"Updated point {point_id} in dataset '{name}' to ({point_to_update.N}, {point_to_update.eta})")
-    return jsonify({"message": "Point updated successfully"}), 200
+    return jsonify({
+        "message": "Point updated successfully",
+        "shear_rate": point_to_update.shear_rate,
+        "shear_stress": point_to_update.shear_stress
+    }), 200

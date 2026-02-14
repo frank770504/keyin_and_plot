@@ -4,7 +4,7 @@ import state from '../state.js';
 export function renderPointsTable(elements, points, onDelete) {
     elements.pointsTableBody.innerHTML = '';
     points.forEach(point => {
-        const tr = createTableRow(point.id, point.N, point.eta, onDelete, point.torque);
+        const tr = createTableRow(point.id, point.N, point.eta, onDelete, point.torque, point.shear_rate, point.shear_stress);
         elements.pointsTableBody.appendChild(tr);
     });
     if (state.isEditing) {
@@ -12,7 +12,7 @@ export function renderPointsTable(elements, points, onDelete) {
     }
 }
 
-export function createTableRow(id, N, eta, onDelete, torque) {
+export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStress) {
     const tr = document.createElement('tr');
     if (id) tr.dataset.id = id;
 
@@ -58,10 +58,34 @@ export function createTableRow(id, N, eta, onDelete, torque) {
     inputTorque.disabled = !state.isEditing;
     tdTorque.appendChild(inputTorque);
 
+    // Shear Rate (Read-only)
+    const tdShearRate = document.createElement('td');
+    const inputShearRate = document.createElement('input');
+    inputShearRate.type = 'number';
+    // Use toFixed for display if it's a number
+    inputShearRate.value = (shearRate !== undefined && shearRate !== null) ? parseFloat(shearRate).toFixed(2) : '';
+    inputShearRate.placeholder = 'Read-only';
+    inputShearRate.dataset.field = 'shear_rate';
+    inputShearRate.disabled = true; // Always disabled as it's calculated
+    tdShearRate.appendChild(inputShearRate);
+
+    // Shear Stress (Read-only)
+    const tdShearStress = document.createElement('td');
+    const inputShearStress = document.createElement('input');
+    inputShearStress.type = 'number';
+    // Use toFixed for display if it's a number
+    inputShearStress.value = (shearStress !== undefined && shearStress !== null) ? parseFloat(shearStress).toFixed(2) : '';
+    inputShearStress.placeholder = 'Read-only';
+    inputShearStress.dataset.field = 'shear_stress';
+    inputShearStress.disabled = true; // Always disabled as it's calculated
+    tdShearStress.appendChild(inputShearStress);
+
     tr.appendChild(tdAction);
     tr.appendChild(tdN);
     tr.appendChild(tdEta);
     tr.appendChild(tdTorque);
+    tr.appendChild(tdShearRate);
+    tr.appendChild(tdShearStress);
 
     return tr;
 }
@@ -83,7 +107,7 @@ export function ensureEmptyRow(elements, onDelete) {
     }
 
     if (needsRow) {
-        const tr = createTableRow(null, undefined, undefined, onDelete);
+        const tr = createTableRow(null, undefined, undefined, onDelete, undefined, undefined, undefined);
         elements.pointsTableBody.appendChild(tr);
     }
 }
