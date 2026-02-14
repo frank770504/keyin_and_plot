@@ -10,6 +10,11 @@ from models import db, Dataset, Point
 
 api_bp = Blueprint('api', __name__)
 
+SPINDLE_ID2FACTOR = {
+    "SC4-18": 1.32,
+    "SC4-31": 0.34,
+    "SC4-34": 0.28
+}
 
 @api_bp.route('/datasets/<string:name>/regression', methods=['GET'])
 def get_regression(name):
@@ -132,7 +137,14 @@ def get_dataset(name):
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    points = [{"id": p.id, "N": p.N, "eta": p.eta, "torque": p.torque} for p in dataset.points]
+    points = [{
+        "id": p.id, 
+        "N": p.N, 
+        "eta": p.eta, 
+        "torque": p.torque,
+        "shear_rate": p.shear_rate,
+        "shear_stress": p.shear_stress
+    } for p in dataset.points]
     return jsonify({
         "points": points,
         "date": dataset.date,
@@ -155,6 +167,17 @@ def update_dataset(name):
         dataset.serial_id = data['serial_id']
     if 'spindle_id' in data:
         dataset.spindle_id = data['spindle_id']
+        # Recalculate shear properties for all points
+        if dataset.spindle_id and dataset.spindle_id in SPINDLE_ID2FACTOR:
+            factor = SPINDLE_ID2FACTOR[dataset.spindle_id]
+            for point in dataset.points:
+                point.shear_rate = factor * point.N
+                point.shear_stress = point.eta * point.shear_rate
+        else:
+            for point in dataset.points:
+                point.shear_rate = None
+                point.shear_stress = None
+
     if 'name' in data:
         new_name = data['name'].strip()
         if not new_name:
@@ -201,12 +224,31 @@ def add_point(name):
     except (ValueError, TypeError):
         return jsonify({"error": "N, eta and torque must be valid numbers"}), 400
 
-    new_point_db = Point(N=N, eta=eta, torque=torque, dataset=dataset_db)
+    shear_rate = None
+    shear_stress = None
+    if dataset_db.spindle_id and dataset_db.spindle_id in SPINDLE_ID2FACTOR:
+        factor = SPINDLE_ID2FACTOR[dataset_db.spindle_id]
+        shear_rate = factor * N
+        shear_stress = eta * shear_rate
+
+    new_point_db = Point(
+        N=N,
+        eta=eta,
+        torque=torque,
+        shear_rate=shear_rate,
+        shear_stress=shear_stress,
+        dataset=dataset_db
+    )
     db.session.add(new_point_db)
     db.session.commit()
 
     print(f"Added point ({N}, {eta}) to dataset '{name}'")
-    return jsonify({"message": "Point added successfully", "id": new_point_db.id}), 201
+    return jsonify({
+        "message": "Point added successfully", 
+        "id": new_point_db.id,
+        "shear_rate": shear_rate,
+        "shear_stress": shear_stress
+    }), 201
 
 
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['DELETE'])
@@ -260,7 +302,16 @@ def update_point(name, point_id):
         except (ValueError, TypeError):
             return jsonify({"error": "torque must be a valid number"}), 400
 
+    # Recalculate shear properties based on new or existing values
+    if dataset.spindle_id and dataset.spindle_id in SPINDLE_ID2FACTOR:
+        factor = SPINDLE_ID2FACTOR[dataset.spindle_id]
+        point_to_update.shear_rate = factor * point_to_update.N
+        point_to_update.shear_stress = point_to_update.eta * point_to_update.shear_rate
+    else:
+        point_to_update.shear_rate = None
+        point_to_update.shear_stress = None
+
     db.session.commit()
 
-    print(f"Updated point {point_id} in dataset '{name}' to ({point_to_update.x}, {point_to_update.y})")
+    print(f"Updated point {point_id} in dataset '{name}' to ({point_to_update.N}, {point_to_update.eta})")
     return jsonify({"message": "Point updated successfully"}), 200

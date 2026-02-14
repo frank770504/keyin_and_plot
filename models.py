@@ -20,6 +20,8 @@ class Point(db.Model):
     N = db.Column(db.Float, nullable=False)
     eta = db.Column(db.Float, nullable=False)
     torque = db.Column(db.Float, nullable=True)  # Added torque column
+    shear_rate = db.Column(db.Float, nullable=True)
+    shear_stress = db.Column(db.Float, nullable=True)
     dataset_id = db.Column(db.Integer, db.ForeignKey('dataset.id'), nullable=False)
 
     def __repr__(self):
