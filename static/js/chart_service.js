@@ -67,6 +67,73 @@ const katexChartPlugin = {
     }
 };
 
+const externalTooltipHandler = (context) => {
+    // Tooltip Element
+    const {chart, tooltip} = context;
+    let tooltipEl = chart.canvas.parentElement.querySelector('div.chartjs-tooltip');
+
+    if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.className = 'chartjs-tooltip';
+        tooltipEl.style.background = 'rgba(0, 0, 0, 0.8)';
+        tooltipEl.style.borderRadius = '4px';
+        tooltipEl.style.color = 'white';
+        tooltipEl.style.opacity = 1;
+        tooltipEl.style.pointerEvents = 'none';
+        tooltipEl.style.position = 'absolute';
+        tooltipEl.style.transition = 'all .1s ease';
+        tooltipEl.style.padding = '8px';
+        tooltipEl.style.zIndex = '2000';
+        tooltipEl.style.fontSize = '12px';
+        chart.canvas.parentElement.appendChild(tooltipEl);
+    }
+
+    // Hide if no tooltip
+    if (tooltip.opacity === 0) {
+        tooltipEl.style.opacity = 0;
+        return;
+    }
+
+    // Set Text
+    if (tooltip.body) {
+        const titleLines = tooltip.title || [];
+        const bodyLines = tooltip.body.map(b => b.lines);
+
+        let innerHtml = '';
+
+        titleLines.forEach(function(title) {
+            innerHtml += '<div style="font-weight: bold; margin-bottom: 4px;">' + title + '</div>';
+        });
+
+        bodyLines.forEach(function(body, i) {
+            const colors = tooltip.labelColors[i];
+            const span = '<span style="background:' + colors.backgroundColor + '; border-color:' + colors.borderColor + '; border-width: 2px; display: inline-block; width: 10px; height: 10px; margin-right: 8px;"></span>';
+            innerHtml += '<div style="display: flex; align-items: center;">' + span + body + '</div>';
+        });
+
+        tooltipEl.innerHTML = innerHtml;
+
+        // Render LaTeX
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(tooltipEl, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        }
+    }
+
+    const {offsetLeft: positionX, offsetTop: positionY} = chart.canvas;
+
+    // Display, position, and set styles for font
+    tooltipEl.style.opacity = 1;
+    tooltipEl.style.left = positionX + tooltip.caretX + 'px';
+    tooltipEl.style.top = positionY + tooltip.caretY + 'px';
+    tooltipEl.style.padding = tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
+};
+
 export function initializeOrUpdateChart(ctx, datasets) {
     return new Chart(ctx, {
         type: 'scatter',
@@ -97,7 +164,8 @@ export function initializeOrUpdateChart(ctx, datasets) {
                     display: false // Disable default legend
                 },
                 tooltip: {
-                    enabled: true
+                    enabled: false, // Disable default tooltip
+                    external: externalTooltipHandler
                 },
                 zoom: {
                     pan: {
