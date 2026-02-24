@@ -119,7 +119,9 @@
             <button id="close-chart-window" class="close-btn">&times;</button>
         </div>
         <div class="window-content">
-            <canvas id="active-chart"></canvas>
+            <div id="active-chart-container" style="position: relative; width: 100%;">
+                <canvas id="active-chart"></canvas>
+            </div>
             <div class="controls">
                 <button id="regression-btn">Calculate Regression</button>
                 <button id="power-regression-btn">Power Law Regression</button>

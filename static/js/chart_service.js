@@ -1,20 +1,87 @@
 // static/js/chart_service.js
 import { getDatasetPoints, getRegressionData } from './api.js';
 
+const katexChartPlugin = {
+    id: 'katexChartPlugin',
+    afterUpdate: function(chart) {
+        const xTitle = chart.options.scales.x.title.text;
+        const yTitle = chart.options.scales.y.title.text;
+        const container = chart.canvas.parentElement;
+
+        if (!container) return;
+
+        // Ensure LaTeX title divs exist
+        ['x', 'y'].forEach(axis => {
+            let titleDiv = container.querySelector(`.katex-axis-title-${axis}`);
+            if (!titleDiv) {
+                titleDiv = document.createElement('div');
+                titleDiv.className = `katex-axis-title-${axis}`;
+                titleDiv.style.position = 'absolute';
+                titleDiv.style.pointerEvents = 'none';
+                container.appendChild(titleDiv);
+            }
+            const text = axis === 'x' ? xTitle : yTitle;
+
+            // Only re-render if the text has changed to save performance
+            if (titleDiv.getAttribute('data-latex-cache') !== text) {
+                titleDiv.innerHTML = text;
+                titleDiv.setAttribute('data-latex-cache', text);
+
+                if (typeof renderMathInElement === 'function') {
+                    renderMathInElement(titleDiv, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false}
+                        ],
+                        throwOnError: false
+                    });
+                } else if (typeof katex !== 'undefined') {
+                    // Fallback for pure math strings if auto-render is missing
+                    katex.render(text.replace(/\$/g, ''), titleDiv, { throwOnError: false });
+                }
+            }
+        });
+    },
+    afterDraw: function(chart) {
+        const container = chart.canvas.parentElement;
+        const xDiv = container.querySelector('.katex-axis-title-x');
+        const yDiv = container.querySelector('.katex-axis-title-y');
+
+        if (xDiv && chart.scales.x) {
+            const xPos = chart.scales.x.left + chart.scales.x.width / 2;
+            const yPos = chart.scales.x.bottom + 10; // offset below
+            xDiv.style.left = `${xPos}px`;
+            xDiv.style.top = `${yPos}px`;
+            xDiv.style.transform = 'translateX(-50%)';
+            xDiv.style.fontSize = '14px';
+        }
+
+        if (yDiv && chart.scales.y) {
+            const xPos = chart.scales.y.left - 40; // offset left
+            const yPos = chart.scales.y.top + chart.scales.y.height / 2;
+            yDiv.style.left = `${xPos}px`;
+            yDiv.style.top = `${yPos}px`;
+            yDiv.style.transform = 'translateY(-50%) rotate(-90deg)';
+            yDiv.style.fontSize = '14px';
+        }
+    }
+};
+
 export function initializeOrUpdateChart(ctx, datasets) {
     return new Chart(ctx, {
         type: 'scatter',
         data: { datasets: datasets },
+        plugins: [katexChartPlugin],
         options: {
             maintainAspectRatio: true,
             scales: {
                 x: {
                     type: 'linear',
                     position: 'bottom',
-                    title: { display: true, text: '$\\dot{\\gamma}$ (1/s)' }
+                    title: { display: false, text: '$\\dot{\\gamma}$ (1/s)' } // Set display to false, plugin handles it
                 },
                 y: {
-                    title: { display: true, text: '$\\sigma$ (Pa)' }
+                    title: { display: false, text: '$\\sigma$ (Pa)' }
                 }
             },
             plugins: {
