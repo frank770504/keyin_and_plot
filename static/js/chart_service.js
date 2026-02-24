@@ -49,7 +49,7 @@ const katexChartPlugin = {
 
         if (xDiv && chart.scales.x) {
             const xPos = chart.scales.x.left + chart.scales.x.width / 2;
-            const yPos = chart.scales.x.bottom + 10; // offset below
+            const yPos = chart.scales.x.bottom + 25; // increased offset for padding
             xDiv.style.left = `${xPos}px`;
             xDiv.style.top = `${yPos}px`;
             xDiv.style.transform = 'translateX(-50%)';
@@ -57,7 +57,7 @@ const katexChartPlugin = {
         }
 
         if (yDiv && chart.scales.y) {
-            const xPos = chart.scales.y.left - 40; // offset left
+            const xPos = chart.scales.y.left - 55; // increased offset left
             const yPos = chart.scales.y.top + chart.scales.y.height / 2;
             yDiv.style.left = `${xPos}px`;
             yDiv.style.top = `${yPos}px`;
@@ -74,6 +74,14 @@ export function initializeOrUpdateChart(ctx, datasets) {
         plugins: [katexChartPlugin],
         options: {
             maintainAspectRatio: true,
+            layout: {
+                padding: {
+                    bottom: 40, // Space for X axis title
+                    left: 50,   // Space for Y axis title
+                    right: 20,
+                    top: 10
+                }
+            },
             scales: {
                 x: {
                     type: 'linear',
@@ -168,7 +176,7 @@ export async function getSelectedDatasetsForChart(datasets) {
             let label;
             const { r_squared, a, b } = regressionData;
             if (r_squared !== undefined && a !== undefined && b !== undefined) {
-                const equation = `$\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}$`;
+                const equation = `$\\sigma = ${a.toFixed(3)}\\,\\dot{\\gamma}^{${b.toFixed(3)}}$`;
                 const rSquaredInfo = `$R^2 = ${r_squared.toFixed(3)}$`;
                 label = `Power: ${equation}, ${rSquaredInfo}`;
             } else {

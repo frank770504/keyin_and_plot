@@ -449,7 +449,7 @@ canvas {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Prevent canvas overflow issues */
+    overflow: visible !important; /* Prevent canvas overflow issues and show LaTeX titles */
 }
 
 .window-content canvas {
