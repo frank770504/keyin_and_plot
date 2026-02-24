@@ -10,6 +10,16 @@ export function renderPointsTable(elements, points, onDelete) {
     if (state.isEditing) {
         ensureEmptyRow(elements, onDelete);
     }
+
+    if (typeof renderMathInElement === 'function') {
+        renderMathInElement(elements.pointsTableBody.parentElement, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
 }
 
 export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStress) {
@@ -35,7 +45,7 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
     const inputN = document.createElement('input');
     inputN.type = 'number';
     inputN.value = N !== undefined ? N : '';
-    inputN.placeholder = 'N (RPM)';
+    inputN.placeholder = '$N$ (RPM)';
     inputN.dataset.field = 'N';
     inputN.disabled = !state.isEditing;
     tdN.appendChild(inputN);
@@ -44,7 +54,7 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
     const inputEta = document.createElement('input');
     inputEta.type = 'number';
     inputEta.value = eta !== undefined ? eta : '';
-    inputEta.placeholder = 'η (mPa∙s)';
+    inputEta.placeholder = '$\\eta$ (mPa$\\cdot$s)';
     inputEta.dataset.field = 'eta';
     inputEta.disabled = !state.isEditing;
     tdEta.appendChild(inputEta);

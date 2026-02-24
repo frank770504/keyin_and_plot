@@ -320,10 +320,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let label;
             if (type === 'linear') {
                 const { r_squared, slope, intercept } = regressionData;
-                label = `Linear: σ = ${slope.toFixed(3)}γ̇ + ${intercept.toFixed(3)}, R² = ${r_squared.toFixed(3)}`;
+                label = `Linear: $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} + ${intercept.toFixed(3)}, R^2 = ${r_squared.toFixed(3)}$`;
             } else {
                 const { r_squared, a, b } = regressionData;
-                label = `Power: σ = ${a.toFixed(3)}γ̇^${b.toFixed(3)}, R² = ${r_squared.toFixed(3)}`;
+                label = `Power: $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2 = ${r_squared.toFixed(3)}$`;
             }
 
             const newDataset = {

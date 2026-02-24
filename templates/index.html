@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rheology Plotter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
 </head>
 <body>
     <div class="container">
@@ -76,11 +79,11 @@
                     <thead>
                         <tr>
                             <th class="action-column"></th>
-                            <th>N (RPM)</th>
-                            <th>η (mPa∙s)</th>
+                            <th>$N$ (RPM)</th>
+                            <th>$\eta$ (mPa$\cdot$s)</th>
                             <th>Torque (%)</th>
-                            <th>&gamma;&#775; (1/s)</th> <!-- Shear Rate -->
-                            <th>&sigma; (Pa)</th>       <!-- Shear Stress -->
+                            <th>$\dot{\gamma}$ (1/s)</th> <!-- Shear Rate -->
+                            <th>$\sigma$ (Pa)</th>       <!-- Shear Stress -->
                         </tr>
                     </thead>
                     <tbody>

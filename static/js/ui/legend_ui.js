@@ -70,6 +70,17 @@ export function createFloatingLegend(chartInstance, legendElement) {
 
         content.appendChild(itemDiv);
     });
+
+    // Render LaTeX in the legend
+    if (typeof renderMathInElement === 'function') {
+        renderMathInElement(legendElement, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ],
+            throwOnError: false
+        });
+    }
 }
 
 export function makeDraggable(element) {

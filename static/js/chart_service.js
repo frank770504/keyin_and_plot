@@ -11,10 +11,10 @@ export function initializeOrUpdateChart(ctx, datasets) {
                 x: {
                     type: 'linear',
                     position: 'bottom',
-                    title: { display: true, text: 'Shear Rate (1/s)' }
+                    title: { display: true, text: '$\\dot{\\gamma}$ (1/s)' }
                 },
                 y: {
-                    title: { display: true, text: 'Shear Stress (Pa)' }
+                    title: { display: true, text: '$\\sigma$ (Pa)' }
                 }
             },
             plugins: {
@@ -101,8 +101,8 @@ export async function getSelectedDatasetsForChart(datasets) {
             let label;
             const { r_squared, a, b } = regressionData;
             if (r_squared !== undefined && a !== undefined && b !== undefined) {
-                const equation = `σ = ${a.toFixed(3)}γ̇^${b.toFixed(3)}`;
-                const rSquaredInfo = `R² = ${r_squared.toFixed(3)}`;
+                const equation = `$\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}$`;
+                const rSquaredInfo = `$R^2 = ${r_squared.toFixed(3)}$`;
                 label = `Power: ${equation}, ${rSquaredInfo}`;
             } else {
                 label = `Power Regression for ${name}`;
