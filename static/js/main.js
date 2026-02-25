@@ -262,47 +262,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = e.target;
         const tr = input.closest('tr');
         const id = tr.dataset.id;
+        
+        // Inputs
         const nInput = tr.querySelector('input[data-field="N"]');
         const etaInput = tr.querySelector('input[data-field="eta"]');
         const torqueInput = tr.querySelector('input[data-field="torque"]');
-        const shearRateInput = tr.querySelector('input[data-field="shear_rate"]');
-        const shearStressInput = tr.querySelector('input[data-field="shear_stress"]');
+        
+        // Calculated Displays (Spans)
+        const shearRateDisplay = tr.querySelector('[data-field="shear_rate"]');
+        const shearStressDisplay = tr.querySelector('[data-field="shear_stress"]');
+        
         const nVal = nInput.value;
         const etaVal = etaInput.value;
         const torqueVal = torqueInput.value;
 
+        // Skip if all inputs are empty
         if (nVal === '' && etaVal === '' && torqueVal === '') return;
 
         let chartNeedsUpdate = false;
         let result = null;
 
         if (id) {
+            // Update existing point - only proceed if we have valid input
             if (input.value === '' && input.dataset.field !== 'torque') return;
             try {
                 result = await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
                 chartNeedsUpdate = true;
-            } catch (error) { console.error(error); }
+            } catch (error) { console.error('Update failed:', error); }
         } else {
+            // Create new point - requires both N and eta
             if (nVal !== '' && etaVal !== '') {
                 try {
                     result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
                     tr.dataset.id = result.id;
                     workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
                     chartNeedsUpdate = true;
-                } catch (error) { console.error(error); }
+                } catch (error) { console.error('Add failed:', error); }
             }
         }
 
+        // Update displays with new calculations
         if (result && result.shear_rate !== undefined && result.shear_stress !== undefined) {
-             if (shearRateInput) shearRateInput.value = parseFloat(result.shear_rate).toFixed(3);
-             if (shearStressInput) shearStressInput.value = parseFloat(result.shear_stress).toFixed(3);
+             if (shearRateDisplay) shearRateDisplay.textContent = parseFloat(result.shear_rate).toFixed(3);
+             if (shearStressDisplay) shearStressDisplay.textContent = parseFloat(result.shear_stress).toFixed(3);
         }
 
         if (chartNeedsUpdate) {
             try {
                 const data = await api.getDatasetPoints(state.activeDataset);
                 renderActiveChart(data.points);
-            } catch (error) { console.error(error); }
+            } catch (error) { console.error('Chart reload failed:', error); }
         }
     }
 

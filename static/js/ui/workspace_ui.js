@@ -26,12 +26,35 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
     const tr = document.createElement('tr');
     if (id) tr.dataset.id = id;
 
-    const tdAction = document.createElement('td');
-    tdAction.className = 'action-column';
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = '×';
-    deleteBtn.className = 'delete-point-btn';
+    // Formatting helper
+    const fmt = (val) => (val !== undefined && val !== null) ? parseFloat(val).toFixed(3) : '';
 
+    tr.innerHTML = `
+        <td class="action-column">
+            <button class="delete-point-btn">×</button>
+        </td>
+        <td>
+            <input type="number" data-field="N" value="${N !== undefined ? N : ''}"
+                   placeholder="$N$ (RPM)" ${!state.isEditing ? 'disabled' : ''}>
+        </td>
+        <td>
+            <input type="number" data-field="eta" value="${eta !== undefined ? eta : ''}"
+                   placeholder="$\\eta$ (mPa$\\cdot$s)" ${!state.isEditing ? 'disabled' : ''}>
+        </td>
+        <td>
+            <input type="number" data-field="torque" value="${torque !== undefined && torque !== null ? torque : ''}" 
+                   placeholder="Torque (%)" ${!state.isEditing ? 'disabled' : ''}>
+        </td>
+        <td>
+            <span class="calculated-value" data-field="shear_rate">${fmt(shearRate)}</span>
+        </td>
+        <td>
+            <span class="calculated-value" data-field="shear_stress">${fmt(shearStress)}</span>
+        </td>
+    `;
+
+    // Event Listeners
+    const deleteBtn = tr.querySelector('.delete-point-btn');
     deleteBtn.addEventListener('click', () => {
         if (id) {
             onDelete(id);
@@ -39,63 +62,6 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
             tr.remove();
         }
     });
-    tdAction.appendChild(deleteBtn);
-
-    const tdN = document.createElement('td');
-    const inputN = document.createElement('input');
-    inputN.type = 'number';
-    inputN.value = N !== undefined ? N : '';
-    inputN.placeholder = '$N$ (RPM)';
-    inputN.dataset.field = 'N';
-    inputN.disabled = !state.isEditing;
-    tdN.appendChild(inputN);
-
-    const tdEta = document.createElement('td');
-    const inputEta = document.createElement('input');
-    inputEta.type = 'number';
-    inputEta.value = eta !== undefined ? eta : '';
-    inputEta.placeholder = '$\\eta$ (mPa$\\cdot$s)';
-    inputEta.dataset.field = 'eta';
-    inputEta.disabled = !state.isEditing;
-    tdEta.appendChild(inputEta);
-
-    const tdTorque = document.createElement('td');
-    const inputTorque = document.createElement('input');
-    inputTorque.type = 'number';
-    inputTorque.value = torque !== undefined && torque !== null ? torque : '';
-    inputTorque.placeholder = 'Torque (%)';
-    inputTorque.dataset.field = 'torque';
-    inputTorque.disabled = !state.isEditing;
-    tdTorque.appendChild(inputTorque);
-
-    // Shear Rate (Read-only)
-    const tdShearRate = document.createElement('td');
-    const inputShearRate = document.createElement('input');
-    inputShearRate.type = 'number';
-    // Use toFixed for display if it's a number
-    inputShearRate.value = (shearRate !== undefined && shearRate !== null) ? parseFloat(shearRate).toFixed(3) : '';
-    inputShearRate.placeholder = 'Read-only';
-    inputShearRate.dataset.field = 'shear_rate';
-    inputShearRate.disabled = true; // Always disabled as it's calculated
-    tdShearRate.appendChild(inputShearRate);
-
-    // Shear Stress (Read-only)
-    const tdShearStress = document.createElement('td');
-    const inputShearStress = document.createElement('input');
-    inputShearStress.type = 'number';
-    // Use toFixed for display if it's a number
-    inputShearStress.value = (shearStress !== undefined && shearStress !== null) ? parseFloat(shearStress).toFixed(3) : '';
-    inputShearStress.placeholder = 'Read-only';
-    inputShearStress.dataset.field = 'shear_stress';
-    inputShearStress.disabled = true; // Always disabled as it's calculated
-    tdShearStress.appendChild(inputShearStress);
-
-    tr.appendChild(tdAction);
-    tr.appendChild(tdN);
-    tr.appendChild(tdEta);
-    tr.appendChild(tdTorque);
-    tr.appendChild(tdShearRate);
-    tr.appendChild(tdShearStress);
 
     return tr;
 }
