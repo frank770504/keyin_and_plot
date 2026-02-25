@@ -7,7 +7,8 @@ const state = {
     sortState: { column: 'name', direction: 'asc' },
     datasetFilter: '',
     comparisonSelected: new Set(),
-    centerColumnAutoHidden: false
+    centerColumnAutoHidden: false,
+    lastValidValues: new WeakMap() // Track numeric input history
 };
 
 export default state;

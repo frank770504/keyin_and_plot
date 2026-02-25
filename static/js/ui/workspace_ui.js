@@ -52,17 +52,20 @@ export function updateTableRow(tr, N, eta, torque, shearRate, shearStress) {
         eta: tr.querySelector('input[data-field="eta"]'),
         torque: tr.querySelector('input[data-field="torque"]')
     };
-    const displays = {
-        shear_rate: tr.querySelector('[data-field="shear_rate"]'),
-        shear_stress: tr.querySelector('[data-field="shear_stress"]')
-    };
 
-    if (inputs.N && inputs.N.value != (N || '')) inputs.N.value = N || '';
-    if (inputs.eta && inputs.eta.value != (eta || '')) inputs.eta.value = eta || '';
-    if (inputs.torque && inputs.torque.value != (torque !== null ? torque : '')) inputs.torque.value = torque !== null ? torque : '';
-
-    if (displays.shear_rate) displays.shear_rate.textContent = fmt(shearRate);
-    if (displays.shear_stress) displays.shear_stress.textContent = fmt(shearStress);
+    if (inputs.N) {
+        if (inputs.N.value != (N || '')) inputs.N.value = N || '';
+        state.lastValidValues.set(inputs.N, inputs.N.value);
+    }
+    if (inputs.eta) {
+        if (inputs.eta.value != (eta || '')) inputs.eta.value = eta || '';
+        state.lastValidValues.set(inputs.eta, inputs.eta.value);
+    }
+    if (inputs.torque) {
+        const torqueVal = (torque !== null && torque !== undefined) ? torque : '';
+        if (inputs.torque.value != torqueVal) inputs.torque.value = torqueVal;
+        state.lastValidValues.set(inputs.torque, inputs.torque.value);
+    }
 }
 
 export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStress) {
@@ -99,6 +102,12 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
 
     // Event Listeners
     const deleteBtn = tr.querySelector('.delete-point-btn');
+
+    // Initialize numeric history tracking
+    tr.querySelectorAll('input').forEach(input => {
+        state.lastValidValues.set(input, input.value);
+    });
+
     deleteBtn.addEventListener('click', () => {
         if (id) {
             onDelete(id);

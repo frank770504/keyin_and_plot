@@ -258,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const activeRequests = new Map(); // Track latest request ID per row
-    const lastValidValues = new WeakMap(); // Store last valid numeric state per input element
 
     async function handleTableInput(e) {
         if (e.target.tagName !== 'INPUT') return;
@@ -272,12 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!isValid) {
             // Revert to last known good value if invalid
-            input.value = lastValidValues.get(input) || '';
+            input.value = state.lastValidValues.get(input) || '';
             return; // Stop processing further for invalid input
         }
 
-        // Update last valid value
-        lastValidValues.set(input, rawVal);
+        // Update last valid value in global state
+        state.lastValidValues.set(input, rawVal);
 
         const tr = input.closest('tr');
         const id = tr.dataset.id;
