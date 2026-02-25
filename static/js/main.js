@@ -258,11 +258,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const activeRequests = new Map(); // Track latest request ID per row
+    const lastValidValues = new WeakMap(); // Store last valid numeric state per input element
 
     async function handleTableInput(e) {
         if (e.target.tagName !== 'INPUT') return;
 
         const input = e.target;
+
+        // --- Numeric Validation (Strict Filter) ---
+        const rawVal = input.value;
+        // Check if value is a valid numeric pattern or empty
+        const isValid = /^-?\d*\.?\d*$/.test(rawVal);
+
+        if (!isValid) {
+            // Revert to last known good value if invalid
+            input.value = lastValidValues.get(input) || '';
+            return; // Stop processing further for invalid input
+        }
+
+        // Update last valid value
+        lastValidValues.set(input, rawVal);
+
         const tr = input.closest('tr');
         const id = tr.dataset.id;
         const requestId = Date.now();
@@ -439,34 +455,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nextInput) nextInput.focus();
             }
         } else if (e.key === 'ArrowUp') {
+            e.preventDefault(); // Stop value change
             const prevTr = tr.previousElementSibling;
             if (prevTr) {
                 const target = prevTr.querySelector(`input[data-field="${field}"]`);
                 if (target) target.focus();
             }
         } else if (e.key === 'ArrowDown') {
+            e.preventDefault(); // Stop value change
             const nextTr = tr.nextElementSibling;
             if (nextTr) {
                 const target = nextTr.querySelector(`input[data-field="${field}"]`);
                 if (target) target.focus();
             }
-        } else if (e.key === 'ArrowLeft' && input.selectionStart === 0) {
-            if (fieldIndex > 0) {
-                const prevField = fields[fieldIndex - 1];
-                const target = tr.querySelector(`input[data-field="${prevField}"]`);
-                if (target) {
-                    target.focus();
-                    // Optional: set cursor at end of value
-                    setTimeout(() => target.setSelectionRange(target.value.length, target.value.length), 0);
+        } else if (e.key === 'ArrowLeft') {
+            if (input.selectionStart === 0 && input.selectionEnd === 0) {
+                e.preventDefault();
+                if (fieldIndex > 0) {
+                    const prevField = fields[fieldIndex - 1];
+                    const target = tr.querySelector(`input[data-field="${prevField}"]`);
+                    if (target) {
+                        target.focus();
+                        // Set cursor at the end of the previous cell
+                        setTimeout(() => target.setSelectionRange(target.value.length, target.value.length), 0);
+                    }
+                } else {
+                    // Wrap to previous row's last field
+                    const prevTr = tr.previousElementSibling;
+                    if (prevTr) {
+                        const target = prevTr.querySelector('input[data-field="torque"]');
+                        if (target) {
+                            target.focus();
+                            setTimeout(() => target.setSelectionRange(target.value.length, target.value.length), 0);
+                        }
+                    }
                 }
             }
-        } else if (e.key === 'ArrowRight' && input.selectionStart === input.value.length) {
-            if (fieldIndex < fields.length - 1) {
-                const nextField = fields[fieldIndex + 1];
-                const target = tr.querySelector(`input[data-field="${nextField}"]`);
-                if (target) {
-                    target.focus();
-                    setTimeout(() => target.setSelectionRange(0, 0), 0);
+        } else if (e.key === 'ArrowRight') {
+            if (input.selectionStart === input.value.length && input.selectionEnd === input.value.length) {
+                e.preventDefault();
+                if (fieldIndex < fields.length - 1) {
+                    const nextField = fields[fieldIndex + 1];
+                    const target = tr.querySelector(`input[data-field="${nextField}"]`);
+                    if (target) {
+                        target.focus();
+                        // Set cursor at the beginning of the next cell
+                        setTimeout(() => target.setSelectionRange(0, 0), 0);
+                    }
+                } else {
+                    // Wrap to next row's first field
+                    const nextTr = tr.nextElementSibling;
+                    if (nextTr) {
+                        const target = nextTr.querySelector('input[data-field="N"]');
+                        if (target) {
+                            target.focus();
+                            setTimeout(() => target.setSelectionRange(0, 0), 0);
+                        }
+                    }
                 }
             }
         }

@@ -72,21 +72,22 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
     // Formatting helper
     const fmt = (val) => (val !== undefined && val !== null) ? parseFloat(val).toFixed(3) : '';
 
-    tr.innerHTML = `
+    // Note: We use Unicode for placeholders because KaTeX cannot render inside attribute values.
+    tr.innerHTML = String.raw`
         <td class="action-column">
             <button class="delete-point-btn">×</button>
         </td>
         <td>
-            <input type="number" data-field="N" value="${N !== undefined ? N : ''}"
-                   placeholder="$N$ (RPM)" ${!state.isEditing ? 'disabled' : ''}>
+            <input type="text" data-field="N" value="${N !== undefined ? N : ''}"
+                   placeholder="N (RPM)" inputmode="decimal" ${!state.isEditing ? 'disabled' : ''}>
         </td>
         <td>
-            <input type="number" data-field="eta" value="${eta !== undefined ? eta : ''}"
-                   placeholder="$\\eta$ (mPa$\\cdot$s)" ${!state.isEditing ? 'disabled' : ''}>
+            <input type="text" data-field="eta" value="${eta !== undefined ? eta : ''}"
+                   placeholder="η (mPa·s)" inputmode="decimal" ${!state.isEditing ? 'disabled' : ''}>
         </td>
         <td>
-            <input type="number" data-field="torque" value="${torque !== undefined && torque !== null ? torque : ''}" 
-                   placeholder="Torque (%)" ${!state.isEditing ? 'disabled' : ''}>
+            <input type="text" data-field="torque" value="${torque !== undefined && torque !== null ? torque : ''}"
+                   placeholder="Torque (%)" inputmode="decimal" ${!state.isEditing ? 'disabled' : ''}>
         </td>
         <td>
             <span class="calculated-value" data-field="shear_rate">${fmt(shearRate)}</span>
