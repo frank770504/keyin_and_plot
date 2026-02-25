@@ -249,12 +249,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm('Are you sure you want to delete this point?')) {
             try {
                 await api.deletePoint(state.activeDataset, pointId);
-                loadActiveDatasetData();
+                await loadActiveDatasetData();
+                workspaceUI.ensureEmptyRow(elements, handleDeletePoint); // Ensure we still have an empty row
             } catch (error) {
                 alert(error.message);
             }
         }
     }
+
+    const activeRequests = new Map(); // Track latest request ID per row
 
     async function handleTableInput(e) {
         if (e.target.tagName !== 'INPUT') return;
@@ -262,16 +265,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const input = e.target;
         const tr = input.closest('tr');
         const id = tr.dataset.id;
-        
+        const requestId = Date.now();
+        activeRequests.set(tr, requestId);
+
         // Inputs
         const nInput = tr.querySelector('input[data-field="N"]');
         const etaInput = tr.querySelector('input[data-field="eta"]');
         const torqueInput = tr.querySelector('input[data-field="torque"]');
-        
+
         // Calculated Displays (Spans)
         const shearRateDisplay = tr.querySelector('[data-field="shear_rate"]');
         const shearStressDisplay = tr.querySelector('[data-field="shear_stress"]');
-        
+
         const nVal = nInput.value;
         const etaVal = etaInput.value;
         const torqueVal = torqueInput.value;
@@ -279,32 +284,58 @@ document.addEventListener('DOMContentLoaded', () => {
         // Skip if all inputs are empty
         if (nVal === '' && etaVal === '' && torqueVal === '') return;
 
+        // --- Start Saving State ---
+        tr.classList.add('syncing');
+        shearRateDisplay.classList.add('syncing');
+        shearStressDisplay.classList.add('syncing');
+
         let chartNeedsUpdate = false;
         let result = null;
 
-        if (id) {
-            // Update existing point - only proceed if we have valid input
-            if (input.value === '' && input.dataset.field !== 'torque') return;
-            try {
+        try {
+            if (id) {
+                // Update existing point
+                if (input.value === '' && input.dataset.field !== 'torque') {
+                     tr.classList.remove('syncing');
+                     return;
+                }
                 result = await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
                 chartNeedsUpdate = true;
-            } catch (error) { console.error('Update failed:', error); }
-        } else {
-            // Create new point - requires both N and eta
-            if (nVal !== '' && etaVal !== '') {
-                try {
+            } else {
+                // Create new point - requires both N and eta
+                if (nVal !== '' && etaVal !== '') {
                     result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
                     tr.dataset.id = result.id;
                     workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
                     chartNeedsUpdate = true;
-                } catch (error) { console.error('Add failed:', error); }
+                } else {
+                    tr.classList.remove('syncing');
+                    return;
+                }
             }
-        }
 
-        // Update displays with new calculations
-        if (result && result.shear_rate !== undefined && result.shear_stress !== undefined) {
-             if (shearRateDisplay) shearRateDisplay.textContent = parseFloat(result.shear_rate).toFixed(3);
-             if (shearStressDisplay) shearStressDisplay.textContent = parseFloat(result.shear_stress).toFixed(3);
+            // --- Success Check ---
+            // Only update UI if this is the most recent request for this row
+            if (activeRequests.get(tr) === requestId) {
+                if (result && result.shear_rate !== undefined && result.shear_stress !== undefined) {
+                     shearRateDisplay.textContent = parseFloat(result.shear_rate).toFixed(3);
+                     shearStressDisplay.textContent = parseFloat(result.shear_stress).toFixed(3);
+                }
+                tr.classList.remove('syncing');
+                tr.classList.remove('error');
+            }
+
+        } catch (error) {
+            console.error('Save failed:', error);
+            if (activeRequests.get(tr) === requestId) {
+                tr.classList.remove('syncing');
+                tr.classList.add('error');
+            }
+        } finally {
+             if (activeRequests.get(tr) === requestId) {
+                 shearRateDisplay.classList.remove('syncing');
+                 shearStressDisplay.classList.remove('syncing');
+             }
         }
 
         if (chartNeedsUpdate) {
@@ -383,7 +414,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    function handleTableKeydown(e) {
+        if (e.target.tagName !== 'INPUT') return;
+
+        const input = e.target;
+        const tr = input.closest('tr');
+        const field = input.dataset.field;
+        const fields = ['N', 'eta', 'torque'];
+        const fieldIndex = fields.indexOf(field);
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (fieldIndex === fields.length - 1) {
+                // Last field, move to next row's first field
+                const nextTr = tr.nextElementSibling;
+                if (nextTr) {
+                    const firstInput = nextTr.querySelector('input[data-field="N"]');
+                    if (firstInput) firstInput.focus();
+                }
+            } else {
+                // Move to next field in same row
+                const nextField = fields[fieldIndex + 1];
+                const nextInput = tr.querySelector(`input[data-field="${nextField}"]`);
+                if (nextInput) nextInput.focus();
+            }
+        } else if (e.key === 'ArrowUp') {
+            const prevTr = tr.previousElementSibling;
+            if (prevTr) {
+                const target = prevTr.querySelector(`input[data-field="${field}"]`);
+                if (target) target.focus();
+            }
+        } else if (e.key === 'ArrowDown') {
+            const nextTr = tr.nextElementSibling;
+            if (nextTr) {
+                const target = nextTr.querySelector(`input[data-field="${field}"]`);
+                if (target) target.focus();
+            }
+        } else if (e.key === 'ArrowLeft' && input.selectionStart === 0) {
+            if (fieldIndex > 0) {
+                const prevField = fields[fieldIndex - 1];
+                const target = tr.querySelector(`input[data-field="${prevField}"]`);
+                if (target) {
+                    target.focus();
+                    // Optional: set cursor at end of value
+                    setTimeout(() => target.setSelectionRange(target.value.length, target.value.length), 0);
+                }
+            }
+        } else if (e.key === 'ArrowRight' && input.selectionStart === input.value.length) {
+            if (fieldIndex < fields.length - 1) {
+                const nextField = fields[fieldIndex + 1];
+                const target = tr.querySelector(`input[data-field="${nextField}"]`);
+                if (target) {
+                    target.focus();
+                    setTimeout(() => target.setSelectionRange(0, 0), 0);
+                }
+            }
+        }
+    }
+
     // --- Event Listeners ---
+    elements.pointsTableBody.addEventListener('keydown', handleTableKeydown);
     elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
     elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);

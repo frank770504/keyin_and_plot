@@ -325,11 +325,34 @@ ul {
     margin: 0;
 }
 
-#points-table input[type="number"] {
-    -moz-appearance: textfield;
+/* Syncing & Visual Feedback */
+@keyframes pulse-sync {
+    0% { background-color: transparent; }
+    50% { background-color: #e3f2fd; } /* Very light blue */
+    100% { background-color: transparent; }
 }
 
-.metadata-area {
+#points-table tr.syncing {
+    animation: pulse-sync 1.5s infinite;
+}
+
+#points-table .calculated-value {
+    font-family: monospace;
+    font-weight: bold;
+    color: #555;
+    padding: 0 5px;
+}
+
+#points-table .calculated-value:empty::before {
+    content: "---";
+    color: #ccc;
+    font-weight: normal;
+}
+
+#points-table .calculated-value.syncing {
+    color: #007bff;
+    font-style: italic;
+}
     margin: 15px 0;
     padding: 10px;
     background-color: #eee;

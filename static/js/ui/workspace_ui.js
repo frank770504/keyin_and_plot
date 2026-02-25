@@ -2,17 +2,36 @@
 import state from '../state.js';
 
 export function renderPointsTable(elements, points, onDelete) {
-    elements.pointsTableBody.innerHTML = '';
-    points.forEach(point => {
-        const tr = createTableRow(point.id, point.N, point.eta, onDelete, point.torque, point.shear_rate, point.shear_stress);
-        elements.pointsTableBody.appendChild(tr);
+    const tbody = elements.pointsTableBody;
+    const existingRows = new Map();
+    tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+        existingRows.set(tr.dataset.id, tr);
     });
+
+    const newRows = [];
+    points.forEach(point => {
+        const idStr = point.id.toString();
+        if (existingRows.has(idStr)) {
+            const tr = existingRows.get(idStr);
+            updateTableRow(tr, point.N, point.eta, point.torque, point.shear_rate, point.shear_stress);
+            newRows.push(tr);
+            existingRows.delete(idStr);
+        } else {
+            const tr = createTableRow(point.id, point.N, point.eta, onDelete, point.torque, point.shear_rate, point.shear_stress);
+            newRows.push(tr);
+        }
+    });
+
+    // Clear and re-append in correct order (more efficient than manual diffing)
+    tbody.innerHTML = '';
+    newRows.forEach(tr => tbody.appendChild(tr));
+
     if (state.isEditing) {
         ensureEmptyRow(elements, onDelete);
     }
 
     if (typeof renderMathInElement === 'function') {
-        renderMathInElement(elements.pointsTableBody.parentElement, {
+        renderMathInElement(tbody.parentElement, {
             delimiters: [
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false}
@@ -20,6 +39,30 @@ export function renderPointsTable(elements, points, onDelete) {
             throwOnError: false
         });
     }
+}
+
+export function updateTableRow(tr, N, eta, torque, shearRate, shearStress) {
+    // Only update if not currently syncing (user is typing)
+    if (tr.classList.contains('syncing')) return;
+
+    const fmt = (val) => (val !== undefined && val !== null) ? parseFloat(val).toFixed(3) : '';
+
+    const inputs = {
+        N: tr.querySelector('input[data-field="N"]'),
+        eta: tr.querySelector('input[data-field="eta"]'),
+        torque: tr.querySelector('input[data-field="torque"]')
+    };
+    const displays = {
+        shear_rate: tr.querySelector('[data-field="shear_rate"]'),
+        shear_stress: tr.querySelector('[data-field="shear_stress"]')
+    };
+
+    if (inputs.N && inputs.N.value != (N || '')) inputs.N.value = N || '';
+    if (inputs.eta && inputs.eta.value != (eta || '')) inputs.eta.value = eta || '';
+    if (inputs.torque && inputs.torque.value != (torque !== null ? torque : '')) inputs.torque.value = torque !== null ? torque : '';
+
+    if (displays.shear_rate) displays.shear_rate.textContent = fmt(shearRate);
+    if (displays.shear_stress) displays.shear_stress.textContent = fmt(shearStress);
 }
 
 export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStress) {
@@ -67,24 +110,31 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
 }
 
 export function ensureEmptyRow(elements, onDelete) {
-    const rows = elements.pointsTableBody.querySelectorAll('tr');
+    const rows = Array.from(elements.pointsTableBody.querySelectorAll('tr'));
+
+    // Helper to check if a row is "empty" (no ID and no input values)
+    const isRowEmpty = (tr) => {
+        if (tr.dataset.id) return false;
+        const inputs = tr.querySelectorAll('input');
+        return Array.from(inputs).every(input => input.value === '');
+    };
+
+    const emptyRows = rows.filter(isRowEmpty);
     const lastRow = rows[rows.length - 1];
 
-    let needsRow = false;
-    if (!lastRow) {
-        needsRow = true;
-    } else {
-        const nInput = lastRow.querySelector('input[data-field="N"]');
-        const etaInput = lastRow.querySelector('input[data-field="eta"]');
-        const torqueInput = lastRow.querySelector('input[data-field="torque"]');
-        if (nInput && etaInput && (nInput.value !== '' || etaInput.value !== '' || (torqueInput && torqueInput.value !== ''))) {
-            needsRow = true;
-        }
-    }
-
-    if (needsRow) {
+    // 1. If there's no empty row at the very bottom, add one
+    if (!lastRow || !isRowEmpty(lastRow)) {
         const tr = createTableRow(null, undefined, undefined, onDelete, undefined, undefined, undefined);
         elements.pointsTableBody.appendChild(tr);
+    }
+    // 2. If there are multiple empty rows, remove the extras
+    else if (emptyRows.length > 1) {
+        // Keep only the last one
+        emptyRows.forEach((tr, index) => {
+            if (index < emptyRows.length - 1) {
+                tr.remove();
+            }
+        });
     }
 }
 
