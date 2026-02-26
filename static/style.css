@@ -80,11 +80,7 @@ body {
 
 /* Hide action elements in read-only mode */
 .read-only-mode #add-row-btn,
-.read-only-mode .delete-dataset-btn-in-list { /* Wait, I didn't add this class yet */
-    display: none;
-}
-
-.read-only-mode #points-table .action-column {
+.read-only-mode .action-column {
     display: none;
 }
 
@@ -92,7 +88,19 @@ body {
 #points-table td.action-column {
     border: none;
     background-color: transparent;
-    width: 80px;
+    width: 30px;
+}
+
+.read-only-mode input:disabled,
+.read-only-mode select:disabled {
+    background-color: transparent;
+    border-color: transparent;
+    color: #333;
+    cursor: default;
+}
+
+.read-only-mode input:disabled::placeholder {
+    color: transparent;
 }
 
 .search-bar {

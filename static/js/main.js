@@ -21,7 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
         centerColumn: document.getElementById('center-column'),
         activeDatasetName: document.getElementById('active-dataset-name'),
         activeDatasetNameInput: document.getElementById('active-dataset-name-input'),
-        editToggleBtn: document.getElementById('edit-toggle-btn'),
+        editBtn: document.getElementById('edit-btn'),
+        cancelEditBtn: document.getElementById('cancel-edit-btn'),
         deleteDatasetBtn: document.getElementById('delete-dataset-btn'),
         datasetDateInput: document.getElementById('dataset-date'),
         datasetSerialIdInput: document.getElementById('dataset-serial-id'),
@@ -89,15 +90,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Workspace & Active Dataset
     async function setActiveDataset(name) {
+        // --- Auto Rollback on Switch ---
+        if (state.isEditing && state.activeDataset) {
+            try {
+                // If we are leaving a dataset while editing, discard its draft
+                await api.rollbackEdit(state.activeDataset);
+                console.log(`Auto-rolled back changes for ${state.activeDataset}`);
+            } catch (error) {
+                console.error('Failed to auto-rollback:', error);
+            }
+        }
+
         if (state.activeDataset === name) {
             // Deselect
             stateManager.setActiveDataset(null);
             workspaceUI.toggleCenterColumn(elements, false);
             elements.activeDatasetName.textContent = 'No Dataset Selected';
+            elements.editBtn.style.display = 'none';
+            elements.cancelEditBtn.style.display = 'none';
         } else {
             // Select
             stateManager.setActiveDataset(name);
             stateManager.setEditing(false); // Reset edit mode
+            elements.editBtn.style.display = 'inline-block';
+            elements.editBtn.textContent = 'Edit';
+            elements.cancelEditBtn.style.display = 'none';
             workspaceUI.toggleCenterColumn(elements, true, () => {
                  if (activeChart) activeChart.resize();
             });
@@ -194,13 +211,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function toggleEditMode() {
-        stateManager.setEditing(!state.isEditing);
-        workspaceUI.updateEditModeUI(elements);
-        if (state.isEditing) {
+    async function startEditMode() {
+        if (!state.activeDataset) return;
+        try {
+            await api.startEdit(state.activeDataset);
+            stateManager.setEditingOriginalName(state.activeDataset); // Store for potential rollback
+            stateManager.setEditing(true);
+            elements.editBtn.textContent = 'Save';
+            elements.cancelEditBtn.style.display = 'inline-block';
+            workspaceUI.updateEditModeUI(elements);
+
+            // Reload to get the new DRAFT IDs for points
+            await loadActiveDatasetData();
+
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
-        } else {
-            loadActiveDatasetData(); // Reload to clear unsaved rows
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function commitEditMode() {
+        try {
+            await api.commitEdit(state.activeDataset);
+            stateManager.setEditing(false);
+            stateManager.setEditingOriginalName(null);
+            elements.editBtn.textContent = 'Edit';
+            elements.cancelEditBtn.style.display = 'none';
+            workspaceUI.updateEditModeUI(elements);
+            await loadActiveDatasetData();
+            loadAndRenderDatasets(); // Refresh list to reflect potential name change
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function cancelEditMode() {
+        try {
+            // Use the current active dataset name to hit the rollback API
+            await api.rollbackEdit(state.activeDataset);
+
+            // If the name was changed during draft, we must revert to the original name
+            if (state.activeDataset !== state.editingOriginalName) {
+                stateManager.setActiveDataset(state.editingOriginalName);
+                elements.activeDatasetName.textContent = state.editingOriginalName;
+            }
+
+            stateManager.setEditing(false);
+            stateManager.setEditingOriginalName(null);
+            elements.editBtn.textContent = 'Edit';
+            elements.cancelEditBtn.style.display = 'none';
+            workspaceUI.updateEditModeUI(elements);
+            await loadActiveDatasetData(); // Reload original data
+        } catch (error) {
+            alert(error.message);
         }
     }
 
@@ -523,7 +586,15 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
 
-    elements.editToggleBtn.addEventListener('click', toggleEditMode);
+    elements.editBtn.addEventListener('click', () => {
+        if (!state.isEditing) {
+            startEditMode();
+        } else {
+            commitEditMode();
+        }
+    });
+    elements.cancelEditBtn.addEventListener('click', cancelEditMode);
+
     elements.deleteDatasetBtn.addEventListener('click', () => handleDeleteDataset(state.activeDataset));
     elements.activeDatasetNameInput.addEventListener('change', handleDatasetRename);
 

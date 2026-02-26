@@ -150,12 +150,11 @@ export function ensureEmptyRow(elements, onDelete) {
 
 export function updateEditModeUI(elements) {
     const isEditing = state.isEditing;
-    const centerColumn = document.getElementById('center-column'); // Or pass in elements.centerColumn
+    const centerColumn = document.getElementById('center-column');
 
     if (isEditing) {
         centerColumn.classList.remove('read-only-mode');
-        elements.editToggleBtn.textContent = 'Done Editing';
-        elements.editToggleBtn.classList.add('editing');
+        elements.editBtn.classList.add('editing');
 
         elements.activeDatasetName.style.display = 'none';
         elements.activeDatasetNameInput.style.display = 'block';
@@ -164,13 +163,13 @@ export function updateEditModeUI(elements) {
         elements.deleteDatasetBtn.style.display = 'inline-block';
     } else {
         centerColumn.classList.add('read-only-mode');
-        elements.editToggleBtn.textContent = 'Edit';
-        elements.editToggleBtn.classList.remove('editing');
+        elements.editBtn.classList.remove('editing');
 
         elements.activeDatasetName.style.display = 'block';
         elements.activeDatasetNameInput.style.display = 'none';
 
         elements.deleteDatasetBtn.style.display = 'none';
+        elements.cancelEditBtn.style.display = 'none';
     }
 
     elements.datasetDateInput.disabled = !isEditing;
@@ -178,7 +177,9 @@ export function updateEditModeUI(elements) {
     elements.datasetSpindleSelect.disabled = !isEditing;
 
     const tableInputs = elements.pointsTableBody.querySelectorAll('input');
-    tableInputs.forEach(input => input.disabled = !isEditing);
+    tableInputs.forEach(input => {
+        input.disabled = !isEditing;
+    });
 }
 
 export function toggleCenterColumn(elements, show, resizeChartsCallback) {
@@ -189,7 +190,7 @@ export function toggleCenterColumn(elements, show, resizeChartsCallback) {
     if (centerColumn.style.display !== displayValue) {
         centerColumn.style.display = displayValue;
         elements.dragHandle.style.display = gutterDisplay;
-        elements.editToggleBtn.style.display = show ? 'block' : 'none';
+        elements.editBtn.style.display = show ? 'block' : 'none';
 
         setTimeout(() => {
             if (resizeChartsCallback) resizeChartsCallback();

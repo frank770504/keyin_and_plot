@@ -16,10 +16,120 @@ SPINDLE_ID2FACTOR = {
     "SC4-34": 0.28
 }
 
+
+def get_best_dataset(name):
+    """Helper to return the draft if it exists, otherwise the original."""
+    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    if draft:
+        return draft
+    return Dataset.query.filter_by(name=name, is_draft=False).first()
+
+
+@api_bp.route('/datasets/<string:name>/edit/start', methods=['POST'])
+def start_edit_mode(name):
+    """Clone a dataset to create a draft for editing."""
+    dataset = Dataset.query.filter_by(name=name, is_draft=False).first()
+    if not dataset:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    # Check if a draft already exists for this dataset
+    existing_draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    if existing_draft:
+        # If it exists, we just return success (re-entering)
+        return jsonify({
+            "message": "Editing already in progress",
+            "is_draft": True
+        }), 200
+
+    # Create the draft dataset
+    draft_dataset = Dataset(
+        name=dataset.name,
+        date=dataset.date,
+        serial_id=dataset.serial_id,
+        spindle_id=dataset.spindle_id,
+        is_draft=True,
+        original_id=dataset.id
+    )
+    db.session.add(draft_dataset)
+    db.session.flush()  # Get ID for points
+
+    # Clone all points
+    for p in dataset.points:
+        draft_point = Point(
+            N=p.N,
+            eta=p.eta,
+            torque=p.torque,
+            shear_rate=p.shear_rate,
+            shear_stress=p.shear_stress,
+            is_draft=True,
+            original_id=p.id,
+            dataset=draft_dataset
+        )
+        db.session.add(draft_point)
+
+    db.session.commit()
+    return jsonify({
+        "message": "Draft created successfully",
+        "is_draft": True
+    }), 201
+
+
+@api_bp.route('/datasets/<string:name>/edit/commit', methods=['POST'])
+def commit_edit_mode(name):
+    """Merge draft changes back into the original dataset."""
+    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    if not draft:
+        return jsonify({"error": "No draft found to commit"}), 404
+
+    original = Dataset.query.get(draft.original_id)
+    if not original:
+        return jsonify({"error": "Original dataset not found"}), 404
+
+    # Update original metadata
+    original.name = draft.name
+    original.date = draft.date
+    original.serial_id = draft.serial_id
+    original.spindle_id = draft.spindle_id
+
+    # Sync points: Simple approach is to
+    # clear original points and copy draft ones
+    # This preserves the draft state exactly
+    Point.query.filter_by(dataset_id=original.id).delete()
+    for dp in draft.points:
+        new_p = Point(
+            N=dp.N,
+            eta=dp.eta,
+            torque=dp.torque,
+            shear_rate=dp.shear_rate,
+            shear_stress=dp.shear_stress,
+            is_draft=False,
+            dataset=original
+        )
+        db.session.add(new_p)
+
+    # Delete draft
+    db.session.delete(draft)
+    db.session.commit()
+
+    return jsonify({"message": "Changes committed successfully"}), 200
+
+
+@api_bp.route('/datasets/<string:name>/edit/rollback', methods=['POST'])
+def rollback_edit_mode(name):
+    """Discard the draft and exit edit mode."""
+    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    if not draft:
+        return jsonify({"error": "No draft found to rollback"}), 404
+
+    db.session.delete(draft)
+    db.session.commit()
+    return jsonify({"message": "Draft discarded"}), 200
+
+
 @api_bp.route('/datasets/<string:name>/regression', methods=['GET'])
 def get_regression(name):
     """Calculate and return a linear regression for the dataset (Shear Stress vs Shear Rate)."""
-    dataset = Dataset.query.filter_by(name=name).first()
+    dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
@@ -62,7 +172,7 @@ def get_regression(name):
 @api_bp.route('/datasets/<string:name>/power-regression', methods=['GET'])
 def get_power_regression(name):
     """Calculate and return a power law regression for the dataset (Shear Stress vs Shear Rate)."""
-    dataset = Dataset.query.filter_by(name=name).first()
+    dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
@@ -103,8 +213,8 @@ def get_power_regression(name):
 
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
-    """Return a list of all datasets with metadata."""
-    all_datasets = Dataset.query.all()
+    """Return a list of all non-draft datasets with metadata."""
+    all_datasets = Dataset.query.filter_by(is_draft=False).all()
     datasets_data = [{
         "name": d.name,
         "date": d.date,
@@ -135,15 +245,15 @@ def create_dataset():
 
 @api_bp.route('/datasets/<string:name>', methods=['GET'])
 def get_dataset(name):
-    """Return the points for a specific dataset."""
-    dataset = Dataset.query.filter_by(name=name).first()
+    """Return the points for a specific dataset (draft if exists)."""
+    dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
     points = [{
-        "id": p.id, 
-        "N": p.N, 
-        "eta": p.eta, 
+        "id": p.id,
+        "N": p.N,
+        "eta": p.eta,
         "torque": p.torque,
         "shear_rate": p.shear_rate,
         "shear_stress": p.shear_stress
@@ -158,8 +268,8 @@ def get_dataset(name):
 
 @api_bp.route('/datasets/<string:name>', methods=['PUT'])
 def update_dataset(name):
-    """Update dataset metadata (like date, serial_id, name)."""
-    dataset = Dataset.query.filter_by(name=name).first()
+    """Update dataset metadata (draft if exists)."""
+    dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
@@ -186,9 +296,12 @@ def update_dataset(name):
         if not new_name:
             return jsonify({"error": "New name cannot be empty"}), 400
 
-        # Check if new name already exists and is not the current dataset
-        if new_name != name and Dataset.query.filter_by(name=new_name).first():
-            return jsonify({"error": "Dataset with this name already exists"}), 409
+        # Only check uniqueness against other non-draft datasets
+        if new_name != name and Dataset.query.filter_by(
+                name=new_name, is_draft=False).first():
+            return jsonify({
+                "error": "Dataset with this name already exists"
+            }), 409
         dataset.name = new_name
 
     db.session.commit()
@@ -197,28 +310,35 @@ def update_dataset(name):
 
 @api_bp.route('/datasets/<string:name>', methods=['DELETE'])
 def delete_dataset(name):
-    """Delete a dataset."""
-    dataset_to_delete = Dataset.query.filter_by(name=name).first()
-    if not dataset_to_delete:
-        return jsonify({"error": "Dataset not found"}), 404
+    """Delete a dataset (original and its draft)."""
+    # Delete original
+    original = Dataset.query.filter_by(name=name, is_draft=False).first()
+    if original:
+        db.session.delete(original)
 
-    db.session.delete(dataset_to_delete)
+    # Delete any associated draft
+    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    if draft:
+        db.session.delete(draft)
+
     db.session.commit()
-
-    print(f"Deleted dataset: '{name}'")
+    print(f"Deleted dataset and potential draft: '{name}'")
     return jsonify({"message": f"Dataset '{name}' deleted"}), 200
 
 
 @api_bp.route('/datasets/<string:name>/points', methods=['POST'])
 def add_point(name):
-    """Add a new point to a dataset."""
-    dataset_db = Dataset.query.filter_by(name=name).first()
+    """Add a new point to a dataset (prefers draft)."""
+    dataset_db = get_best_dataset(name)
     if not dataset_db:
         return jsonify({"error": "Dataset not found"}), 404
 
     data = request.get_json()
     if not dataset_db.spindle_id or dataset_db.spindle_id not in SPINDLE_ID2FACTOR:
-        return jsonify({"error": "A valid Spindle ID must be selected before adding data points."}), 400
+        _err_string = ("A valid Spindle ID "
+                       "must be selected before adding data points.")
+        return jsonify({
+            "error": _err_string}), 400
 
     try:
         N = float(data['N'])
@@ -240,14 +360,16 @@ def add_point(name):
         torque=torque,
         shear_rate=shear_rate,
         shear_stress=shear_stress,
+        is_draft=dataset_db.is_draft,
         dataset=dataset_db
     )
     db.session.add(new_point_db)
     db.session.commit()
 
-    print(f"Added point ({N}, {eta}) to dataset '{name}'")
+    print(f"Added point ({N}, {eta}) to dataset '{name}' "
+          f"(Draft: {dataset_db.is_draft})")
     return jsonify({
-        "message": "Point added successfully", 
+        "message": "Point added successfully",
         "id": new_point_db.id,
         "shear_rate": shear_rate,
         "shear_stress": shear_stress
@@ -256,13 +378,14 @@ def add_point(name):
 
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['DELETE'])
 def delete_point(name, point_id):
-    """Delete a point from a dataset by its unique ID."""
-    dataset = Dataset.query.filter_by(name=name).first()
+    """Delete a point from a dataset."""
+    dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    point_to_delete = Point.query.get(point_id)
-    if not point_to_delete or point_to_delete.dataset_id != dataset.id:
+    point_to_delete = Point.query.filter_by(
+            id=point_id, dataset_id=dataset.id).first()
+    if not point_to_delete:
         return jsonify({"error": "Point not found in this dataset"}), 404
 
     db.session.delete(point_to_delete)
@@ -275,12 +398,13 @@ def delete_point(name, point_id):
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['PUT'])
 def update_point(name, point_id):
     """Update a point in a dataset."""
-    dataset = Dataset.query.filter_by(name=name).first()
+    dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    point_to_update = Point.query.get(point_id)
-    if not point_to_update or point_to_update.dataset_id != dataset.id:
+    point_to_update = Point.query.filter_by(
+            id=point_id, dataset_id=dataset.id).first()
+    if not point_to_update:
         return jsonify({"error": "Point not found in this dataset"}), 404
 
     data = request.get_json()
@@ -305,12 +429,11 @@ def update_point(name, point_id):
         except (ValueError, TypeError):
             return jsonify({"error": "torque must be a valid number"}), 400
 
-    # Recalculate shear properties based on new or existing values
+    # Recalculate shear properties
     if dataset.spindle_id and dataset.spindle_id in SPINDLE_ID2FACTOR:
         factor = SPINDLE_ID2FACTOR[dataset.spindle_id]
         point_to_update.shear_rate = factor * point_to_update.N
         point_to_update.shear_stress = point_to_update.eta * point_to_update.shear_rate * 0.001
-
     else:
         point_to_update.shear_rate = None
         point_to_update.shear_stress = None

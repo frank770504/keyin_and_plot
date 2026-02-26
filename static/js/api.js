@@ -1,5 +1,23 @@
 // static/js/api.js
 
+export async function startEdit(name) {
+    const response = await fetch(`/api/datasets/${name}/edit/start`, { method: 'POST' });
+    if (!response.ok) throw new Error('Failed to start edit mode');
+    return await response.json();
+}
+
+export async function commitEdit(name) {
+    const response = await fetch(`/api/datasets/${name}/edit/commit`, { method: 'POST' });
+    if (!response.ok) throw new Error('Failed to commit changes');
+    return await response.json();
+}
+
+export async function rollbackEdit(name) {
+    const response = await fetch(`/api/datasets/${name}/edit/rollback`, { method: 'POST' });
+    if (!response.ok) throw new Error('Failed to rollback changes');
+    return await response.json();
+}
+
 export async function getDatasets() {
     const response = await fetch('/api/datasets');
     if (!response.ok) {

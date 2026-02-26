@@ -8,6 +8,7 @@ const state = {
     datasetFilter: '',
     comparisonSelected: new Set(),
     centerColumnAutoHidden: false,
+    editingOriginalName: null,
     lastValidValues: new WeakMap() // Track numeric input history
 };
 
@@ -15,6 +16,10 @@ export default state;
 
 export function setAllDatasets(datasets) {
     state.allDatasets = datasets;
+}
+
+export function setEditingOriginalName(name) {
+    state.editingOriginalName = name;
 }
 
 export function setActiveDataset(name) {
