@@ -306,8 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const etaVal = etaInput.value;
         const torqueVal = torqueInput.value;
 
-        // Skip if all inputs are empty
-        if (nVal === '' && etaVal === '' && torqueVal === '') return;
+        // Only proceed if ALL three fields (N, eta, torque) have values
+        if (nVal === '' || etaVal === '' || torqueVal === '') return;
 
         // --- Start Saving State ---
         tr.classList.add('syncing');
@@ -320,23 +320,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (id) {
                 // Update existing point
-                if (input.value === '' && input.dataset.field !== 'torque') {
-                     tr.classList.remove('syncing');
-                     return;
-                }
                 result = await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
                 chartNeedsUpdate = true;
             } else {
-                // Create new point - requires both N and eta
-                if (nVal !== '' && etaVal !== '') {
-                    result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
-                    tr.dataset.id = result.id;
-                    workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
-                    chartNeedsUpdate = true;
-                } else {
-                    tr.classList.remove('syncing');
-                    return;
-                }
+                // Create new point
+                result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
+                tr.dataset.id = result.id;
+                workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
+                chartNeedsUpdate = true;
             }
 
             // --- Success Check ---
