@@ -237,6 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 serial_id: serialId,
                 spindle_id: spindleId
             });
+            // Reload all data after metadata change, especially for spindle-based recalculations
+            await loadActiveDatasetData();
         } catch (error) {
             console.error('Failed to update metadata:', error);
             alert('Failed to save metadata.');
@@ -263,6 +265,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.tagName !== 'INPUT') return;
 
         const input = e.target;
+
+        // --- Check for Spindle ---
+        const spindleId = elements.datasetSpindleSelect.value;
+        if (!spindleId) {
+            alert('Please select a Spindle ID before adding data points.');
+            input.value = ''; // Clear value
+            return;
+        }
 
         // --- Numeric Validation (Strict Filter) ---
         const rawVal = input.value;

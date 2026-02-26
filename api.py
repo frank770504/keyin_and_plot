@@ -217,8 +217,8 @@ def add_point(name):
         return jsonify({"error": "Dataset not found"}), 404
 
     data = request.get_json()
-    if not data or 'N' not in data or 'eta' not in data:
-        return jsonify({"error": "Request must include N and eta values"}), 400
+    if not dataset_db.spindle_id or dataset_db.spindle_id not in SPINDLE_ID2FACTOR:
+        return jsonify({"error": "A valid Spindle ID must be selected before adding data points."}), 400
 
     try:
         N = float(data['N'])
