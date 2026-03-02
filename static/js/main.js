@@ -372,6 +372,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Only proceed if ALL three fields (N, eta, torque) have values
         if (nVal === '' || etaVal === '' || torqueVal === '') return;
 
+        // Fortify: Pop up the empty row as soon as these are filled
+        workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
+
         // --- Start Saving State ---
         tr.classList.add('syncing');
         shearRateDisplay.classList.add('syncing');

@@ -17,7 +17,7 @@ export function renderPointsTable(elements, points, onDelete) {
             newRows.push(tr);
             existingRows.delete(idStr);
         } else {
-            const tr = createTableRow(point.id, point.N, point.eta, onDelete, point.torque, point.shear_rate, point.shear_stress);
+            const tr = createTableRow(point.id, point.N, point.eta, onDelete, point.torque, point.shear_rate, point.shear_stress, () => ensureEmptyRow(elements, onDelete));
             newRows.push(tr);
         }
     });
@@ -68,7 +68,7 @@ export function updateTableRow(tr, N, eta, torque, shearRate, shearStress) {
     }
 }
 
-export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStress) {
+export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStress, onRemove) {
     const tr = document.createElement('tr');
     if (id) tr.dataset.id = id;
 
@@ -113,6 +113,7 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
             onDelete(id);
         } else {
             tr.remove();
+            if (onRemove) onRemove();
         }
     });
 
@@ -122,26 +123,34 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
 export function ensureEmptyRow(elements, onDelete) {
     const rows = Array.from(elements.pointsTableBody.querySelectorAll('tr'));
 
-    // Helper to check if a row is "empty" (no ID and no input values)
-    const isRowEmpty = (tr) => {
+    const isRowTrulyEmpty = (tr) => {
         if (tr.dataset.id) return false;
         const inputs = tr.querySelectorAll('input');
         return Array.from(inputs).every(input => input.value === '');
     };
 
-    const emptyRows = rows.filter(isRowEmpty);
+    const isRowComplete = (tr) => {
+        const n = tr.querySelector('input[data-field="N"]')?.value;
+        const eta = tr.querySelector('input[data-field="eta"]')?.value;
+        const torque = tr.querySelector('input[data-field="torque"]')?.value;
+        return n !== '' && eta !== '' && torque !== '';
+    };
+
     const lastRow = rows[rows.length - 1];
 
-    // 1. If there's no empty row at the very bottom, add one
-    if (!lastRow || !isRowEmpty(lastRow)) {
-        const tr = createTableRow(null, undefined, undefined, onDelete, undefined, undefined, undefined);
+    // 1. If last row is complete (or no rows at all), pop up a new truly empty row
+    if (!lastRow || isRowComplete(lastRow)) {
+        const tr = createTableRow(null, undefined, undefined, onDelete, undefined, undefined, undefined, () => ensureEmptyRow(elements, onDelete));
         elements.pointsTableBody.appendChild(tr);
     }
-    // 2. If there are multiple empty rows, remove the extras
-    else if (emptyRows.length > 1) {
-        // Keep only the last one
-        emptyRows.forEach((tr, index) => {
-            if (index < emptyRows.length - 1) {
+
+    // 2. Secondary cleanup: Ensure only ONE truly empty row exists, and it must be at the very end
+    const allRowsUpdated = Array.from(elements.pointsTableBody.querySelectorAll('tr'));
+    const trulyEmptyRows = allRowsUpdated.filter(isRowTrulyEmpty);
+    if (trulyEmptyRows.length > 1) {
+        trulyEmptyRows.forEach((tr, index) => {
+            const isLastInTable = tr === allRowsUpdated[allRowsUpdated.length - 1];
+            if (!isLastInTable || index < trulyEmptyRows.length - 1) {
                 tr.remove();
             }
         });
