@@ -213,20 +213,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function startEditMode() {
+    async function startEditMode(forceJoin = false) {
         if (!state.activeDataset) return;
         try {
-            await api.startEdit(state.activeDataset);
+            const result = await api.startEdit(state.activeDataset, forceJoin);
+
+            // --- Handle Conflict ---
+            if (result && result.conflict) {
+                const choice = prompt(
+                    `Another user is currently editing "${state.activeDataset}".\n\n` +
+                    `Type 'JOIN' to work on the shared draft.\n` +
+                    `Type 'COPY' to create a separate copy and edit that instead.\n` +
+                    `Press Cancel or leave blank to ABORT.`,
+                    "JOIN"
+                );
+
+                if (!choice) return; // ABORT
+
+                const action = choice.toUpperCase().trim();
+                if (action === 'JOIN') {
+                    // Force Join
+                    return startEditMode(true);
+                } else if (action === 'COPY') {
+                    // Create Copy (Fork)
+                    return handleForkDataset();
+                } else {
+                    return; // ABORT for any other input
+                }
+            }
+
             stateManager.setEditingOriginalName(state.activeDataset); // Store for potential rollback
             stateManager.setEditing(true);
             elements.editBtn.textContent = 'Save';
             elements.cancelEditBtn.style.display = 'inline-block';
             workspaceUI.updateEditModeUI(elements);
 
-            // Reload to get the new DRAFT IDs for points
+            // Reload to get the new DRAFT IDs for points (important for both Join and New Draft)
             await loadActiveDatasetData();
 
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function handleForkDataset() {
+        if (!state.activeDataset) return;
+        try {
+            const result = await api.duplicateDataset(state.activeDataset);
+            // Switch to the new copy and start editing there
+            await setActiveDataset(result.new_name);
+            await startEditMode(false); // Should succeed now as it's a new dataset
         } catch (error) {
             alert(error.message);
         }

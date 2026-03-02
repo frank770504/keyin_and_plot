@@ -1,8 +1,24 @@
 // static/js/api.js
 
-export async function startEdit(name) {
-    const response = await fetch(`/api/datasets/${name}/edit/start`, { method: 'POST' });
+export async function startEdit(name, forceJoin = false) {
+    const url = forceJoin
+        ? `/api/datasets/${name}/edit/start?force_join=true`
+        : `/api/datasets/${name}/edit/start`;
+
+    const response = await fetch(url, { method: 'POST' });
+    if (response.status === 409) {
+        return { conflict: true, data: await response.json() };
+    }
     if (!response.ok) throw new Error('Failed to start edit mode');
+    return await response.json();
+}
+
+export async function duplicateDataset(name) {
+    const response = await fetch(`/api/datasets/${name}/duplicate`, { method: 'POST' });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to duplicate dataset');
+    }
     return await response.json();
 }
 

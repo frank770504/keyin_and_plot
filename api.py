@@ -32,16 +32,25 @@ def start_edit_mode(name):
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    # Check if a draft already exists for this dataset
+    # Check if a draft already exists
     existing_draft = Dataset.query.filter_by(name=name, is_draft=True).first()
-    if existing_draft:
-        # If it exists, we just return success (re-entering)
+    force_join = request.args.get('force_join') == 'true'
+
+    if existing_draft and not force_join:
+        # CONFLICT: Someone is already editing
         return jsonify({
-            "message": "Editing already in progress",
+            "error": "Conflict",
+            "message": "Another user is currently editing this dataset.",
+            "draft_id": existing_draft.id
+        }), 409
+
+    if existing_draft and force_join:
+        return jsonify({
+            "message": "Joined existing editing session",
             "is_draft": True
         }), 200
 
-    # Create the draft dataset
+    # Create the draft dataset (Standard Flow)
     draft_dataset = Dataset(
         name=dataset.name,
         date=dataset.date,
@@ -51,9 +60,8 @@ def start_edit_mode(name):
         original_id=dataset.id
     )
     db.session.add(draft_dataset)
-    db.session.flush()  # Get ID for points
+    db.session.flush()
 
-    # Clone all points
     for p in dataset.points:
         draft_point = Point(
             N=p.N,
@@ -71,6 +79,50 @@ def start_edit_mode(name):
     return jsonify({
         "message": "Draft created successfully",
         "is_draft": True
+    }), 201
+
+
+@api_bp.route('/datasets/<string:name>/duplicate', methods=['POST'])
+def duplicate_dataset(name):
+    """Create a new independent dataset by cloning an existing one."""
+    original = Dataset.query.filter_by(name=name, is_draft=False).first()
+    if not original:
+        return jsonify({"error": "Dataset not found"}), 404
+
+    # Generate a unique name
+    base_name = f"{original.name} (Copy)"
+    new_name = base_name
+    counter = 1
+    while Dataset.query.filter_by(name=new_name, is_draft=False).first():
+        new_name = f"{base_name} {counter}"
+        counter += 1
+
+    new_dataset = Dataset(
+        name=new_name,
+        date=original.date,
+        serial_id=original.serial_id,
+        spindle_id=original.spindle_id,
+        is_draft=False
+    )
+    db.session.add(new_dataset)
+    db.session.flush()
+
+    for p in original.points:
+        new_p = Point(
+            N=p.N,
+            eta=p.eta,
+            torque=p.torque,
+            shear_rate=p.shear_rate,
+            shear_stress=p.shear_stress,
+            is_draft=False,
+            dataset=new_dataset
+        )
+        db.session.add(new_p)
+
+    db.session.commit()
+    return jsonify({
+        "message": "Dataset duplicated successfully",
+        "new_name": new_name
     }), 201
 
 
