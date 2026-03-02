@@ -213,6 +213,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Conflict Dialog Helper ---
+    function showConflictDialog(datasetName) {
+        const dialog = document.getElementById('conflict-dialog');
+        const message = document.getElementById('conflict-message');
+        message.textContent = `Another user is currently editing "${datasetName}". What would you like to do?`;
+
+        return new Promise((resolve) => {
+            const handleClose = () => {
+                dialog.removeEventListener('close', handleClose);
+                resolve(dialog.returnValue); // "join", "copy", or "abort" (via the form's button values)
+            };
+            dialog.addEventListener('close', handleClose);
+            dialog.showModal();
+        });
+    }
+
     async function startEditMode(forceJoin = false) {
         if (!state.activeDataset) return;
         try {
@@ -220,25 +236,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- Handle Conflict ---
             if (result && result.conflict) {
-                const choice = prompt(
-                    `Another user is currently editing "${state.activeDataset}".\n\n` +
-                    `Type 'JOIN' to work on the shared draft.\n` +
-                    `Type 'COPY' to create a separate copy and edit that instead.\n` +
-                    `Press Cancel or leave blank to ABORT.`,
-                    "JOIN"
-                );
+                const action = await showConflictDialog(state.activeDataset);
 
-                if (!choice) return; // ABORT
-
-                const action = choice.toUpperCase().trim();
-                if (action === 'JOIN') {
+                if (action === 'join') {
                     // Force Join
                     return startEditMode(true);
-                } else if (action === 'COPY') {
+                } else if (action === 'copy') {
                     // Create Copy (Fork)
                     return handleForkDataset();
                 } else {
-                    return; // ABORT for any other input
+                    return; // ABORT
                 }
             }
 

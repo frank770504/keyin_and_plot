@@ -131,6 +131,19 @@
         </div>
     </div>
 
+    <!-- Conflict Resolution Dialog -->
+    <dialog id="conflict-dialog" class="custom-modal">
+        <form method="dialog">
+            <h3>Editing Conflict</h3>
+            <p id="conflict-message">Another user is currently editing this dataset.</p>
+            <div class="modal-actions">
+                <button type="submit" value="join" class="btn-primary">Join Shared Session</button>
+                <button type="submit" value="copy" class="btn-secondary">Create Separate Copy</button>
+                <button type="submit" value="abort" class="btn-danger">Abort</button>
+            </div>
+        </form>
+    </dialog>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>

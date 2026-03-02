@@ -585,3 +585,54 @@ canvas {
     text-decoration: line-through;
     opacity: 0.6;
 }
+
+/* Custom Modal Dialog Styles */
+#conflict-dialog {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    padding: 20px;
+    width: 400px;
+    background: #fff;
+    font-family: inherit;
+}
+
+#conflict-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+#conflict-dialog h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+#conflict-dialog p {
+    color: #666;
+    line-height: 1.5;
+    margin: 15px 0 25px 0;
+}
+
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-actions button {
+    width: 100%;
+    padding: 12px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    transition: filter 0.2s;
+}
+
+.modal-actions button:hover {
+    filter: brightness(0.9);
+}
+
+.btn-primary { background-color: #007bff; color: white; }
+.btn-secondary { background-color: #6c757d; color: white; }
+.btn-danger { background-color: #dc3545; color: white; }
