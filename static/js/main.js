@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeChart = null;
     let comparisonChart = null;
+    const activeRequests = new Map(); // Track latest request ID per row
+    const pendingAdds = new Set();    // Track rows currently being created in DB
 
     // --- Layout Initialization ---
     layout.initLayoutCorrected(elements, [() => {
@@ -322,37 +324,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const activeRequests = new Map(); // Track latest request ID per row
-
-    async function handleTableInput(e) {
-        if (e.target.tagName !== 'INPUT') return;
-
-        const input = e.target;
-
+    async function syncTableRow(tr) {
         // --- Check for Spindle ---
         const spindleId = elements.datasetSpindleSelect.value;
         if (!spindleId) {
             alert('Please select a Spindle ID before adding data points.');
-            input.value = ''; // Clear value
             return;
         }
 
-        // --- Numeric Validation (Strict Filter) ---
-        const rawVal = input.value;
-        // Check if value is a valid numeric pattern or empty
-        const isValid = /^-?\d*\.?\d*$/.test(rawVal);
-
-        if (!isValid) {
-            // Revert to last known good value if invalid
-            input.value = state.lastValidValues.get(input) || '';
-            return; // Stop processing further for invalid input
-        }
-
-        // Update last valid value in global state
-        state.lastValidValues.set(input, rawVal);
-
-        const tr = input.closest('tr');
-        const id = tr.dataset.id;
+        let id = tr.dataset.id;
         const requestId = Date.now();
         activeRequests.set(tr, requestId);
 
@@ -372,9 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Only proceed if ALL three fields (N, eta, torque) have values
         if (nVal === '' || etaVal === '' || torqueVal === '') return;
 
-        // Fortify: Pop up the empty row as soon as these are filled
-        workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
-
         // --- Start Saving State ---
         tr.classList.add('syncing');
         shearRateDisplay.classList.add('syncing');
@@ -389,11 +366,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 result = await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
                 chartNeedsUpdate = true;
             } else {
-                // Create new point
-                result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
-                tr.dataset.id = result.id;
-                workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
-                chartNeedsUpdate = true;
+                // Create new point - LOCK to prevent duplicates if user is still typing
+                if (pendingAdds.has(tr)) return;
+                pendingAdds.add(tr);
+                try {
+                    result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
+                    tr.dataset.id = result.id;
+                    id = result.id; // Update local var for success check
+                    workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
+                    chartNeedsUpdate = true;
+                } finally {
+                    pendingAdds.delete(tr);
+                }
             }
 
             // --- Success Check ---
@@ -426,6 +410,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderActiveChart(data.points);
             } catch (error) { console.error('Chart reload failed:', error); }
         }
+    }
+
+    function handleTableNumericValidation(e) {
+        if (e.target.tagName !== 'INPUT') return;
+        const input = e.target;
+        const rawVal = input.value;
+
+        // Strict numeric filter
+        const isValid = /^-?\d*\.?\d*$/.test(rawVal);
+        if (!isValid) {
+            input.value = state.lastValidValues.get(input) || '';
+            return;
+        }
+        state.lastValidValues.set(input, rawVal);
+
+        // Proactive row creation: if the current row is now complete, pop up the next one
+        const tr = input.closest('tr');
+        const nVal = tr.querySelector('input[data-field="N"]').value;
+        const etaVal = tr.querySelector('input[data-field="eta"]').value;
+        const torqueVal = tr.querySelector('input[data-field="torque"]').value;
+
+        if (nVal !== '' && etaVal !== '' && torqueVal !== '') {
+            workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
+            syncTableRow(tr); // Immediately call backend when finished
+        }
+    }
+
+    async function handleTableInput(e) {
+        if (e.target.tagName !== 'INPUT') return;
+        const tr = e.target.closest('tr');
+        await syncTableRow(tr);
     }
 
     // Chart & Regression
@@ -507,6 +522,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.key === 'Enter') {
             e.preventDefault();
+            syncTableRow(tr); // Explicitly trigger sync on Enter
+
             if (fieldIndex === fields.length - 1) {
                 // Last field, move to next row's first field
                 const nextTr = tr.nextElementSibling;
@@ -605,6 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
     elements.datasetSpindleSelect.addEventListener('change', handleMetadataChange);
 
+    elements.pointsTableBody.addEventListener('input', handleTableNumericValidation);
     elements.pointsTableBody.addEventListener('change', handleTableInput);
 
     elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.show());
