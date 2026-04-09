@@ -128,7 +128,7 @@ def duplicate_dataset(name):
 
 @api_bp.route('/datasets/<string:name>/edit/commit', methods=['POST'])
 def commit_edit_mode(name):
-    """Merge draft changes back into the original dataset."""
+    """Merge draft changes back into the original dataset with intelligent syncing."""
     draft = Dataset.query.filter_by(name=name, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to commit"}), 404
@@ -143,23 +143,40 @@ def commit_edit_mode(name):
     original.serial_id = draft.serial_id
     original.spindle_id = draft.spindle_id
 
-    # Sync points: Simple approach is to
-    # clear original points and copy draft ones
-    # This preserves the draft state exactly
-    Point.query.filter_by(dataset_id=original.id).delete()
-    for dp in draft.points:
-        new_p = Point(
-            N=dp.N,
-            eta=dp.eta,
-            torque=dp.torque,
-            shear_rate=dp.shear_rate,
-            shear_stress=dp.shear_stress,
-            is_draft=False,
-            dataset=original
-        )
-        db.session.add(new_p)
+    # --- Sync points ---
+    # Map original points by ID for fast lookup
+    original_points_map = {p.id: p for p in original.points}
+    draft_point_ids_seen = set()
 
-    # Delete draft
+    for dp in draft.points:
+        if dp.original_id and dp.original_id in original_points_map:
+            # Update existing original point
+            op = original_points_map[dp.original_id]
+            op.N = dp.N
+            op.eta = dp.eta
+            op.torque = dp.torque
+            op.shear_rate = dp.shear_rate
+            op.shear_stress = dp.shear_stress
+            draft_point_ids_seen.add(dp.original_id)
+        else:
+            # Add new point (created in draft)
+            new_p = Point(
+                N=dp.N,
+                eta=dp.eta,
+                torque=dp.torque,
+                shear_rate=dp.shear_rate,
+                shear_stress=dp.shear_stress,
+                is_draft=False,
+                dataset=original
+            )
+            db.session.add(new_p)
+
+    # Delete original points that were not in the draft
+    for op_id, op in original_points_map.items():
+        if op_id not in draft_point_ids_seen:
+            db.session.delete(op)
+
+    # Delete draft dataset (cascades to draft points)
     db.session.delete(draft)
     db.session.commit()
 
