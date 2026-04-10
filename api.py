@@ -34,21 +34,14 @@ def start_edit_mode(name):
 
     # Check if a draft already exists
     existing_draft = Dataset.query.filter_by(name=name, is_draft=True).first()
-    force_join = request.args.get('force_join') == 'true'
 
-    if existing_draft and not force_join:
+    if existing_draft:
         # CONFLICT: Someone is already editing
         return jsonify({
             "error": "Conflict",
             "message": "Another user is currently editing this dataset.",
             "draft_id": existing_draft.id
         }), 409
-
-    if existing_draft and force_join:
-        return jsonify({
-            "message": "Joined existing editing session",
-            "is_draft": True
-        }), 200
 
     # Create the draft dataset (Standard Flow)
     draft_dataset = Dataset(

@@ -1,9 +1,7 @@
 // static/js/api.js
 
-export async function startEdit(name, forceJoin = false) {
-    const url = forceJoin
-        ? `/api/datasets/${name}/edit/start?force_join=true`
-        : `/api/datasets/${name}/edit/start`;
+export async function startEdit(name) {
+    const url = `/api/datasets/${name}/edit/start`;
 
     const response = await fetch(url, { method: 'POST' });
     if (response.status === 409) {

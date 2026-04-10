@@ -14,3 +14,17 @@ dependencies = [
     "scikit-learn",
     "numpy",
 ]
+
+[tool.pylsp.plugins.jedi]
+environment = ".venv"  # Path to your venv folder
+
+[dependency-groups]
+dev = [
+    "mypy>=1.20.0",
+    "pylint>=4.0.5",
+    "ruff>=0.15.10",
+]
+
+[[tool.mypy.overrides]]
+module = "sklearn.*"
+ignore_missing_imports = true

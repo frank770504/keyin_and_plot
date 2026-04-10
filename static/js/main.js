@@ -229,19 +229,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function startEditMode(forceJoin = false) {
+    async function startEditMode() {
         if (!state.activeDataset) return;
         try {
-            const result = await api.startEdit(state.activeDataset, forceJoin);
+            const result = await api.startEdit(state.activeDataset);
 
             // --- Handle Conflict ---
             if (result && result.conflict) {
                 const action = await showConflictDialog(state.activeDataset);
 
-                if (action === 'join') {
-                    // Force Join
-                    return startEditMode(true);
-                } else if (action === 'copy') {
+                if (action === 'copy') {
                     // Create Copy (Fork)
                     return handleForkDataset();
                 } else {
@@ -255,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.cancelEditBtn.style.display = 'inline-block';
             workspaceUI.updateEditModeUI(elements);
 
-            // Reload to get the new DRAFT IDs for points (important for both Join and New Draft)
+            // Reload to get the new DRAFT IDs for points
             await loadActiveDatasetData();
 
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
@@ -270,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await api.duplicateDataset(state.activeDataset);
             // Switch to the new copy and start editing there
             await setActiveDataset(result.new_name);
-            await startEditMode(false); // Should succeed now as it's a new dataset
+            await startEditMode(); // Should succeed now as it's a new dataset
         } catch (error) {
             alert(error.message);
         }
