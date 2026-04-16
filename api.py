@@ -5,7 +5,7 @@ APIs
 from flask import Blueprint, jsonify, request
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from models import db, Dataset, Point
 
@@ -41,7 +41,7 @@ def start_edit_mode(name):
 
     if existing_draft:
         # Check heartbeat
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         is_stale = False
         if existing_draft.last_heartbeat:
             if now - existing_draft.last_heartbeat > timedelta(seconds=120):
@@ -72,7 +72,7 @@ def start_edit_mode(name):
         is_draft=True,
         original_id=dataset.id,
         session_id=session_id,
-        last_heartbeat=datetime.utcnow()
+        last_heartbeat=datetime.now(UTC).replace(tzinfo=None)
     )
     db.session.add(draft_dataset)
     db.session.flush()
@@ -212,7 +212,7 @@ def heartbeat(name):
 
     # Only update if the session_id matches
     if draft.session_id == session_id:
-        draft.last_heartbeat = datetime.utcnow()
+        draft.last_heartbeat = datetime.now(UTC).replace(tzinfo=None)
         db.session.commit()
         return jsonify({"message": "Heartbeat updated"}), 200
 
