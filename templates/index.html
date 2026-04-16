@@ -16,6 +16,13 @@
             <button class="collapse-btn" id="collapse-left">&laquo;</button>
             <div class="column-content-wrapper">
                 <h1>Datasets</h1>
+
+                <div id="lock-status-container" class="status-panel">
+                    <span id="lock-status-text">Checking...</span>
+                    <button id="acquire-lock-btn" class="btn-small" style="display: none;">Become Editor</button>
+                    <button id="release-lock-btn" class="btn-small" style="display: none;">Release Lock</button>
+                </div>
+
                 <input type="text" id="dataset-search" placeholder="Search datasets..." class="search-bar">
                 <div class="dataset-list-wrapper">
                     <table id="dataset-list-table">
@@ -137,9 +144,11 @@
             <h3>Editing Conflict</h3>
             <p id="conflict-message">Another user is currently editing this dataset.</p>
             <div class="modal-actions">
+                <button type="submit" value="force" class="btn-warning">Take Over (Force)</button>
                 <button type="submit" value="copy" class="btn-secondary">Create Separate Copy</button>
                 <button type="submit" value="abort" class="btn-danger">Abort</button>
             </div>
+
         </form>
     </dialog>
 

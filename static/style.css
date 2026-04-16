@@ -9,6 +9,45 @@ body {
     height: 100vh;
 }
 
+.status-panel {
+    background: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+#lock-status-text {
+    font-weight: bold;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#acquire-lock-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+#release-lock-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+}
+
+#left-column h1 {
+    margin-top: 0;
+}
+
 .column {
     position: relative;
     transition: width 0.3s ease, padding 0.3s ease;

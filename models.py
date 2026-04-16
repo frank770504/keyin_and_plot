@@ -1,6 +1,18 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, UTC
 
 db = SQLAlchemy()
+
+
+class GlobalLock(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_name = db.Column(db.String(100), nullable=False)
+    session_id = db.Column(db.String(100), nullable=False, unique=True)
+    last_heartbeat = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC).replace(tzinfo=None))
+
+    def is_stale(self, timeout_seconds=120):
+        now = datetime.now(UTC).replace(tzinfo=None)
+        return (now - self.last_heartbeat).total_seconds() > timeout_seconds
 
 
 class Dataset(db.Model):
@@ -11,8 +23,7 @@ class Dataset(db.Model):
     spindle_id = db.Column(db.String(50), nullable=True)
     is_draft = db.Column(db.Boolean, default=False)
     original_id = db.Column(db.Integer, nullable=True)
-    last_heartbeat = db.Column(db.DateTime, nullable=True)
-    session_id = db.Column(db.String(100), nullable=True)
+    # Draft-related session columns removed
     points = db.relationship('Point', backref='dataset', cascade="all, delete-orphan", lazy=True)
 
     def __repr__(self):
@@ -32,6 +43,3 @@ class Point(db.Model):
 
     def __repr__(self):
         return f'<Point(N={self.N}, eta={self.eta})>'
-
-
-

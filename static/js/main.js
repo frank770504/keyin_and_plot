@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
         newDatasetNameInput: document.getElementById('new-dataset-name'),
         createDatasetBtn: document.getElementById('create-dataset-btn'),
 
+        // Lock UI
+        lockStatusText: document.getElementById('lock-status-text'),
+        acquireLockBtn: document.getElementById('acquire-lock-btn'),
+        releaseLockBtn: document.getElementById('release-lock-btn'),
+
         // Center Column
         centerColumn: document.getElementById('center-column'),
         activeDatasetName: document.getElementById('active-dataset-name'),
@@ -74,6 +79,119 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Controller Functions ---
 
+    // 0. Lock Management
+    async function pollLockStatus() {
+        try {
+            const data = await api.getLockStatus();
+            if (data.locked) {
+                // If it's me but I don't have a heartbeat running (e.g., page refresh), restore it
+                if (data.is_me && !state.heartbeatInterval) {
+                    stateManager.setGlobalEditor(true, data.user_name);
+                    startHeartbeat();
+                }
+                updateLockUI(data.locked, data.user_name, data.is_me);
+            } else {
+                updateLockUI(false);
+            }
+        } catch (error) {
+            console.error('Lock poll failed:', error);
+        }
+    }
+
+    function updateLockUI(locked, owner = null, isMe = false) {
+        if (locked) {
+            if (isMe) {
+                elements.lockStatusText.textContent = 'You are the Editor';
+                elements.lockStatusText.style.color = '#28a745';
+                elements.acquireLockBtn.style.display = 'none';
+                elements.releaseLockBtn.style.display = 'inline-block';
+            } else {
+                elements.lockStatusText.textContent = `${owner} is Editing`;
+                elements.lockStatusText.style.color = '#dc3545';
+                elements.acquireLockBtn.style.display = 'none';
+                elements.releaseLockBtn.style.display = 'none';
+            }
+        } else {
+            elements.lockStatusText.textContent = 'Status: Read-Only';
+            elements.lockStatusText.style.color = '#666';
+            elements.acquireLockBtn.style.display = 'inline-block';
+            elements.releaseLockBtn.style.display = 'none';
+
+            // If we thought we were the editor but the lock is gone, clear our state
+            if (state.isGlobalEditor) {
+                stopEditingDueToLockLoss();
+            }
+        }
+
+        // Disable/Enable globally restricted actions
+        const canWrite = state.isGlobalEditor;
+        elements.createDatasetBtn.disabled = !canWrite;
+        elements.newDatasetNameInput.disabled = !canWrite;
+        if (!canWrite && state.isEditing) {
+            stopEditingDueToLockLoss();
+        }
+    }
+
+    function startHeartbeat() {
+        const intervalId = setInterval(async () => {
+            try {
+                await api.sendHeartbeat();
+            } catch (error) {
+                console.error('Heartbeat lost:', error);
+                stopEditingDueToLockLoss();
+                alert('Your editor session has expired or was taken over.');
+            }
+        }, 30000);
+        stateManager.setHeartbeat(intervalId);
+    }
+
+    async function handleAcquireLock() {
+        if (!state.userName) {
+            const name = prompt("Please enter your name to identify your edit sessions:");
+            if (!name || name.trim() === '') return;
+            stateManager.setUserName(name.trim());
+        }
+
+        try {
+            await api.acquireLock(state.userName, state.sessionID);
+            stateManager.setGlobalEditor(true, state.userName);
+            startHeartbeat();
+            updateLockUI(true, state.userName, true);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function handleReleaseLock() {
+        try {
+            if (state.isEditing) {
+                if (!confirm('You are currently editing a dataset. Releasing the lock will discard unsaved changes. Continue?')) {
+                    return;
+                }
+                await cancelEditMode();
+            }
+            await api.releaseLock();
+            stateManager.setGlobalEditor(false);
+            stateManager.clearHeartbeat();
+            updateLockUI(false);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    function stopEditingDueToLockLoss() {
+        stateManager.setGlobalEditor(false);
+        stateManager.clearHeartbeat();
+        if (state.isEditing) {
+            stateManager.setEditing(false);
+            stateManager.setEditingOriginalName(null);
+            elements.editBtn.textContent = 'Edit';
+            elements.cancelEditBtn.style.display = 'none';
+            workspaceUI.updateEditModeUI(elements);
+            loadActiveDatasetData();
+        }
+    }
+
     // 1. Data Loading & List Management
     async function loadAndRenderDatasets() {
         try {
@@ -97,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // If we are leaving a dataset while editing, discard its draft
                 await api.rollbackEdit(state.activeDataset);
-                stateManager.clearEditSession();
                 console.log(`Auto-rolled back changes for ${state.activeDataset}`);
             } catch (error) {
                 console.error('Failed to auto-rollback:', error);
@@ -179,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleCreateDataset() {
+        if (!state.isGlobalEditor) return alert('You must be the Editor to create datasets.');
         const name = elements.newDatasetNameInput.value.trim();
         if (!name) return alert('Please enter a dataset name.');
         try {
@@ -191,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleDeleteDataset(name) {
-        // If name is passed (from list context? removed now), or use active
+        if (!state.isGlobalEditor) return alert('You must be the Editor to delete datasets.');
         const targetName = name || state.activeDataset;
         if (!targetName) return;
 
@@ -214,47 +332,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Conflict Dialog Helper ---
-    function showConflictDialog(datasetName) {
-        const dialog = document.getElementById('conflict-dialog');
-        const message = document.getElementById('conflict-message');
-        message.textContent = `Another user is currently editing "${datasetName}". What would you like to do?`;
-
-        return new Promise((resolve) => {
-            const handleClose = () => {
-                dialog.removeEventListener('close', handleClose);
-                resolve(dialog.returnValue); // "join", "copy", or "abort" (via the form's button values)
-            };
-            dialog.addEventListener('close', handleClose);
-            dialog.showModal();
-        });
-    }
-
     async function startEditMode() {
         if (!state.activeDataset) return;
+        if (!state.isGlobalEditor) return alert('You must acquire the Editor Lock before editing.');
+
         try {
-            const sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
-            const result = await api.startEdit(state.activeDataset, sessionId);
+            await api.startEdit(state.activeDataset);
 
-            // --- Handle Conflict ---
-            if (result && result.conflict) {
-                const action = await showConflictDialog(state.activeDataset);
-
-                if (action === 'copy') {
-                    // Create Copy (Fork)
-                    return handleForkDataset();
-                } else {
-                    return; // ABORT
-                }
-            }
-
-            const intervalId = setInterval(() => {
-                if (state.isEditing && state.activeDataset && state.editSessionId) {
-                    api.sendHeartbeat(state.activeDataset, state.editSessionId);
-                }
-            }, 30000); // 30s heartbeats
-
-            stateManager.setEditSession(sessionId, intervalId);
             stateManager.setEditingOriginalName(state.activeDataset); // Store for potential rollback
             stateManager.setEditing(true);
             elements.editBtn.textContent = 'Save';
@@ -270,22 +354,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function handleForkDataset() {
-        if (!state.activeDataset) return;
-        try {
-            const result = await api.duplicateDataset(state.activeDataset);
-            // Switch to the new copy and start editing there
-            await setActiveDataset(result.new_name);
-            await startEditMode(); // Should succeed now as it's a new dataset
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
     async function commitEditMode() {
         try {
             await api.commitEdit(state.activeDataset);
-            stateManager.clearEditSession();
             stateManager.setEditing(false);
             stateManager.setEditingOriginalName(null);
             elements.editBtn.textContent = 'Edit';
@@ -302,7 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Use the current active dataset name to hit the rollback API
             await api.rollbackEdit(state.activeDataset);
-            stateManager.clearEditSession();
 
             // If the name was changed during draft, we must revert to the original name
             if (state.activeDataset !== state.editingOriginalName) {
@@ -332,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            await api.updateDataset(state.activeDataset, { name: newName });
+            await api.updateMetadata(state.activeDataset, { name: newName });
             stateManager.setActiveDataset(newName);
             elements.activeDatasetName.textContent = newName;
             loadAndRenderDatasets(); // Refresh list
@@ -344,12 +414,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleMetadataChange() {
-        if (!state.activeDataset) return;
+        if (!state.activeDataset || !state.isEditing) return;
         const date = elements.datasetDateInput.value;
         const serialId = elements.datasetSerialIdInput.value;
         const spindleId = elements.datasetSpindleSelect.value;
         try {
-            await api.updateDataset(state.activeDataset, {
+            await api.updateMetadata(state.activeDataset, {
                 date: date,
                 serial_id: serialId,
                 spindle_id: spindleId
@@ -364,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Points Logic
     async function handleDeletePoint(pointId) {
-        if (!state.activeDataset) return;
+        if (!state.activeDataset || !state.isEditing) return;
         if (confirm('Are you sure you want to delete this point?')) {
             try {
                 await api.deletePoint(state.activeDataset, pointId);
@@ -377,6 +447,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function syncTableRow(tr) {
+        if (!state.isEditing) return;
+
         // --- Check for Spindle ---
         const spindleId = elements.datasetSpindleSelect.value;
         if (!spindleId) {
@@ -500,10 +572,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.activeDataset || !activeChart) return;
         try {
             const regressionData = await api.getRegressionData(state.activeDataset, type);
-            // Logic to add regression dataset to chart...
-            // This logic is a bit tied to specific chart instance manipulation
-            // Ideally should be in chart_service, but passing the chart instance or managing it there is cleaner.
-            // For now, I'll inline the logic but adapt it.
 
             const regressionPoints = regressionData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
             let label;
@@ -658,6 +726,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
 
+    elements.acquireLockBtn.addEventListener('click', handleAcquireLock);
+    elements.releaseLockBtn.addEventListener('click', handleReleaseLock);
+
     elements.editBtn.addEventListener('click', () => {
         if (!state.isEditing) {
             startEditMode();
@@ -685,6 +756,8 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
 
 
-    // --- Initial Load ---
+    // --- Initial Load & Polling ---
     loadAndRenderDatasets();
+    pollLockStatus();
+    setInterval(pollLockStatus, 10000); // Poll lock status every 10s
 });

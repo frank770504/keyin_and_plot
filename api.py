@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from datetime import datetime, timedelta, UTC
 
-from models import db, Dataset, Point
+from models import db, Dataset, Point, GlobalLock
 
 api_bp = Blueprint('api', __name__)
 
@@ -26,11 +26,110 @@ def get_best_dataset(name):
     return Dataset.query.filter_by(name=name, is_draft=False).first()
 
 
+def check_lock():
+    """Helper to verify if the requester holds the active global lock."""
+    session_id = request.headers.get('X-Session-ID')
+    if not session_id:
+        return False, "Missing Session ID"
+    
+    lock = GlobalLock.query.first()
+    if not lock:
+        return False, "No active editor lock"
+    
+    if lock.is_stale():
+        db.session.delete(lock)
+        db.session.commit()
+        return False, "Lock has expired"
+    
+    if lock.session_id != session_id:
+        return False, f"Lock held by {lock.user_name}"
+    
+    # Update heartbeat on successful check
+    lock.last_heartbeat = datetime.now(UTC).replace(tzinfo=None)
+    db.session.commit()
+    return True, None
+
+
+# --- Lock Endpoints ---
+
+@api_bp.route('/lock', methods=['GET'])
+def get_lock_status():
+    """Check who currently holds the global editor lock."""
+    session_id = request.headers.get('X-Session-ID')
+    lock = GlobalLock.query.first()
+    if not lock:
+        return jsonify({"locked": False})
+    
+    if lock.is_stale():
+        db.session.delete(lock)
+        db.session.commit()
+        return jsonify({"locked": False})
+    
+    return jsonify({
+        "locked": True,
+        "user_name": lock.user_name,
+        "is_me": (lock.session_id == session_id) if session_id else False,
+        "last_active": (datetime.now(UTC).replace(tzinfo=None) - lock.last_heartbeat).total_seconds()
+    })
+
+
+@api_bp.route('/lock/acquire', methods=['POST'])
+def acquire_lock():
+    """Attempt to become the global editor."""
+    data = request.get_json() or {}
+    user_name = data.get('user_name')
+    session_id = data.get('session_id')
+    
+    if not user_name or not session_id:
+        return jsonify({"error": "Missing user_name or session_id"}), 400
+    
+    lock = GlobalLock.query.first()
+    if lock:
+        if not lock.is_stale():
+            return jsonify({
+                "error": "Locked",
+                "user_name": lock.user_name
+            }), 409
+        # Lock is stale, delete it
+        db.session.delete(lock)
+        db.session.commit()
+    
+    new_lock = GlobalLock(user_name=user_name, session_id=session_id)
+    db.session.add(new_lock)
+    db.session.commit()
+    
+    return jsonify({"message": "Lock acquired"}), 201
+
+
+@api_bp.route('/lock/release', methods=['POST'])
+def release_lock():
+    """Relinquish the global editor lock."""
+    session_id = request.headers.get('X-Session-ID')
+    lock = GlobalLock.query.filter_by(session_id=session_id).first()
+    if lock:
+        db.session.delete(lock)
+        db.session.commit()
+        return jsonify({"message": "Lock released"}), 200
+    return jsonify({"error": "Not the lock holder"}), 403
+
+
+@api_bp.route('/lock/heartbeat', methods=['POST'])
+def lock_heartbeat():
+    """Keep the global lock alive."""
+    success, error = check_lock()
+    if success:
+        return jsonify({"message": "Heartbeat updated"}), 200
+    return jsonify({"error": error}), 403
+
+
+# --- Dataset Endpoints ---
+
 @api_bp.route('/datasets/<string:name>/edit/start', methods=['POST'])
 def start_edit_mode(name):
     """Clone a dataset to create a draft for editing."""
-    data = request.get_json() or {}
-    session_id = data.get('session_id')
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
 
     dataset = Dataset.query.filter_by(name=name, is_draft=False).first()
     if not dataset:
@@ -38,41 +137,19 @@ def start_edit_mode(name):
 
     # Check if a draft already exists
     existing_draft = Dataset.query.filter_by(name=name, is_draft=True).first()
-
     if existing_draft:
-        # Check heartbeat
-        now = datetime.now(UTC).replace(tzinfo=None)
-        is_stale = False
-        if existing_draft.last_heartbeat:
-            if now - existing_draft.last_heartbeat > timedelta(seconds=120):
-                is_stale = True
-        else:
-            # If no heartbeat set, treat as stale if created long ago (but we just added the column, so let's be safe)
-            is_stale = True
+        # If a draft exists, we just return success (someone might have left it)
+        # In a single-editor system, the editor owns all drafts.
+        return jsonify({"message": "Draft already exists", "is_draft": True}), 200
 
-        if is_stale:
-            # AUTO-TAKE-OVER: Delete stale draft
-            db.session.delete(existing_draft)
-            db.session.commit()
-            existing_draft = None
-        else:
-            # CONFLICT: Someone is already editing
-            return jsonify({
-                "error": "Conflict",
-                "message": "Another user is currently editing this dataset.",
-                "draft_id": existing_draft.id
-            }), 409
-
-    # Create the draft dataset (Standard Flow)
+    # Create the draft dataset
     draft_dataset = Dataset(
         name=dataset.name,
         date=dataset.date,
         serial_id=dataset.serial_id,
         spindle_id=dataset.spindle_id,
         is_draft=True,
-        original_id=dataset.id,
-        session_id=session_id,
-        last_heartbeat=datetime.now(UTC).replace(tzinfo=None)
+        original_id=dataset.id
     )
     db.session.add(draft_dataset)
     db.session.flush()
@@ -100,6 +177,10 @@ def start_edit_mode(name):
 @api_bp.route('/datasets/<string:name>/duplicate', methods=['POST'])
 def duplicate_dataset(name):
     """Create a new independent dataset by cloning an existing one."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
     original = Dataset.query.filter_by(name=name, is_draft=False).first()
     if not original:
         return jsonify({"error": "Dataset not found"}), 404
@@ -143,7 +224,11 @@ def duplicate_dataset(name):
 
 @api_bp.route('/datasets/<string:name>/edit/commit', methods=['POST'])
 def commit_edit_mode(name):
-    """Merge draft changes back into the original dataset with intelligent syncing."""
+    """Merge draft changes back into the original dataset."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
     draft = Dataset.query.filter_by(name=name, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to commit"}), 404
@@ -159,13 +244,11 @@ def commit_edit_mode(name):
     original.spindle_id = draft.spindle_id
 
     # --- Sync points ---
-    # Map original points by ID for fast lookup
     original_points_map = {p.id: p for p in original.points}
     draft_point_ids_seen = set()
 
     for dp in draft.points:
         if dp.original_id and dp.original_id in original_points_map:
-            # Update existing original point
             op = original_points_map[dp.original_id]
             op.N = dp.N
             op.eta = dp.eta
@@ -174,7 +257,6 @@ def commit_edit_mode(name):
             op.shear_stress = dp.shear_stress
             draft_point_ids_seen.add(dp.original_id)
         else:
-            # Add new point (created in draft)
             new_p = Point(
                 N=dp.N,
                 eta=dp.eta,
@@ -186,42 +268,22 @@ def commit_edit_mode(name):
             )
             db.session.add(new_p)
 
-    # Delete original points that were not in the draft
     for op_id, op in original_points_map.items():
         if op_id not in draft_point_ids_seen:
             db.session.delete(op)
 
-    # Delete draft dataset (cascades to draft points)
     db.session.delete(draft)
     db.session.commit()
-
     return jsonify({"message": "Changes committed successfully"}), 200
-
-
-@api_bp.route('/datasets/<string:name>/heartbeat', methods=['POST'])
-def heartbeat(name):
-    """Keep a draft alive."""
-    data = request.get_json() or {}
-    session_id = data.get('session_id')
-    if not session_id:
-        return jsonify({"error": "Missing session_id"}), 400
-
-    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
-    if not draft:
-        return jsonify({"error": "No draft found"}), 404
-
-    # Only update if the session_id matches
-    if draft.session_id == session_id:
-        draft.last_heartbeat = datetime.now(UTC).replace(tzinfo=None)
-        db.session.commit()
-        return jsonify({"message": "Heartbeat updated"}), 200
-
-    return jsonify({"error": "Session ID mismatch"}), 403
 
 
 @api_bp.route('/datasets/<string:name>/edit/rollback', methods=['POST'])
 def rollback_edit_mode(name):
     """Discard the draft and exit edit mode."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
     draft = Dataset.query.filter_by(name=name, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to rollback"}), 404
@@ -233,138 +295,109 @@ def rollback_edit_mode(name):
 
 @api_bp.route('/datasets/<string:name>/regression', methods=['GET'])
 def get_regression(name):
-    """Calculate and return a linear regression for the dataset (Shear Stress vs Shear Rate)."""
+    """Calculate and return a linear regression for the dataset."""
     dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    points = dataset.points
-    # Filter points where shear_rate and shear_stress are available
-    valid_points = [p for p in points if p.shear_rate is not None and p.shear_stress is not None]
-
+    valid_points = [p for p in dataset.points if p.shear_rate is not None and p.shear_stress is not None]
     if len(valid_points) < 2:
-        return jsonify({"error": "Not enough data points with shear rate/stress to calculate regression"}), 400
+        return jsonify({"error": "Not enough data points"}), 400
 
-    # Prepare data for scikit-learn
     X_values = np.array([p.shear_rate for p in valid_points]).reshape(-1, 1)
     Y_values = np.array([p.shear_stress for p in valid_points])
 
-    # Perform linear regression
     model = LinearRegression()
     model.fit(X_values, Y_values)
 
-    # Calculate R-squared
-    r_squared = model.score(X_values, Y_values)
-    slope = model.coef_[0]
-    intercept = model.intercept_
-
-    # Generate points for the regression line
-    X_min = np.min(X_values)
-    X_max = np.max(X_values)
+    X_min, X_max = np.min(X_values), np.max(X_values)
     X_line = np.linspace(X_min, X_max, 100).reshape(-1, 1)
     Y_line = model.predict(X_line)
 
     regression_points = [{"shear_rate": X_line[i][0], "shear_stress": Y_line[i]} for i in range(len(X_line))]
-
     return jsonify({
         "regression_points": regression_points,
-        "r_squared": r_squared,
-        "slope": slope,
-        "intercept": intercept
+        "r_squared": model.score(X_values, Y_values),
+        "slope": model.coef_[0],
+        "intercept": model.intercept_
     })
 
 
 @api_bp.route('/datasets/<string:name>/power-regression', methods=['GET'])
 def get_power_regression(name):
-    """Calculate and return a power law regression for the dataset (Shear Stress vs Shear Rate)."""
+    """Calculate and return a power law regression for the dataset."""
     dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    points = dataset.points
-    # Filter for points where shear_rate and shear_stress are positive for log transformation
-    positive_points = [p for p in points if p.shear_rate is not None and p.shear_stress is not None and p.shear_rate > 0 and p.shear_stress > 0]
-
+    positive_points = [p for p in dataset.points if p.shear_rate and p.shear_stress and p.shear_rate > 0 and p.shear_stress > 0]
     if len(positive_points) < 2:
-        return jsonify({"error": "Not enough positive data points for power law regression"}), 400
+        return jsonify({"error": "Not enough positive data points"}), 400
 
-    # Prepare data for log-log linear regression
-    log_X_values = np.log(np.array([p.shear_rate for p in positive_points])).reshape(-1, 1)
-    log_Y_values = np.log(np.array([p.shear_stress for p in positive_points]))
+    log_X = np.log(np.array([p.shear_rate for p in positive_points])).reshape(-1, 1)
+    log_Y = np.log(np.array([p.shear_stress for p in positive_points]))
 
     model = LinearRegression()
-    model.fit(log_X_values, log_Y_values)
+    model.fit(log_X, log_Y)
 
-    r_squared = model.score(log_X_values, log_Y_values)
-    log_a = model.intercept_
+    a = np.exp(model.intercept_)
     b = model.coef_[0]
-    a = np.exp(log_a)
 
-    # Generate points for the power law curve
     X_min = np.min([p.shear_rate for p in positive_points])
     X_max = np.max([p.shear_rate for p in positive_points])
     X_line = np.linspace(X_min, X_max, 100)
     Y_line = a * (X_line ** b)
 
     regression_points = [{"shear_rate": X_line[i], "shear_stress": Y_line[i]} for i in range(len(X_line))]
-
     return jsonify({
         "regression_points": regression_points,
-        "r_squared": r_squared,
-        "a": a,
-        "b": b
+        "r_squared": model.score(log_X, log_Y),
+        "a": a, "b": b
     })
 
 
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
-    """Return a list of all non-draft datasets with metadata."""
+    """Return a list of all non-draft datasets."""
     all_datasets = Dataset.query.filter_by(is_draft=False).all()
-    datasets_data = [{
-        "name": d.name,
-        "date": d.date,
-        "serial_id": d.serial_id,
-        "spindle_id": d.spindle_id
-    } for d in all_datasets]
-    return jsonify(datasets_data)
+    return jsonify([{
+        "name": d.name, "date": d.date, "serial_id": d.serial_id, "spindle_id": d.spindle_id
+    } for d in all_datasets])
 
 
 @api_bp.route('/datasets', methods=['POST'])
 def create_dataset():
     """Create a new, empty dataset."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
     data = request.get_json()
-    if not data or 'name' not in data or not data['name'].strip():
-        return jsonify({"error": "Dataset name must be a non-empty string"}), 400
+    name = data.get('name', '').strip()
+    if not name:
+        return jsonify({"error": "Dataset name required"}), 400
 
-    dataset_name = data['name'].strip()
-    if Dataset.query.filter_by(name=dataset_name).first():
-        return jsonify({"error": "Dataset with this name already exists"}), 409
+    if Dataset.query.filter_by(name=name, is_draft=False).first():
+        return jsonify({"error": "Dataset already exists"}), 409
 
-    new_dataset_db = Dataset(name=dataset_name)
-    db.session.add(new_dataset_db)
+    new_ds = Dataset(name=name)
+    db.session.add(new_ds)
     db.session.commit()
-
-    print(f"Created new dataset: '{dataset_name}'")
-    return jsonify({"message": f"Dataset '{dataset_name}' created successfully"}), 201
+    return jsonify({"message": f"Dataset '{name}' created"}), 201
 
 
 @api_bp.route('/datasets/<string:name>', methods=['GET'])
 def get_dataset(name):
-    """Return the points for a specific dataset (draft if exists)."""
+    """Return points and metadata for a dataset."""
     dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
-    points = [{
-        "id": p.id,
-        "N": p.N,
-        "eta": p.eta,
-        "torque": p.torque,
-        "shear_rate": p.shear_rate,
-        "shear_stress": p.shear_stress
-    } for p in dataset.points]
     return jsonify({
-        "points": points,
+        "points": [{
+            "id": p.id, "N": p.N, "eta": p.eta, "torque": p.torque,
+            "shear_rate": p.shear_rate, "shear_stress": p.shear_stress
+        } for p in dataset.points],
         "date": dataset.date,
         "serial_id": dataset.serial_id,
         "spindle_id": dataset.spindle_id
@@ -373,181 +406,121 @@ def get_dataset(name):
 
 @api_bp.route('/datasets/<string:name>', methods=['PUT'])
 def update_dataset(name):
-    """Update dataset metadata (draft if exists)."""
+    """Update dataset metadata (Renaming and metadata)."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
     dataset = get_best_dataset(name)
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
 
     data = request.get_json()
-    if 'date' in data:
-        dataset.date = data['date']
-    if 'serial_id' in data:
-        dataset.serial_id = data['serial_id']
+    if 'date' in data: dataset.date = data['date']
+    if 'serial_id' in data: dataset.serial_id = data['serial_id']
     if 'spindle_id' in data:
         dataset.spindle_id = data['spindle_id']
-        # Recalculate shear properties for all points
-        if dataset.spindle_id and dataset.spindle_id in SPINDLE_ID2FACTOR:
-            factor = SPINDLE_ID2FACTOR[dataset.spindle_id]
-            for point in dataset.points:
-                point.shear_rate = factor * point.N
-                point.shear_stress = point.eta * point.shear_rate * 0.001
-        else:
-            for point in dataset.points:
-                point.shear_rate = None
-                point.shear_stress = None
+        factor = SPINDLE_ID2FACTOR.get(dataset.spindle_id)
+        for p in dataset.points:
+            if factor:
+                p.shear_rate = factor * p.N
+                p.shear_stress = p.eta * p.shear_rate * 0.001
+            else:
+                p.shear_rate = p.shear_stress = None
 
     if 'name' in data:
         new_name = data['name'].strip()
-        if not new_name:
-            return jsonify({"error": "New name cannot be empty"}), 400
-
-        # Only check uniqueness against other non-draft datasets
-        if new_name != name and Dataset.query.filter_by(
-                name=new_name, is_draft=False).first():
-            return jsonify({
-                "error": "Dataset with this name already exists"
-            }), 409
-        dataset.name = new_name
+        if new_name and new_name != name:
+            if Dataset.query.filter_by(name=new_name, is_draft=False).first():
+                return jsonify({"error": "Name already exists"}), 409
+            dataset.name = new_name
 
     db.session.commit()
-    return jsonify({"message": "Dataset updated successfully"}), 200
+    return jsonify({"message": "Updated successfully"}), 200
 
 
 @api_bp.route('/datasets/<string:name>', methods=['DELETE'])
 def delete_dataset(name):
-    """Delete a dataset (original and its draft)."""
-    # Delete original
-    original = Dataset.query.filter_by(name=name, is_draft=False).first()
-    if original:
-        db.session.delete(original)
+    """Delete a dataset and its draft."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    # Delete any associated draft
+    original = Dataset.query.filter_by(name=name, is_draft=False).first()
+    if original: db.session.delete(original)
     draft = Dataset.query.filter_by(name=name, is_draft=True).first()
-    if draft:
-        db.session.delete(draft)
+    if draft: db.session.delete(draft)
 
     db.session.commit()
-    print(f"Deleted dataset and potential draft: '{name}'")
-    return jsonify({"message": f"Dataset '{name}' deleted"}), 200
+    return jsonify({"message": "Deleted"}), 200
 
 
 @api_bp.route('/datasets/<string:name>/points', methods=['POST'])
 def add_point(name):
-    """Add a new point to a dataset (prefers draft)."""
-    dataset_db = get_best_dataset(name)
-    if not dataset_db:
-        return jsonify({"error": "Dataset not found"}), 404
+    """Add a point to a dataset."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
+    dataset = get_best_dataset(name)
+    if not dataset: return jsonify({"error": "Dataset not found"}), 404
+
+    factor = SPINDLE_ID2FACTOR.get(dataset.spindle_id)
+    if not factor: return jsonify({"error": "Select a valid spindle first"}), 400
 
     data = request.get_json()
-    if not dataset_db.spindle_id or dataset_db.spindle_id not in SPINDLE_ID2FACTOR:
-        _err_string = ("A valid Spindle ID "
-                       "must be selected before adding data points.")
-        return jsonify({
-            "error": _err_string}), 400
-
     try:
-        N = float(data['N'])
-        eta = float(data['eta'])
-        torque = float(data['torque']) if 'torque' in data and data['torque'] != '' else None
+        N, eta = float(data['N']), float(data['eta'])
+        torque = float(data['torque']) if data.get('torque') else None
     except (ValueError, TypeError):
-        return jsonify({"error": "N, eta and torque must be valid numbers"}), 400
+        return jsonify({"error": "Invalid numbers"}), 400
 
-    shear_rate = None
-    shear_stress = None
-    if dataset_db.spindle_id and dataset_db.spindle_id in SPINDLE_ID2FACTOR:
-        factor = SPINDLE_ID2FACTOR[dataset_db.spindle_id]
-        shear_rate = factor * N
-        shear_stress = eta * shear_rate * 0.001
-
-    new_point_db = Point(
-        N=N,
-        eta=eta,
-        torque=torque,
-        shear_rate=shear_rate,
-        shear_stress=shear_stress,
-        is_draft=dataset_db.is_draft,
-        dataset=dataset_db
-    )
-    db.session.add(new_point_db)
+    sr = factor * N
+    ss = eta * sr * 0.001
+    new_p = Point(N=N, eta=eta, torque=torque, shear_rate=sr, shear_stress=ss, is_draft=dataset.is_draft, dataset=dataset)
+    db.session.add(new_p)
     db.session.commit()
-
-    print(f"Added point ({N}, {eta}) to dataset '{name}' "
-          f"(Draft: {dataset_db.is_draft})")
-    return jsonify({
-        "message": "Point added successfully",
-        "id": new_point_db.id,
-        "shear_rate": shear_rate,
-        "shear_stress": shear_stress
-    }), 201
+    return jsonify({"id": new_p.id, "shear_rate": sr, "shear_stress": ss}), 201
 
 
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['DELETE'])
 def delete_point(name, point_id):
-    """Delete a point from a dataset."""
+    """Delete a point."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
     dataset = get_best_dataset(name)
-    if not dataset:
-        return jsonify({"error": "Dataset not found"}), 404
+    point = Point.query.filter_by(id=point_id, dataset_id=dataset.id).first()
+    if not point: return jsonify({"error": "Point not found"}), 404
 
-    point_to_delete = Point.query.filter_by(
-            id=point_id, dataset_id=dataset.id).first()
-    if not point_to_delete:
-        return jsonify({"error": "Point not found in this dataset"}), 404
-
-    db.session.delete(point_to_delete)
+    db.session.delete(point)
     db.session.commit()
-
-    print(f"Deleted point {point_to_delete} from dataset '{name}'")
     return jsonify({"message": "Point deleted"}), 200
 
 
 @api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['PUT'])
 def update_point(name, point_id):
-    """Update a point in a dataset."""
-    dataset = get_best_dataset(name)
-    if not dataset:
-        return jsonify({"error": "Dataset not found"}), 404
+    """Update a point."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    point_to_update = Point.query.filter_by(
-            id=point_id, dataset_id=dataset.id).first()
-    if not point_to_update:
-        return jsonify({"error": "Point not found in this dataset"}), 404
+    dataset = get_best_dataset(name)
+    point = Point.query.filter_by(id=point_id, dataset_id=dataset.id).first()
+    if not point: return jsonify({"error": "Point not found"}), 404
 
     data = request.get_json()
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
+    if 'N' in data: point.N = float(data['N'])
+    if 'eta' in data: point.eta = float(data['eta'])
+    if 'torque' in data: point.torque = float(data['torque']) if data['torque'] else None
 
-    if 'N' in data:
-        try:
-            point_to_update.N = float(data['N'])
-        except (ValueError, TypeError):
-            return jsonify({"error": "N must be a valid number"}), 400
-
-    if 'eta' in data:
-        try:
-            point_to_update.eta = float(data['eta'])
-        except (ValueError, TypeError):
-            return jsonify({"error": "eta must be a valid number"}), 400
-
-    if 'torque' in data:
-        try:
-            point_to_update.torque = float(data['torque']) if data['torque'] else None
-        except (ValueError, TypeError):
-            return jsonify({"error": "torque must be a valid number"}), 400
-
-    # Recalculate shear properties
-    if dataset.spindle_id and dataset.spindle_id in SPINDLE_ID2FACTOR:
-        factor = SPINDLE_ID2FACTOR[dataset.spindle_id]
-        point_to_update.shear_rate = factor * point_to_update.N
-        point_to_update.shear_stress = point_to_update.eta * point_to_update.shear_rate * 0.001
+    factor = SPINDLE_ID2FACTOR.get(dataset.spindle_id)
+    if factor:
+        point.shear_rate = factor * point.N
+        point.shear_stress = point.eta * point.shear_rate * 0.001
     else:
-        point_to_update.shear_rate = None
-        point_to_update.shear_stress = None
+        point.shear_rate = point.shear_stress = None
 
     db.session.commit()
-
-    print(f"Updated point {point_id} in dataset '{name}' to ({point_to_update.N}, {point_to_update.eta})")
-    return jsonify({
-        "message": "Point updated successfully",
-        "shear_rate": point_to_update.shear_rate,
-        "shear_stress": point_to_update.shear_stress
-    }), 200
+    return jsonify({"shear_rate": point.shear_rate, "shear_stress": point.shear_stress}), 200
