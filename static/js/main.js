@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // If we are leaving a dataset while editing, discard its draft
                 await api.rollbackEdit(state.activeDataset);
+                stateManager.clearEditSession();
                 console.log(`Auto-rolled back changes for ${state.activeDataset}`);
             } catch (error) {
                 console.error('Failed to auto-rollback:', error);
@@ -232,7 +233,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function startEditMode() {
         if (!state.activeDataset) return;
         try {
-            const result = await api.startEdit(state.activeDataset);
+            const sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+            const result = await api.startEdit(state.activeDataset, sessionId);
 
             // --- Handle Conflict ---
             if (result && result.conflict) {
@@ -246,6 +248,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            const intervalId = setInterval(() => {
+                if (state.isEditing && state.activeDataset && state.editSessionId) {
+                    api.sendHeartbeat(state.activeDataset, state.editSessionId);
+                }
+            }, 30000); // 30s heartbeats
+
+            stateManager.setEditSession(sessionId, intervalId);
             stateManager.setEditingOriginalName(state.activeDataset); // Store for potential rollback
             stateManager.setEditing(true);
             elements.editBtn.textContent = 'Save';
@@ -276,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function commitEditMode() {
         try {
             await api.commitEdit(state.activeDataset);
+            stateManager.clearEditSession();
             stateManager.setEditing(false);
             stateManager.setEditingOriginalName(null);
             elements.editBtn.textContent = 'Edit';
@@ -292,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Use the current active dataset name to hit the rollback API
             await api.rollbackEdit(state.activeDataset);
+            stateManager.clearEditSession();
 
             // If the name was changed during draft, we must revert to the original name
             if (state.activeDataset !== state.editingOriginalName) {

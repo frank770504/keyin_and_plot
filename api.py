@@ -5,6 +5,7 @@ APIs
 from flask import Blueprint, jsonify, request
 import numpy as np
 from sklearn.linear_model import LinearRegression
+from datetime import datetime, timedelta
 
 from models import db, Dataset, Point
 
@@ -28,6 +29,9 @@ def get_best_dataset(name):
 @api_bp.route('/datasets/<string:name>/edit/start', methods=['POST'])
 def start_edit_mode(name):
     """Clone a dataset to create a draft for editing."""
+    data = request.get_json() or {}
+    session_id = data.get('session_id')
+
     dataset = Dataset.query.filter_by(name=name, is_draft=False).first()
     if not dataset:
         return jsonify({"error": "Dataset not found"}), 404
@@ -36,12 +40,28 @@ def start_edit_mode(name):
     existing_draft = Dataset.query.filter_by(name=name, is_draft=True).first()
 
     if existing_draft:
-        # CONFLICT: Someone is already editing
-        return jsonify({
-            "error": "Conflict",
-            "message": "Another user is currently editing this dataset.",
-            "draft_id": existing_draft.id
-        }), 409
+        # Check heartbeat
+        now = datetime.utcnow()
+        is_stale = False
+        if existing_draft.last_heartbeat:
+            if now - existing_draft.last_heartbeat > timedelta(seconds=120):
+                is_stale = True
+        else:
+            # If no heartbeat set, treat as stale if created long ago (but we just added the column, so let's be safe)
+            is_stale = True
+
+        if is_stale:
+            # AUTO-TAKE-OVER: Delete stale draft
+            db.session.delete(existing_draft)
+            db.session.commit()
+            existing_draft = None
+        else:
+            # CONFLICT: Someone is already editing
+            return jsonify({
+                "error": "Conflict",
+                "message": "Another user is currently editing this dataset.",
+                "draft_id": existing_draft.id
+            }), 409
 
     # Create the draft dataset (Standard Flow)
     draft_dataset = Dataset(
@@ -50,7 +70,9 @@ def start_edit_mode(name):
         serial_id=dataset.serial_id,
         spindle_id=dataset.spindle_id,
         is_draft=True,
-        original_id=dataset.id
+        original_id=dataset.id,
+        session_id=session_id,
+        last_heartbeat=datetime.utcnow()
     )
     db.session.add(draft_dataset)
     db.session.flush()
@@ -174,6 +196,27 @@ def commit_edit_mode(name):
     db.session.commit()
 
     return jsonify({"message": "Changes committed successfully"}), 200
+
+
+@api_bp.route('/datasets/<string:name>/heartbeat', methods=['POST'])
+def heartbeat(name):
+    """Keep a draft alive."""
+    data = request.get_json() or {}
+    session_id = data.get('session_id')
+    if not session_id:
+        return jsonify({"error": "Missing session_id"}), 400
+
+    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    if not draft:
+        return jsonify({"error": "No draft found"}), 404
+
+    # Only update if the session_id matches
+    if draft.session_id == session_id:
+        draft.last_heartbeat = datetime.utcnow()
+        db.session.commit()
+        return jsonify({"message": "Heartbeat updated"}), 200
+
+    return jsonify({"error": "Session ID mismatch"}), 403
 
 
 @api_bp.route('/datasets/<string:name>/edit/rollback', methods=['POST'])

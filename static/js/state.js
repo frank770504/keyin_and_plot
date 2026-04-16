@@ -9,10 +9,25 @@ const state = {
     comparisonSelected: new Set(),
     centerColumnAutoHidden: false,
     editingOriginalName: null,
+    editSessionId: null,
+    heartbeatInterval: null,
     lastValidValues: new WeakMap() // Track numeric input history
 };
 
 export default state;
+
+export function setEditSession(sessionId, intervalId) {
+    state.editSessionId = sessionId;
+    state.heartbeatInterval = intervalId;
+}
+
+export function clearEditSession() {
+    if (state.heartbeatInterval) {
+        clearInterval(state.heartbeatInterval);
+    }
+    state.editSessionId = null;
+    state.heartbeatInterval = null;
+}
 
 export function setAllDatasets(datasets) {
     state.allDatasets = datasets;

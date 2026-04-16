@@ -11,6 +11,8 @@ class Dataset(db.Model):
     spindle_id = db.Column(db.String(50), nullable=True)
     is_draft = db.Column(db.Boolean, default=False)
     original_id = db.Column(db.Integer, nullable=True)
+    last_heartbeat = db.Column(db.DateTime, nullable=True)
+    session_id = db.Column(db.String(100), nullable=True)
     points = db.relationship('Point', backref='dataset', cascade="all, delete-orphan", lazy=True)
 
     def __repr__(self):

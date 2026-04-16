@@ -1,14 +1,29 @@
 // static/js/api.js
 
-export async function startEdit(name) {
+export async function startEdit(name, sessionId) {
     const url = `/api/datasets/${name}/edit/start`;
 
-    const response = await fetch(url, { method: 'POST' });
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+    });
     if (response.status === 409) {
         return { conflict: true, data: await response.json() };
     }
     if (!response.ok) throw new Error('Failed to start edit mode');
     return await response.json();
+}
+
+export async function sendHeartbeat(name, sessionId) {
+    const response = await fetch(`/api/datasets/${name}/heartbeat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+    });
+    if (!response.ok) {
+        console.error('Heartbeat failed');
+    }
 }
 
 export async function duplicateDataset(name) {
