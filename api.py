@@ -31,19 +31,19 @@ def check_lock():
     session_id = request.headers.get('X-Session-ID')
     if not session_id:
         return False, "Missing Session ID"
-    
+
     lock = GlobalLock.query.first()
     if not lock:
         return False, "No active editor lock"
-    
+
     if lock.is_stale():
         db.session.delete(lock)
         db.session.commit()
         return False, "Lock has expired"
-    
+
     if lock.session_id != session_id:
         return False, f"Lock held by {lock.user_name}"
-    
+
     # Update heartbeat on successful check
     lock.last_heartbeat = datetime.now(UTC).replace(tzinfo=None)
     db.session.commit()
@@ -59,12 +59,12 @@ def get_lock_status():
     lock = GlobalLock.query.first()
     if not lock:
         return jsonify({"locked": False})
-    
+
     if lock.is_stale():
         db.session.delete(lock)
         db.session.commit()
         return jsonify({"locked": False})
-    
+
     return jsonify({
         "locked": True,
         "user_name": lock.user_name,
@@ -79,10 +79,10 @@ def acquire_lock():
     data = request.get_json() or {}
     user_name = data.get('user_name')
     session_id = data.get('session_id')
-    
+
     if not user_name or not session_id:
         return jsonify({"error": "Missing user_name or session_id"}), 400
-    
+
     lock = GlobalLock.query.first()
     if lock:
         if not lock.is_stale():
@@ -93,24 +93,31 @@ def acquire_lock():
         # Lock is stale, delete it
         db.session.delete(lock)
         db.session.commit()
-    
+
     new_lock = GlobalLock(user_name=user_name, session_id=session_id)
     db.session.add(new_lock)
     db.session.commit()
-    
-    return jsonify({"message": "Lock acquired"}), 201
+
+    return jsonify({
+        "message": "Lock acquired",
+        "user_name": user_name,
+        "is_me": True
+    }), 201
 
 
 @api_bp.route('/lock/release', methods=['POST'])
 def release_lock():
     """Relinquish the global editor lock."""
     session_id = request.headers.get('X-Session-ID')
+    if not session_id:
+        return jsonify({"error": "Missing Session ID"}), 400
+
     lock = GlobalLock.query.filter_by(session_id=session_id).first()
     if lock:
         db.session.delete(lock)
         db.session.commit()
         return jsonify({"message": "Lock released"}), 200
-    return jsonify({"error": "Not the lock holder"}), 403
+    return jsonify({"error": "Not the lock holder or lock not found"}), 403
 
 
 @api_bp.route('/lock/heartbeat', methods=['POST'])

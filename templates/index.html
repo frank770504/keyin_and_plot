@@ -17,10 +17,13 @@
             <div class="column-content-wrapper">
                 <h1>Datasets</h1>
 
+                <div class="user-config-panel">
+                    <label for="username-input">Your Name:</label>
+                    <input type="text" id="username-input" placeholder="Enter name">
+                </div>
+
                 <div id="lock-status-container" class="status-panel">
-                    <span id="lock-status-text">Checking...</span>
-                    <button id="acquire-lock-btn" class="btn-small" style="display: none;">Become Editor</button>
-                    <button id="release-lock-btn" class="btn-small" style="display: none;">Release Lock</button>
+                    <span id="lock-status-text">Status: Checking...</span>
                 </div>
 
                 <input type="text" id="dataset-search" placeholder="Search datasets..." class="search-bar">
@@ -149,6 +152,19 @@
                 <button type="submit" value="abort" class="btn-danger">Abort</button>
             </div>
 
+        </form>
+    </dialog>
+
+    <!-- Unsaved Changes Dialog -->
+    <dialog id="unsaved-changes-dialog" class="custom-modal">
+        <form method="dialog">
+            <h3>Unsaved Changes</h3>
+            <p>You are currently editing a dataset. What would you like to do before switching?</p>
+            <div class="modal-actions">
+                <button type="submit" value="save" class="btn-success" style="background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Save Changes</button>
+                <button type="submit" value="discard" class="btn-danger" style="background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Discard Changes</button>
+                <button type="submit" value="stay" class="btn-secondary" style="background-color: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Stay Here</button>
+            </div>
         </form>
     </dialog>
 

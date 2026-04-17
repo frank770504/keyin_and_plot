@@ -9,6 +9,21 @@ body {
     height: 100vh;
 }
 
+.user-config-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.user-config-panel input {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
 .status-panel {
     background: #fff;
     padding: 10px;

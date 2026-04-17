@@ -17,10 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
         newDatasetNameInput: document.getElementById('new-dataset-name'),
         createDatasetBtn: document.getElementById('create-dataset-btn'),
 
-        // Lock UI
+        // Lock & User UI
         lockStatusText: document.getElementById('lock-status-text'),
-        acquireLockBtn: document.getElementById('acquire-lock-btn'),
-        releaseLockBtn: document.getElementById('release-lock-btn'),
+        usernameInput: document.getElementById('username-input'),
 
         // Center Column
         centerColumn: document.getElementById('center-column'),
@@ -52,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Layout
         collapseLeftBtn: document.getElementById('collapse-left'),
         dragHandle: document.getElementById('drag-handle'),
+
+        // Dialogs
+        unsavedChangesDialog: document.getElementById('unsaved-changes-dialog'),
     };
 
     let activeChart = null;
@@ -77,14 +79,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Draggable Legend
     makeDraggable(elements.customLegend);
 
-    // --- Controller Functions ---
+    // 0. Lock & User Management
+    function initUserConfig() {
+        if (!state.userName) {
+            stateManager.setUserName('User-' + Math.random().toString(36).substring(2, 6));
+        }
+        elements.usernameInput.value = state.userName;
 
-    // 0. Lock Management
+        elements.usernameInput.addEventListener('change', () => {
+            const newName = elements.usernameInput.value.trim();
+            if (newName) {
+                stateManager.setUserName(newName);
+            } else {
+                elements.usernameInput.value = state.userName;
+            }
+        });
+    }
+
     async function pollLockStatus() {
         try {
             const data = await api.getLockStatus();
             if (data.locked) {
-                // If it's me but I don't have a heartbeat running (e.g., page refresh), restore it
                 if (data.is_me && !state.heartbeatInterval) {
                     stateManager.setGlobalEditor(true, data.user_name);
                     startHeartbeat();
@@ -101,34 +116,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateLockUI(locked, owner = null, isMe = false) {
         if (locked) {
             if (isMe) {
-                elements.lockStatusText.textContent = 'You are the Editor';
+                elements.lockStatusText.textContent = 'Status: You are the Editor';
                 elements.lockStatusText.style.color = '#28a745';
-                elements.acquireLockBtn.style.display = 'none';
-                elements.releaseLockBtn.style.display = 'inline-block';
             } else {
-                elements.lockStatusText.textContent = `${owner} is Editing`;
+                elements.lockStatusText.textContent = `Status: ${owner} is Editing`;
                 elements.lockStatusText.style.color = '#dc3545';
-                elements.acquireLockBtn.style.display = 'none';
-                elements.releaseLockBtn.style.display = 'none';
             }
         } else {
-            elements.lockStatusText.textContent = 'Status: Read-Only';
+            elements.lockStatusText.textContent = 'Status: Ready';
             elements.lockStatusText.style.color = '#666';
-            elements.acquireLockBtn.style.display = 'inline-block';
-            elements.releaseLockBtn.style.display = 'none';
 
-            // If we thought we were the editor but the lock is gone, clear our state
             if (state.isGlobalEditor) {
                 stopEditingDueToLockLoss();
             }
         }
 
-        // Disable/Enable globally restricted actions
-        const canWrite = state.isGlobalEditor;
+        const canWrite = state.isGlobalEditor || !locked;
         elements.createDatasetBtn.disabled = !canWrite;
         elements.newDatasetNameInput.disabled = !canWrite;
-        if (!canWrite && state.isEditing) {
+
+        // If someone else took the lock while we were editing
+        if (locked && !isMe && state.isEditing) {
             stopEditingDueToLockLoss();
+            alert(`Your session was interrupted. ${owner} is now the editor.`);
         }
     }
 
@@ -145,37 +155,29 @@ document.addEventListener('DOMContentLoaded', () => {
         stateManager.setHeartbeat(intervalId);
     }
 
-    async function handleAcquireLock() {
-        if (!state.userName) {
-            const name = prompt("Please enter your name to identify your edit sessions:");
-            if (!name || name.trim() === '') return;
-            stateManager.setUserName(name.trim());
-        }
-
+    async function ensureLock() {
+        if (state.isGlobalEditor) return true;
         try {
             await api.acquireLock(state.userName, state.sessionID);
             stateManager.setGlobalEditor(true, state.userName);
             startHeartbeat();
             updateLockUI(true, state.userName, true);
+            return true;
         } catch (error) {
-            alert(error.message);
+            alert(`Action failed: ${error.message}`);
+            return false;
         }
     }
 
-    async function handleReleaseLock() {
+    async function releaseLockIfPossible() {
+        if (!state.isGlobalEditor || state.isEditing) return;
         try {
-            if (state.isEditing) {
-                if (!confirm('You are currently editing a dataset. Releasing the lock will discard unsaved changes. Continue?')) {
-                    return;
-                }
-                await cancelEditMode();
-            }
             await api.releaseLock();
             stateManager.setGlobalEditor(false);
             stateManager.clearHeartbeat();
             updateLockUI(false);
         } catch (error) {
-            alert(error.message);
+            console.error('Failed to release lock:', error);
         }
     }
 
@@ -208,16 +210,33 @@ document.addEventListener('DOMContentLoaded', () => {
         datasetUI.updateSortIcons(elements);
     }
 
+    function showUnsavedChangesDialog() {
+        const dialog = elements.unsavedChangesDialog;
+        return new Promise((resolve) => {
+            const handleClose = () => {
+                dialog.removeEventListener('close', handleClose);
+                resolve(dialog.returnValue); // "save", "discard", or "stay"
+            };
+            dialog.addEventListener('close', handleClose);
+            dialog.showModal();
+        });
+    }
+
     // 2. Workspace & Active Dataset
     async function setActiveDataset(name) {
-        // --- Auto Rollback on Switch ---
+        // --- Handle Unsaved Changes ---
         if (state.isEditing && state.activeDataset) {
-            try {
-                // If we are leaving a dataset while editing, discard its draft
-                await api.rollbackEdit(state.activeDataset);
-                console.log(`Auto-rolled back changes for ${state.activeDataset}`);
-            } catch (error) {
-                console.error('Failed to auto-rollback:', error);
+            // If clicking a different dataset OR clicking the same one to deselect
+            const action = await showUnsavedChangesDialog();
+
+            if (action === 'save') {
+                await commitEditMode();
+            } else if (action === 'discard') {
+                await cancelEditMode();
+            } else {
+                // "stay" or dialog closed without action
+                refreshDatasetList();
+                return;
             }
         }
 
@@ -296,24 +315,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleCreateDataset() {
-        if (!state.isGlobalEditor) return alert('You must be the Editor to create datasets.');
         const name = elements.newDatasetNameInput.value.trim();
         if (!name) return alert('Please enter a dataset name.');
+
+        const lockAcquired = await ensureLock();
+        if (!lockAcquired) return;
+
         try {
             await api.createDataset(name);
             elements.newDatasetNameInput.value = '';
             loadAndRenderDatasets();
         } catch (error) {
             alert(error.message);
+        } finally {
+            await releaseLockIfPossible();
         }
     }
 
     async function handleDeleteDataset(name) {
-        if (!state.isGlobalEditor) return alert('You must be the Editor to delete datasets.');
         const targetName = name || state.activeDataset;
         if (!targetName) return;
 
         if (confirm(`Are you sure you want to delete the dataset "${targetName}"?`)) {
+            const lockAcquired = await ensureLock();
+            if (!lockAcquired) return;
+
             try {
                 await api.deleteDataset(targetName);
                 if (state.activeDataset === targetName) {
@@ -328,13 +354,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadAndRenderDatasets();
             } catch (error) {
                 alert(error.message);
+            } finally {
+                await releaseLockIfPossible();
             }
         }
     }
 
     async function startEditMode() {
         if (!state.activeDataset) return;
-        if (!state.isGlobalEditor) return alert('You must acquire the Editor Lock before editing.');
+
+        const lockAcquired = await ensureLock();
+        if (!lockAcquired) return;
 
         try {
             await api.startEdit(state.activeDataset);
@@ -364,6 +394,8 @@ document.addEventListener('DOMContentLoaded', () => {
             workspaceUI.updateEditModeUI(elements);
             await loadActiveDatasetData();
             loadAndRenderDatasets(); // Refresh list to reflect potential name change
+
+            await releaseLockIfPossible();
         } catch (error) {
             alert(error.message);
         }
@@ -386,6 +418,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
             await loadActiveDatasetData(); // Reload original data
+
+            await releaseLockIfPossible();
         } catch (error) {
             alert(error.message);
         }
@@ -726,9 +760,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
     elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
 
-    elements.acquireLockBtn.addEventListener('click', handleAcquireLock);
-    elements.releaseLockBtn.addEventListener('click', handleReleaseLock);
-
     elements.editBtn.addEventListener('click', () => {
         if (!state.isEditing) {
             startEditMode();
@@ -757,6 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Initial Load & Polling ---
+    initUserConfig();
     loadAndRenderDatasets();
     pollLockStatus();
     setInterval(pollLockStatus, 10000); // Poll lock status every 10s
