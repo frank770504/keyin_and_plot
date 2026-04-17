@@ -109,10 +109,17 @@ def acquire_lock():
 def release_lock():
     """Relinquish the global editor lock."""
     session_id = request.headers.get('X-Session-ID')
+
+    # Fallback to JSON body for sendBeacon support
+    if not session_id and request.is_json:
+        data = request.get_json()
+        session_id = data.get('session_id')
+
     if not session_id:
         return jsonify({"error": "Missing Session ID"}), 400
 
     lock = GlobalLock.query.filter_by(session_id=session_id).first()
+
     if lock:
         db.session.delete(lock)
         db.session.commit()

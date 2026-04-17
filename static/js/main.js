@@ -100,10 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data = await api.getLockStatus();
             if (data.locked) {
-                if (data.is_me && !state.heartbeatInterval) {
-                    stateManager.setGlobalEditor(true, data.user_name);
-                    startHeartbeat();
-                }
                 updateLockUI(data.locked, data.user_name, data.is_me);
             } else {
                 updateLockUI(false);
@@ -112,6 +108,24 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Lock poll failed:', error);
         }
     }
+
+    // --- Page Lifecycle Logic ---
+    window.addEventListener('beforeunload', (e) => {
+        if (state.isEditing) {
+            // Standard browser warning for unsaved changes
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    window.addEventListener('unload', () => {
+        if (state.isGlobalEditor) {
+            // Last-second request to release lock immediately on refresh/close
+            const data = JSON.stringify({ session_id: state.sessionID });
+            const blob = new Blob([data], { type: 'application/json' });
+            navigator.sendBeacon('/api/lock/release', blob);
+        }
+    });
 
     function updateLockUI(locked, owner = null, isMe = false) {
         if (locked) {
