@@ -1,5 +1,4 @@
 // static/js/ui/layout.js
-import state, { setCenterColumnAutoHidden } from '../state.js';
 
 export class FloatingWindow {
     constructor(windowId, headerId, closeBtnId, onResize = null) {
@@ -23,7 +22,6 @@ export class FloatingWindow {
     }
 
     initResizeObserver() {
-        // Automatically trigger resize callback when the window size changes
         if (this.onResize) {
             const resizeObserver = new ResizeObserver(() => {
                 this.onResize();
@@ -34,7 +32,6 @@ export class FloatingWindow {
 
     show() {
         this.window.style.display = 'flex';
-        // Trigger resize once on show to ensure content fits
         if (this.onResize) this.onResize();
     }
 
@@ -55,158 +52,124 @@ export class FloatingWindow {
         const element = this.window;
         const handle = this.header;
 
-        handle.onmousedown = dragMouseDown;
-
-        function dragMouseDown(e) {
+        handle.onmousedown = (e) => {
             e = e || window.event;
             e.preventDefault();
-            // Get the mouse cursor position at startup:
             pos3 = e.clientX;
             pos4 = e.clientY;
-            document.onmouseup = closeDragElement;
-            // Call a function whenever the cursor moves:
-            document.onmousemove = elementDrag;
-        }
-
-        function elementDrag(e) {
-            e = e || window.event;
-            e.preventDefault();
-            // Calculate the new cursor position:
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            // Set the element's new position:
-            element.style.top = (element.offsetTop - pos2) + "px";
-            element.style.left = (element.offsetLeft - pos1) + "px";
-        }
-
-        function closeDragElement() {
-            // Stop moving when mouse button is released:
-            document.onmouseup = null;
-            document.onmousemove = null;
-        }
+            document.onmouseup = () => {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            };
+            document.onmousemove = (e) => {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            };
+        };
     }
 }
 
-// Drag & Collapse Logic
-let isDragging = false;
-let dragElements = {};
+class ResizableColumn {
+    constructor(columnId, gutterId, collapseBtnId, minWidth = 100, onResize = null) {
+        this.column = document.getElementById(columnId);
+        this.gutter = document.getElementById(gutterId);
+        this.collapseBtn = document.getElementById(collapseBtnId);
+        this.minWidth = minWidth;
+        this.onResize = onResize;
+
+        this.isDragging = false;
+        this.lastWidth = this.column.getBoundingClientRect().width || 300;
+
+        this.init();
+    }
+
+    init() {
+        if (this.gutter) {
+            this.gutter.addEventListener('mousedown', (e) => this.startDrag(e));
+        }
+        if (this.collapseBtn) {
+            this.collapseBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent drag trigger
+                this.toggleCollapse();
+            });
+        }
+    }
+
+    startDrag(e) {
+        if (this.column.classList.contains('collapsed')) return;
+
+        this.isDragging = true;
+        document.body.style.cursor = 'col-resize';
+        this.gutter.classList.add('dragging');
+
+        const mouseMoveHandler = (e) => this.doDrag(e);
+        const mouseUpHandler = () => {
+            this.isDragging = false;
+            document.body.style.cursor = '';
+            this.gutter.classList.remove('dragging');
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+        };
+
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+        e.preventDefault();
+    }
+
+    doDrag(e) {
+        if (!this.isDragging) return;
+
+        const container = document.querySelector('.container');
+        const containerRect = container.getBoundingClientRect();
+        const columnRect = this.column.getBoundingClientRect();
+
+        // Calculate new width relative to the column's left edge
+        let newWidth = e.clientX - columnRect.left;
+
+        // Constraints
+        const maxWidth = containerRect.width - 200; // Leave space for right column
+        if (newWidth < this.minWidth) newWidth = this.minWidth;
+        if (newWidth > maxWidth) newWidth = maxWidth;
+
+        this.column.style.width = `${newWidth}px`;
+        this.lastWidth = newWidth;
+
+        if (this.onResize) this.onResize();
+    }
+
+    toggleCollapse() {
+        const isCollapsing = !this.column.classList.contains('collapsed');
+
+        if (isCollapsing) {
+            this.lastWidth = this.column.getBoundingClientRect().width;
+            this.column.classList.add('collapsed');
+            this.column.style.width = '0';
+        } else {
+            this.column.classList.remove('collapsed');
+            this.column.style.width = `${this.lastWidth}px`;
+        }
+
+        // Trigger resize after transition
+        setTimeout(() => {
+            if (this.onResize) this.onResize();
+        }, 310);
+    }
+}
 
 export function initLayout(elements, resizeCallbacks) {
-    dragElements = elements;
-    
-    // Drag Handle
-    if (elements.dragHandle) {
-        elements.dragHandle.addEventListener('mousedown', startDrag);
-    }
-    
-    // Collapse Button
-    if (elements.collapseLeftBtn) {
-        elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column', resizeCallbacks));
-    }
-}
-
-function startDrag(e) {
-    isDragging = true;
-    document.body.style.cursor = 'col-resize';
-    dragElements.dragHandle.classList.add('dragging');
-    document.addEventListener('mousemove', (e) => handleDrag(e, dragElements.centerColumn));
-    document.addEventListener('mouseup', stopDrag);
-    e.preventDefault();
-}
-
-function handleDrag(e, centerColumn) {
-    if (!isDragging) return;
-
-    const containerRect = document.querySelector('.container').getBoundingClientRect();
-    const leftColumn = document.getElementById('left-column');
-    const leftColumnWidth = leftColumn.getBoundingClientRect().width;
-
-    let newCenterWidth = e.clientX - leftColumnWidth;
-
-    const minCenterWidth = 200;
-    const maxCenterWidth = containerRect.width - leftColumnWidth - 200;
-
-    if (newCenterWidth < minCenterWidth) newCenterWidth = minCenterWidth;
-    if (newCenterWidth > maxCenterWidth) newCenterWidth = maxCenterWidth;
-
-    centerColumn.style.width = `${newCenterWidth}px`;
-
-    // We might want to trigger chart resize here, but maybe throttle it
-    // For now we rely on the resizeObserver or manual callback if passed
-}
-
-function stopDrag() {
-    isDragging = false;
-    document.body.style.cursor = '';
-    dragElements.dragHandle.classList.remove('dragging');
-    document.removeEventListener('mousemove', handleDrag); // This fails because handleDrag is wrapped
-    // Fix: We need the exact function reference to remove it.
-    // Simplifying for this refactor: Just clone the node or use a global handler.
-    // Better: use a persistent handler.
-}
-// Correcting Drag Implementation to handle event removal
-const persistentDragHandler = (e) => handleDrag(e, document.getElementById('center-column'));
-
-function startDragCorrected(e) {
-    isDragging = true;
-    document.body.style.cursor = 'col-resize';
-    dragElements.dragHandle.classList.add('dragging');
-    document.addEventListener('mousemove', persistentDragHandler);
-    document.addEventListener('mouseup', stopDragCorrected);
-    e.preventDefault();
-}
-
-function stopDragCorrected() {
-    isDragging = false;
-    document.body.style.cursor = '';
-    dragElements.dragHandle.classList.remove('dragging');
-    document.removeEventListener('mousemove', persistentDragHandler);
-    document.removeEventListener('mouseup', stopDragCorrected);
-}
-
-// Overwrite init to use corrected
-export function initLayoutCorrected(elements, resizeCallbacks) {
-    dragElements = elements;
-    if (elements.dragHandle) {
-        elements.dragHandle.addEventListener('mousedown', startDragCorrected);
-    }
-    if (elements.collapseLeftBtn) {
-        elements.collapseLeftBtn.addEventListener('click', () => handleCollapse('left-column', resizeCallbacks));
-    }
-}
-
-function handleCollapse(columnId, resizeCallbacks) {
-    const leftColumn = document.getElementById(columnId);
-    const centerColumn = document.getElementById('center-column');
-    const dragHandle = document.getElementById('drag-handle');
-    const isCollapsing = !leftColumn.classList.contains('collapsed');
-
-    leftColumn.classList.toggle('collapsed');
-
-    if (isCollapsing) {
-        // Collapsing Left Column
-        if (centerColumn.style.display !== 'none') {
-            // If center is visible, hide it and mark as auto-hidden
-            centerColumn.style.display = 'none';
-            if (dragHandle) dragHandle.style.display = 'none';
-            setCenterColumnAutoHidden(true);
-        } else {
-            // Center is already hidden manually, don't mark as auto-hidden
-            setCenterColumnAutoHidden(false);
-        }
-    } else {
-        // Expanding Left Column
-        if (state.centerColumnAutoHidden) {
-            // Restore center column if it was auto-hidden
-            centerColumn.style.display = 'block'; // Or flex/block depending on CSS, usually handled by toggleCenterColumn but simpler here
-            if (dragHandle) dragHandle.style.display = 'block';
-            setCenterColumnAutoHidden(false);
-        }
-    }
-
-    setTimeout(() => {
+    const triggerResizes = () => {
         if (resizeCallbacks) resizeCallbacks.forEach(cb => cb());
-    }, 300);
+    };
+
+    // Initialize Left Column
+    new ResizableColumn('left-column', 'gutter-left', 'collapse-left', 150, triggerResizes);
+
+    // Initialize Center Column
+    new ResizableColumn('center-column', 'gutter-center', 'collapse-center', 200, triggerResizes);
 }

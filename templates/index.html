@@ -13,7 +13,6 @@
     <div class="container">
         <!-- Left Column: Dataset List -->
         <div class="column" id="left-column">
-            <button class="collapse-btn" id="collapse-left">&laquo;</button>
             <div class="column-content-wrapper">
                 <h1>Datasets</h1>
 
@@ -49,9 +48,12 @@
             </div>
         </div>
 
+        <div id="gutter-left" class="gutter">
+            <button class="collapse-btn" id="collapse-left">&laquo;</button>
+        </div>
+
         <!-- Center Column: Workspace -->
         <div class="column" id="center-column">
-            <!-- Collapse button removed, replaced by drag functionality -->
             <div class="column-content-wrapper">
                 <div class="center-header">
                     <h1 id="active-dataset-name">No Dataset Selected</h1>
@@ -108,7 +110,9 @@
             </div>
         </div>
 
-        <div id="drag-handle" class="gutter"></div>
+        <div id="gutter-center" class="gutter">
+            <button class="collapse-btn" id="collapse-center">&laquo;</button>
+        </div>
 
         <!-- Right Column: Comparison Chart -->
         <div class="column" id="right-column">

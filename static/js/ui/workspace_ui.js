@@ -193,12 +193,12 @@ export function updateEditModeUI(elements) {
 
 export function toggleCenterColumn(elements, show, resizeChartsCallback) {
     const displayValue = show ? 'flex' : 'none';
-    const gutterDisplay = show ? 'block' : 'none';
+    const gutterDisplay = show ? 'flex' : 'none';
     const centerColumn = document.getElementById('center-column');
 
     if (centerColumn.style.display !== displayValue) {
         centerColumn.style.display = displayValue;
-        elements.dragHandle.style.display = gutterDisplay;
+        elements.gutterCenter.style.display = gutterDisplay;
         elements.editBtn.style.display = show ? 'block' : 'none';
 
         setTimeout(() => {

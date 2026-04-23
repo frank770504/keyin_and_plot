@@ -50,7 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Layout
         collapseLeftBtn: document.getElementById('collapse-left'),
-        dragHandle: document.getElementById('drag-handle'),
+        collapseCenterBtn: document.getElementById('collapse-center'),
+        gutterLeft: document.getElementById('gutter-left'),
+        gutterCenter: document.getElementById('gutter-center'),
 
         // Dialogs
         unsavedChangesDialog: document.getElementById('unsaved-changes-dialog'),
@@ -62,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendingAdds = new Set();    // Track rows currently being created in DB
 
     // --- Layout Initialization ---
-    layout.initLayoutCorrected(elements, [() => {
+    layout.initLayout(elements, [() => {
         if (activeChart) activeChart.resize();
         if (comparisonChart) comparisonChart.resize();
     }]);

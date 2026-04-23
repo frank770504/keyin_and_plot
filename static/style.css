@@ -171,46 +171,37 @@ body {
     flex-shrink: 0;
 }
 
-#right-column {
-    flex-grow: 1;
-}
-
-#left-column.collapsed {
+.column.collapsed {
     width: 0 !important;
-    padding: 0;
-    border-right: none; /* Remove border to regain space */
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
 }
 
-#left-column.collapsed .column-content-wrapper {
-    overflow: hidden;
+.column.collapsed .column-content-wrapper {
     opacity: 0;
-}
-
-/* Ensure the first visible column after a collapsed sidebar clears the floating button */
-#left-column.collapsed ~ .column .column-content-wrapper {
-    padding-left: 45px; /* 25px button + 20px safety margin */
-    transition: padding-left 0.3s ease;
+    pointer-events: none;
 }
 
 .collapse-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%) rotate(0deg);
-    right: -12.5px; /* Center on the border */
     z-index: 30;
-    width: 25px;
-    height: 60px; /* Taller rounded rectangle */
+    width: 16px;
+    height: 60px;
     line-height: 60px;
     text-align: center;
     padding: 0;
-    border-radius: 4px; /* Slightly rounded corners */
+    border-radius: 4px;
     background-color: #fff;
     border: 1px solid #ddd;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease, right 0.3s ease, background-color 0.2s;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, background-color 0.2s;
     cursor: pointer;
     color: #555;
-    font-size: 1.2rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .collapse-btn:hover {
@@ -218,36 +209,38 @@ body {
     color: #007bff;
 }
 
-#left-column.collapsed .collapse-btn {
-    transform: translateY(-50%) rotate(180deg);
-    right: -25px; /* Adjust to sit on edge when width is 0 */
-    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+.column.collapsed + .gutter .collapse-btn {
+    transform: rotate(180deg);
 }
 
 .gutter {
-    width: 5px;
+    width: 10px;
     cursor: col-resize;
-    background-color: #e0e0e0;
+    background-color: #f0f0f0;
     flex-shrink: 0;
-    z-index: 5;
+    z-index: 25;
     transition: background-color 0.2s;
-    display: none; /* Hidden by default */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
 }
 
 .gutter:hover, .gutter.dragging {
-    background-color: #007bff;
+    background-color: #e0e0e0;
+    border-color: #ccc;
 }
 
 #left-column {
     width: 20%;
     background-color: #fff;
-    border-right: 1px solid #ddd;
     height: 100%;
-    z-index: 20; /* Ensure it stays on top of center column for the button overlap */
+    z-index: 20;
 }
 
 #center-column {
-    display: none; /* Hidden by default */
+    display: none; /* Hidden until dataset selected */
     width: 450px; /* Set a default reasonable width */
     min-width: 200px; /* Allow shrinking smaller */
     background-color: #fafafa;
