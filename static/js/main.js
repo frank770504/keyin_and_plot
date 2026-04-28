@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
         customLegend: document.getElementById('custom-legend'),
 
         // Layout
+        leftColumn: document.getElementById('left-column'),
+        centerColumn: document.getElementById('center-column'),
         collapseLeftBtn: document.getElementById('collapse-left'),
         collapseCenterBtn: document.getElementById('collapse-center'),
         gutterLeft: document.getElementById('gutter-left'),
@@ -64,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendingAdds = new Set();    // Track rows currently being created in DB
 
     // --- Layout Initialization ---
-    layout.initLayout(elements, [() => {
+    const layoutControl = layout.initLayout(elements, [() => {
         if (activeChart) activeChart.resize();
         if (comparisonChart) comparisonChart.resize();
     }]);

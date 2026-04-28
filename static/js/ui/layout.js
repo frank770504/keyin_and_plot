@@ -75,16 +75,17 @@ export class FloatingWindow {
     }
 }
 
-class ResizableColumn {
-    constructor(columnId, gutterId, collapseBtnId, minWidth = 100, onResize = null) {
-        this.column = document.getElementById(columnId);
-        this.gutter = document.getElementById(gutterId);
-        this.collapseBtn = document.getElementById(collapseBtnId);
-        this.minWidth = minWidth;
-        this.onResize = onResize;
+export class ResizableColumn {
+    constructor(config) {
+        this.column = config.column;
+        this.gutter = config.gutter;
+        this.collapseBtn = config.collapseBtn;
+        this.minWidth = config.minWidth || 0;
+        this.snapThreshold = config.snapThreshold || 50;
+        this.onResize = config.onResize;
 
         this.isDragging = false;
-        this.lastWidth = this.column.getBoundingClientRect().width || 300;
+        this.lastWidth = this.column.getBoundingClientRect().width || 250;
 
         this.init();
     }
@@ -94,15 +95,22 @@ class ResizableColumn {
             this.gutter.addEventListener('mousedown', (e) => this.startDrag(e));
         }
         if (this.collapseBtn) {
+            // CRITICAL: Stop mousedown bubbling to prevent gutter from stripping 'collapsed' class
+            this.collapseBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+
             this.collapseBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent drag trigger
+                e.stopPropagation();
                 this.toggleCollapse();
             });
         }
     }
 
     startDrag(e) {
-        if (this.column.classList.contains('collapsed')) return;
+        // Prepare to "pull" it open if collapsed
+        if (this.column.classList.contains('collapsed')) {
+            this.column.classList.remove('collapsed');
+            this.column.style.width = '0px';
+        }
 
         this.isDragging = true;
         document.body.style.cursor = 'col-resize';
@@ -129,47 +137,77 @@ class ResizableColumn {
         const containerRect = container.getBoundingClientRect();
         const columnRect = this.column.getBoundingClientRect();
 
-        // Calculate new width relative to the column's left edge
         let newWidth = e.clientX - columnRect.left;
+        const maxWidth = containerRect.width;
 
-        // Constraints
-        const maxWidth = containerRect.width - 200; // Leave space for right column
-        if (newWidth < this.minWidth) newWidth = this.minWidth;
         if (newWidth > maxWidth) newWidth = maxWidth;
 
-        this.column.style.width = `${newWidth}px`;
-        this.lastWidth = newWidth;
+        if (newWidth < this.snapThreshold) {
+            this.column.style.width = '0px';
+            if (!this.column.classList.contains('collapsed')) {
+                this.column.classList.add('collapsed');
+            }
+        } else {
+            if (this.column.classList.contains('collapsed')) {
+                this.column.classList.remove('collapsed');
+            }
+            this.column.style.width = `${newWidth}px`;
+            this.lastWidth = newWidth;
+        }
 
         if (this.onResize) this.onResize();
     }
 
     toggleCollapse() {
-        const isCollapsing = !this.column.classList.contains('collapsed');
+        const isCurrentlyCollapsed = this.column.classList.contains('collapsed');
 
-        if (isCollapsing) {
-            this.lastWidth = this.column.getBoundingClientRect().width;
+        if (!isCurrentlyCollapsed) {
+            // Hiding
+            const currentWidth = this.column.getBoundingClientRect().width;
+            if (currentWidth >= this.snapThreshold) {
+                this.lastWidth = currentWidth;
+            }
             this.column.classList.add('collapsed');
             this.column.style.width = '0';
         } else {
+            // Showing
             this.column.classList.remove('collapsed');
+            if (this.lastWidth < this.snapThreshold) this.lastWidth = 250;
             this.column.style.width = `${this.lastWidth}px`;
         }
 
-        // Trigger resize after transition
         setTimeout(() => {
             if (this.onResize) this.onResize();
         }, 310);
     }
 }
 
+/**
+ * Initializes resizable columns based on provided elements.
+ * Returns an object containing the ResizableColumn instances.
+ */
 export function initLayout(elements, resizeCallbacks) {
     const triggerResizes = () => {
         if (resizeCallbacks) resizeCallbacks.forEach(cb => cb());
     };
 
-    // Initialize Left Column
-    new ResizableColumn('left-column', 'gutter-left', 'collapse-left', 150, triggerResizes);
+    const left = new ResizableColumn({
+        column: elements.leftColumn,
+        gutter: elements.gutterLeft,
+        collapseBtn: elements.collapseLeftBtn,
+        minWidth: 0,
+        snapThreshold: 50,
+        onResize: triggerResizes
+    });
 
-    // Initialize Center Column
-    new ResizableColumn('center-column', 'gutter-center', 'collapse-center', 200, triggerResizes);
+    const center = new ResizableColumn({
+        column: elements.centerColumn,
+        gutter: elements.gutterCenter,
+        collapseBtn: elements.collapseCenterBtn,
+        minWidth: 0,
+        snapThreshold: 50,
+        onResize: triggerResizes
+    });
+
+    return { left, center };
 }
