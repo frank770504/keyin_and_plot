@@ -1,3 +1,4 @@
+<!-- The spec is implemented in commit: b3d96c0 -->
 # Technical Specification: Unified Gutter Resizing & Collapse System
 
 ## 1. Architectural Overview
