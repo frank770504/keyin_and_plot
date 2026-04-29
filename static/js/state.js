@@ -31,7 +31,9 @@ const state = {
         },
         active: {
             xLog: false,
-            yLog: false
+            yLog: false,
+            includeLinear: false,
+            includePower: false
         }
     }
 };

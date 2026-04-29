@@ -157,13 +157,18 @@
             </div>
         </div>
         <div class="window-content">
-            <div id="active-chart-container" style="position: relative; width: 100%;">
-                <canvas id="active-chart"></canvas>
+            <div class="analysis-control-bar">
+                <div class="chart-controls">
+                    <div class="control-group">
+                        <label>Regression:</label>
+                        <label class="checkbox-label"><input type="checkbox" id="active-include-linear"> Linear</label>
+                        <label class="checkbox-label"><input type="checkbox" id="active-include-power"> Power</label>
+                    </div>
+                </div>
             </div>
-            <div class="controls">
-                <button id="regression-btn">Calculate Regression</button>
-                <button id="power-regression-btn">Power Law Regression</button>
-                <button id="clear-regression-btn">Clear Regressions</button>
+            <div id="active-chart-container" style="position: relative; width: 100%;">
+                <button id="reset-active-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
+                <canvas id="active-chart"></canvas>
             </div>
         </div>
     </div>

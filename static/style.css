@@ -158,6 +158,10 @@ body {
     gap: 5px;
 }
 
+.analysis-control-bar {
+    margin-bottom: 15px;
+}
+
 
 #active-measurement-name-input {
     font-size: 2rem;

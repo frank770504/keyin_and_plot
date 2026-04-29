@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
         compIncludePower: document.getElementById('comp-include-power'),
         toggleActiveLogX: document.getElementById('toggle-active-log-x'),
         toggleActiveLogY: document.getElementById('toggle-active-log-y'),
+        activeIncludeLinear: document.getElementById('active-include-linear'),
+        activeIncludePower: document.getElementById('active-include-power'),
+        resetActiveZoomBtn: document.getElementById('reset-active-zoom-btn'),
 
         // Layout
         leftColumn: document.getElementById('left-column'),
@@ -307,15 +310,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderActiveChart(points) {
-        const chartData = [{
+    async function renderActiveChart(points) {
+        if (!state.activeMeasurement) return;
+
+        const datasets = [{
             label: state.activeMeasurement,
             data: points.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
             backgroundColor: 'rgba(75, 192, 192, 0.5)',
             borderColor: 'rgba(75, 192, 192, 1)',
             pointRadius: 5,
             pointHoverRadius: 7,
+            type: 'scatter'
         }];
+
+        // Add Regressions if enabled
+        if (state.chartConfig.active.includeLinear) {
+            try {
+                const reg = await api.getRegressionData(state.activeMeasurement, 'linear');
+                datasets.push(createRegressionDataset(state.activeMeasurement, reg, 'linear', 'rgba(255, 99, 132, 1)'));
+            } catch (e) { console.warn('Active linear reg failed', e); }
+        }
+
+        if (state.chartConfig.active.includePower) {
+            try {
+                const reg = await api.getRegressionData(state.activeMeasurement, 'power');
+                datasets.push(createRegressionDataset(state.activeMeasurement, reg, 'power', 'rgba(54, 162, 235, 1)'));
+            } catch (e) { console.warn('Active power reg failed', e); }
+        }
 
         const chartOptions = {
             xAxisType: state.chartConfig.active.xLog ? 'logarithmic' : 'linear',
@@ -323,9 +344,38 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (activeChart) chartService.destroyChart(activeChart);
-        activeChart = chartService.initializeOrUpdateChart(elements.activeChartCanvas, chartData, chartOptions);
+        activeChart = chartService.initializeOrUpdateChart(elements.activeChartCanvas, datasets, chartOptions);
+        elements.resetActiveZoomBtn.style.display = 'flex';
     }
 
+    // Helper for creating regression datasets (could be moved to chartService later if needed more broadly)
+    function createRegressionDataset(name, regData, type, color) {
+        const points = regData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
+        let label;
+        const r2 = regData.r_squared.toFixed(3);
+
+        if (type === 'linear') {
+            const { slope, intercept } = regData;
+            label = `Linear: $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2=${r2}$`;
+        } else {
+            const { a, b } = regData;
+            label = `Power: $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2=${r2}$`;
+        }
+
+        return {
+            label: label,
+            data: points,
+            borderColor: color,
+            borderWidth: 2,
+            borderDash: type === 'linear' ? [10, 5] : [5, 5],
+            backgroundColor: 'rgba(0,0,0,0)',
+            type: 'line',
+            showLine: true,
+            fill: false,
+            pointRadius: 0,
+            tension: 0.1
+        };
+    }
     // 3. User Actions
     function handleSort(e) {
         const column = e.currentTarget.dataset.sort;
@@ -707,58 +757,6 @@ document.addEventListener('DOMContentLoaded', () => {
         await syncTableRow(tr);
     }
 
-    // Chart & Regression
-    async function handleRegression(type) {
-        if (!state.activeMeasurement || !activeChart) return;
-        try {
-            const regressionData = await api.getRegressionData(state.activeMeasurement, type);
-
-            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
-            let label;
-            const r2 = regressionData.r_squared.toFixed(3);
-            if (type === 'linear') {
-                const { slope, intercept } = regressionData;
-                label = `Linear: $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2 = ${r2}$`;
-            } else {
-                const { a, b } = regressionData;
-                label = `Power: $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2 = ${r2}$`;
-            }
-
-            const newDataset = {
-                label: label,
-                data: regressionPoints,
-                borderColor: type === 'linear' ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                borderDash: type === 'linear' ? [10, 5] : [5, 5],
-                backgroundColor: 'rgba(0,0,0,0)',
-                type: 'line',
-                showLine: true,
-                fill: false,
-                pointRadius: 0,
-                tension: 0.1
-            };
-
-            const otherDatasets = activeChart.data.datasets.filter(d =>
-                !d.label.startsWith(type === 'linear' ? 'Linear:' : 'Power:')
-            );
-            activeChart.data.datasets = [...otherDatasets, newDataset];
-            activeChart.update();
-
-        } catch (error) {
-            console.error(error);
-            alert(error.message);
-        }
-    }
-
-    function clearRegressions() {
-        if (!activeChart) return;
-        const originalDataset = activeChart.data.datasets.filter(d =>
-            !d.label.startsWith('Linear:') && !d.label.startsWith('Power:')
-        );
-        activeChart.data.datasets = originalDataset;
-        activeChart.update();
-    }
-
     async function handleDrawSelected() {
         const selectedNames = Array.from(state.comparisonSelected);
         if (selectedNames.length === 0) {
@@ -935,9 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.pointsTableBody.addEventListener('change', handleTableInput);
 
     elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.show());
-    elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
-    elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
-    elements.clearRegressionBtn.addEventListener('click', clearRegressions);
+
 
     elements.resetZoomBtn.addEventListener('click', () => {
         if (comparisonChart) {
@@ -980,7 +976,21 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.toggleActiveLogY.classList.toggle('active', state.chartConfig.active.yLog);
         updateActiveChart();
     });
+    elements.activeIncludeLinear.addEventListener('change', () => {
+        state.chartConfig.active.includeLinear = elements.activeIncludeLinear.checked;
+        updateActiveChart();
+    });
+    elements.activeIncludePower.addEventListener('change', () => {
+        state.chartConfig.active.includePower = elements.activeIncludePower.checked;
+        updateActiveChart();
+    });
 
+
+    elements.resetActiveZoomBtn.addEventListener('click', () => {
+        if (activeChart) {
+            activeChart.resetZoom();
+        }
+    });
 
     // --- Initial Load & Polling ---
     initUserConfig();
