@@ -189,6 +189,16 @@ export function initializeOrUpdateChart(ctx, chartDatasets) {
 
 export function destroyChart(chartInstance) {
     if (chartInstance) {
+        // Clean up LaTeX title elements created by the plugin
+        const container = chartInstance.canvas.parentElement;
+        if (container) {
+            ['x', 'y'].forEach(axis => {
+                const titleDiv = container.querySelector(`.katex-axis-title-${axis}`);
+                if (titleDiv) {
+                    titleDiv.remove();
+                }
+            });
+        }
         chartInstance.destroy();
     }
 }
