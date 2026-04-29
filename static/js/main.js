@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearRegressionBtn: document.getElementById('clear-regression-btn'),
 
         // Right Column
+        resetZoomBtn: document.getElementById('reset-zoom-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
 
@@ -739,6 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 comparisonChart = null;
             }
             elements.customLegend.style.display = 'none';
+            elements.resetZoomBtn.style.display = 'none';
             return;
         }
 
@@ -746,6 +748,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const chartData = await chartService.getSelectedMeasurementsForChart(selectedNames);
             if (comparisonChart) chartService.destroyChart(comparisonChart);
             comparisonChart = chartService.initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets);
+
+            elements.resetZoomBtn.style.display = 'flex';
 
             // Generate Custom Legend
             createFloatingLegend(comparisonChart, elements.customLegend);
@@ -898,6 +902,12 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
     elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);
+
+    elements.resetZoomBtn.addEventListener('click', () => {
+        if (comparisonChart) {
+            comparisonChart.resetZoom();
+        }
+    });
 
 
     // --- Initial Load & Polling ---
