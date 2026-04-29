@@ -292,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             workspaceUI.renderPointsTable(elements, points, handleDeletePoint);
             renderActiveChart(points);
+            updateSaveButtonState();
         } catch (error) {
             console.error(`Error loading data for ${state.activeMeasurement}:`, error);
         }
@@ -329,6 +330,18 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshMeasurementList();
     }
 
+    function updateSaveButtonState() {
+        if (!state.isEditing) return;
+
+        const name = elements.activeMeasurementNameInput.value.trim();
+        const date = elements.measurementDateInput.value;
+        const serialId = elements.measurementSerialIdInput.value.trim();
+        const spindleId = elements.measurementSpindleSelect.value;
+
+        const isValid = name && date && serialId && spindleId;
+        elements.editBtn.disabled = !isValid;
+    }
+
     async function handleAddMeasurement() {
         const lockAcquired = await ensureLock();
         if (!lockAcquired) return;
@@ -341,7 +354,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update local state and UI to point to this new measurement
             stateManager.setActiveMeasurement(newName);
             elements.activeMeasurementName.textContent = newName;
-            elements.activeMeasurementNameInput.value = newName;
+
+            // CLEAR INPUTS as per request
+            elements.activeMeasurementNameInput.value = "";
+            elements.measurementDateInput.value = "";
+            elements.measurementSerialIdInput.value = "";
+            elements.measurementSpindleSelect.value = "";
 
             // Show the center column if it was hidden
             workspaceUI.toggleCenterColumn(elements, true);
@@ -353,6 +371,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.editBtn.textContent = 'Save';
             elements.cancelEditBtn.style.display = 'inline-block';
             workspaceUI.updateEditModeUI(elements);
+
+            updateSaveButtonState(); // Initialize disabled state
 
             // Clear any old data and prepare for entry
             workspaceUI.renderPointsTable(elements, [], handleDeletePoint);
@@ -413,6 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Reload to get the new DRAFT IDs for points
             await loadActiveMeasurementData();
+            updateSaveButtonState();
 
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
         } catch (error) {
@@ -487,10 +508,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleMeasurementRename() {
         if (!state.activeMeasurement || !state.isEditing) return;
         const newName = elements.activeMeasurementNameInput.value.trim();
+
+        updateSaveButtonState(); // Update UI state immediately
+
         if (newName === state.activeMeasurement) return;
         if (!newName) {
-            alert("Measurement name cannot be empty.");
-            elements.activeMeasurementNameInput.value = state.activeMeasurement;
+            // We allow empty name in the input during draft editing, but Save remains disabled
             return;
         }
 
@@ -503,6 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Failed to rename:', error);
             alert(error.message);
             elements.activeMeasurementNameInput.value = state.activeMeasurement;
+            updateSaveButtonState();
         }
     }
 
@@ -830,10 +854,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement(state.activeMeasurement));
     elements.activeMeasurementNameInput.addEventListener('change', handleMeasurementRename);
+    elements.activeMeasurementNameInput.addEventListener('input', updateSaveButtonState);
 
     elements.measurementDateInput.addEventListener('change', handleMetadataChange);
+    elements.measurementDateInput.addEventListener('input', updateSaveButtonState);
+
     elements.measurementSerialIdInput.addEventListener('change', handleMetadataChange);
+    elements.measurementSerialIdInput.addEventListener('input', updateSaveButtonState);
+
     elements.measurementSpindleSelect.addEventListener('change', handleMetadataChange);
+    elements.measurementSpindleSelect.addEventListener('change', updateSaveButtonState);
 
     elements.pointsTableBody.addEventListener('input', handleTableNumericValidation);
     elements.pointsTableBody.addEventListener('change', handleTableInput);

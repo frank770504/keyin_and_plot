@@ -34,7 +34,7 @@ keyin-and-plot/
 
 ### A. Global Editor Lock (Single-Editor Policy)
 The application enforces a single-editor workflow to ensure data integrity:
-1.  **Implicit Acquisition**: Clicking "Edit", "Create Measurement", or "Delete Measurement" automatically attempts to acquire the `GlobalLock`.
+1.  **Implicit Acquisition**: Clicking "Edit", "Add Measurement", or "Delete Measurement" automatically attempts to acquire the `GlobalLock`.
 2.  **Exclusivity**: If User A is editing, User B is blocked from all write actions and sees "User A is Editing" in the sidebar.
 3.  **Automatic Release**: The lock is released immediately when the editor clicks "Save", "Cancel", or closes/refreshes the browser tab (via `sendBeacon`).
 4.  **Heartbeat & Expiry**: A 30s heartbeat keeps the lock alive. If a session is abandoned, the lock expires after 120s of inactivity.
@@ -42,7 +42,7 @@ The application enforces a single-editor workflow to ensure data integrity:
 ### B. Draft System
 Used to prevent direct modification of production records and streamline creation:
 1.  **Edit Start**: Clones an existing `Measurement` into a new record with `is_draft=True`.
-2.  **Creation**: Clicking "Create Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`).
+2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). The workspace inputs (Name, Date, Serial ID, Spindle) are cleared, and the "Save" button is disabled until all these mandatory fields are filled.
 3.  **Commit**: Merges draft changes back to the original or "promotes" a new draft to production by flipping the `is_draft` flag.
 4.  **Rollback**: Deletes the draft.
 
@@ -59,7 +59,7 @@ Used to prevent direct modification of production records and streamline creatio
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Measurement List, Workspace, Comparison Chart):
-1.  **Measurement List**: Houses the "Create Measurement" button at the top and a search bar. Drafts are visually marked with a `(Draft)` suffix.
+1.  **Measurement List**: Houses the "Add Measurement" button at the top and a search bar. Drafts are visually marked with a `(Draft)` suffix.
 2.  **Independent Gutters**: Vertical gutters separate the columns, acting as drag handles for resizing and housing toggle buttons for collapsing.
 3.  **Independent State**: Collapsing one pane (e.g., Measurement List) does not affect the visibility of others.
 4.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging to prevent layout glitches.

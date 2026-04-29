@@ -25,9 +25,11 @@ The "Draft-First" workflow streamlines measurement creation by initializing a te
 ### A. Creation Trigger (`main.js`)
 - **Action**: Clicking "Create Measurement" (now located at the top of the Measurement column) calls the initialization API.
 - **State Transition**: Immediately sets `state.isEditing = true` and `state.editingOriginalName = null` (signaling a new record).
-- **UI Update**: Focuses the workspace and allows immediate metadata/point entry.
+- **UI Reset**: Clears all workspace inputs (Name, Date, Serial ID, and Spindle) to ensure a blank slate for the user.
+- **Validation**: Disables the "Save" button (grey/unclickable) until all four mandatory fields (Name, Date, Serial ID, Spindle) are populated.
 
 ### B. Persistence & Sync
+- **Mandatory Fields**: The "Save" button is dynamically enabled/disabled based on the presence of a Name, Date, Serial ID, and Spindle ID.
 - **Pre-Commit Sync**: When "Save" is clicked, the system iterates through all table rows and ensures `syncTableRow()` is completed for each before calling the `commit` API.
 - **Real-time Feedback**: Shear Rate and Shear Stress are calculated on the backend as points are added to the draft and updated in the UI via the `sync` response.
 
