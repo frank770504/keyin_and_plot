@@ -1,6 +1,34 @@
 // static/js/chart_service.js
 import { getMeasurementPoints, getRegressionData } from './api.js';
 
+// --- Constants & Configuration ---
+const COLORS = [
+    'rgba(255, 99, 132, 1)',   // Red
+    'rgba(54, 162, 235, 1)',   // Blue
+    'rgba(255, 206, 86, 1)',   // Yellow
+    'rgba(75, 192, 192, 1)',   // Teal
+    'rgba(153, 102, 255, 1)',  // Purple
+    'rgba(255, 159, 64, 1)',   // Orange
+    'rgba(199, 199, 199, 1)',  // Grey
+    'rgba(83, 102, 255, 1)',   // Indigo
+    'rgba(40, 167, 69, 1)',    // Green
+    'rgba(220, 53, 69, 1)'     // Dark Red
+];
+
+const POINT_STYLES = ['circle', 'rect', 'triangle', 'rectRot', 'cross', 'crossRot', 'star', 'line', 'dash'];
+
+// Simple cache for measurement points to avoid redundant API calls
+const dataCache = new Map();
+
+export function clearChartCache(name = null) {
+    if (name) {
+        dataCache.delete(name);
+    } else {
+        dataCache.clear();
+    }
+}
+
+// --- Custom KaTeX Plugin ---
 const katexChartPlugin = {
     id: 'katexChartPlugin',
     afterUpdate: function(chart) {
@@ -10,7 +38,6 @@ const katexChartPlugin = {
 
         if (!container) return;
 
-        // Ensure LaTeX title divs exist
         ['x', 'y'].forEach(axis => {
             let titleDiv = container.querySelector(`.katex-axis-title-${axis}`);
             if (!titleDiv) {
@@ -22,7 +49,6 @@ const katexChartPlugin = {
             }
             const text = axis === 'x' ? xTitle : yTitle;
 
-            // Only re-render if the text has changed to save performance
             if (titleDiv.getAttribute('data-latex-cache') !== text) {
                 titleDiv.innerHTML = text;
                 titleDiv.setAttribute('data-latex-cache', text);
@@ -35,9 +61,6 @@ const katexChartPlugin = {
                         ],
                         throwOnError: false
                     });
-                } else if (typeof katex !== 'undefined') {
-                    // Fallback for pure math strings if auto-render is missing
-                    katex.render(text.replace(/\$/g, ''), titleDiv, { throwOnError: false });
                 }
             }
         });
@@ -49,7 +72,7 @@ const katexChartPlugin = {
 
         if (xDiv && chart.scales.x) {
             const xPos = chart.scales.x.left + chart.scales.x.width / 2;
-            const yPos = chart.scales.x.bottom + 25; // increased offset for padding
+            const yPos = chart.scales.x.bottom + 25;
             xDiv.style.left = `${xPos}px`;
             xDiv.style.top = `${yPos}px`;
             xDiv.style.transform = 'translateX(-50%)';
@@ -57,7 +80,7 @@ const katexChartPlugin = {
         }
 
         if (yDiv && chart.scales.y) {
-            const xPos = chart.scales.y.left - 55; // increased offset left
+            const xPos = chart.scales.y.left - 55;
             const yPos = chart.scales.y.top + chart.scales.y.height / 2;
             yDiv.style.left = `${xPos}px`;
             yDiv.style.top = `${yPos}px`;
@@ -67,8 +90,8 @@ const katexChartPlugin = {
     }
 };
 
+// --- Custom Tooltip Handler ---
 const externalTooltipHandler = (context) => {
-    // Tooltip Element
     const {chart, tooltip} = context;
     let tooltipEl = chart.canvas.parentElement.querySelector('div.chartjs-tooltip');
 
@@ -88,13 +111,11 @@ const externalTooltipHandler = (context) => {
         chart.canvas.parentElement.appendChild(tooltipEl);
     }
 
-    // Hide if no tooltip
     if (tooltip.opacity === 0) {
         tooltipEl.style.opacity = 0;
         return;
     }
 
-    // Set Text
     if (tooltip.body) {
         const titleLines = tooltip.title || [];
         const bodyLines = tooltip.body.map(b => b.lines);
@@ -113,7 +134,6 @@ const externalTooltipHandler = (context) => {
 
         tooltipEl.innerHTML = innerHtml;
 
-        // Render LaTeX
         if (typeof renderMathInElement === 'function') {
             renderMathInElement(tooltipEl, {
                 delimiters: [
@@ -127,14 +147,22 @@ const externalTooltipHandler = (context) => {
 
     const {offsetLeft: positionX, offsetTop: positionY} = chart.canvas;
 
-    // Display, position, and set styles for font
     tooltipEl.style.opacity = 1;
     tooltipEl.style.left = positionX + tooltip.caretX + 'px';
     tooltipEl.style.top = positionY + tooltip.caretY + 'px';
     tooltipEl.style.padding = tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
 };
 
-export function initializeOrUpdateChart(ctx, chartDatasets) {
+// --- Main Chart Interface ---
+
+export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
+    const {
+        xAxisType = 'linear',
+        yAxisType = 'linear',
+        xAxisTitle = '$\\dot{\\gamma}$ (1/s)',
+        yAxisTitle = '$\\sigma$ (Pa)'
+    } = options;
+
     return new Chart(ctx, {
         type: 'scatter',
         data: { datasets: chartDatasets },
@@ -143,42 +171,46 @@ export function initializeOrUpdateChart(ctx, chartDatasets) {
             maintainAspectRatio: true,
             layout: {
                 padding: {
-                    bottom: 40, // Space for X axis title
-                    left: 50,   // Space for Y axis title
+                    bottom: 40,
+                    left: 60,
                     right: 20,
                     top: 10
                 }
             },
             scales: {
                 x: {
-                    type: 'linear',
+                    type: xAxisType,
                     position: 'bottom',
-                    title: { display: false, text: '$\\dot{\\gamma}$ (1/s)' } // Set display to false, plugin handles it
+                    title: { display: false, text: xAxisTitle },
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        callback: function(value) {
+                            return xAxisType === 'logarithmic' ? value.toExponential(0) : value;
+                        }
+                    }
                 },
                 y: {
-                    title: { display: false, text: '$\\sigma$ (Pa)' }
+                    type: yAxisType,
+                    title: { display: false, text: yAxisTitle },
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: {
+                        callback: function(value) {
+                            return yAxisType === 'logarithmic' ? value.toExponential(0) : value;
+                        }
+                    }
                 }
             },
             plugins: {
-                legend: {
-                    display: false // Disable default legend
-                },
+                legend: { display: false },
                 tooltip: {
-                    enabled: false, // Disable default tooltip
+                    enabled: false,
                     external: externalTooltipHandler
                 },
                 zoom: {
-                    pan: {
-                        enabled: true,
-                        mode: 'xy'
-                    },
+                    pan: { enabled: true, mode: 'xy' },
                     zoom: {
-                        wheel: {
-                            enabled: true,
-                        },
-                        pinch: {
-                            enabled: true
-                        },
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
                         mode: 'xy',
                     }
                 }
@@ -189,84 +221,92 @@ export function initializeOrUpdateChart(ctx, chartDatasets) {
 
 export function destroyChart(chartInstance) {
     if (chartInstance) {
-        // Clean up LaTeX title elements created by the plugin
         const container = chartInstance.canvas.parentElement;
         if (container) {
             ['x', 'y'].forEach(axis => {
                 const titleDiv = container.querySelector(`.katex-axis-title-${axis}`);
-                if (titleDiv) {
-                    titleDiv.remove();
-                }
+                if (titleDiv) titleDiv.remove();
             });
         }
         chartInstance.destroy();
     }
 }
 
-export async function getSelectedMeasurementsForChart(measurementNames) {
+export async function getSelectedMeasurementsForChart(measurementNames, options = {}) {
+    const { includeLinear = false, includePower = true } = options;
     const chartData = { datasets: [] };
-    const colors = [
-        'rgba(255, 99, 132, 0.5)',
-        'rgba(54, 162, 235, 0.5)',
-        'rgba(255, 206, 86, 0.5)',
-        'rgba(75, 192, 192, 0.5)',
-        'rgba(153, 102, 255, 0.5)',
-        'rgba(255, 159, 64, 0.5)'
-    ];
-    const borderColors = [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(255, 159, 64, 1)'
-    ];
 
     for (let i = 0; i < measurementNames.length; i++) {
         const name = measurementNames[i];
-        const data = await getMeasurementPoints(name); // API returns object { points: [...] }
-        const pointsArray = data.points;
-        const colorIndex = i % colors.length;
+        let pointsArray;
+
+        // Caching logic
+        if (dataCache.has(name)) {
+            pointsArray = dataCache.get(name);
+        } else {
+            const data = await getMeasurementPoints(name);
+            pointsArray = data.points;
+            dataCache.set(name, pointsArray);
+        }
+
+        const color = COLORS[i % COLORS.length];
+        const pointStyle = POINT_STYLES[i % POINT_STYLES.length];
 
         // Add raw data points
         chartData.datasets.push({
             label: name,
             data: pointsArray.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
-            backgroundColor: colors[colorIndex],
-            borderColor: borderColors[colorIndex],
-            pointRadius: 3,
+            backgroundColor: color.replace('1)', '0.5)'),
+            borderColor: color,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointStyle: pointStyle,
             type: 'scatter'
         });
 
-        // Fetch and add power law regression data
-        try {
-            const regressionData = await getRegressionData(name, 'power');
-            const regressionPoints = regressionData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
+        // Fetch Regression Data
+        if (includePower) {
+            try {
+                const reg = await getRegressionData(name, 'power');
+                chartData.datasets.push(createRegressionDataset(name, reg, 'power', color));
+            } catch (e) { console.warn(`Power reg failed for ${name}`, e); }
+        }
 
-            let label;
-            const { r_squared, a, b } = regressionData;
-            if (r_squared !== undefined && a !== undefined && b !== undefined) {
-                const equation = `$\\sigma = ${a.toFixed(3)}\\,\\dot{\\gamma}^{${b.toFixed(3)}}$`;
-                const rSquaredInfo = `$R^2 = ${r_squared.toFixed(3)}$`;
-                label = `Power: ${equation}, ${rSquaredInfo}`;
-            } else {
-                label = `Power Regression for ${name}`;
-            }
-
-            chartData.datasets.push({
-                label: label,
-                data: regressionPoints,
-                borderColor: borderColors[colorIndex], // Use same color but dashed
-                borderDash: [5, 5],
-                backgroundColor: 'rgba(0,0,0,0)', // Transparent fill
-                type: 'line',
-                showLine: true,
-                fill: false,
-                pointRadius: 0
-            });
-        } catch (error) {
-            console.warn(`Could not get power regression for measurement ${name}:`, error.message);
+        if (includeLinear) {
+            try {
+                const reg = await getRegressionData(name, 'linear');
+                chartData.datasets.push(createRegressionDataset(name, reg, 'linear', color));
+            } catch (e) { console.warn(`Linear reg failed for ${name}`, e); }
         }
     }
     return chartData;
 }
+
+function createRegressionDataset(name, regData, type, color) {
+    const points = regData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
+    let label;
+    const r2 = regData.r_squared.toFixed(3);
+
+    if (type === 'linear') {
+        const { slope, intercept } = regData;
+        label = `Linear (${name}): $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2=${r2}$`;
+    } else {
+        const { a, b } = regData;
+        label = `Power (${name}): $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2=${r2}$`;
+    }
+
+    return {
+        label: label,
+        data: points,
+        borderColor: color,
+        borderWidth: 2,
+        borderDash: type === 'linear' ? [10, 5] : [5, 5],
+        backgroundColor: 'rgba(0,0,0,0)',
+        type: 'line',
+        showLine: true,
+        fill: false,
+        pointRadius: 0,
+        tension: 0.1 // Slight smoothing
+    };
+}
+

@@ -82,16 +82,82 @@ body {
     box-sizing: border-box;
 }
 
-.center-header {
+.right-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.center-header h1 {
+.right-header h1 {
     margin: 0;
 }
+
+.chart-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: normal !important;
+}
+
+.toggle-btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background-color: #fff;
+    color: #495057;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+    background-color: #e9ecef;
+}
+
+.toggle-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.toggle-btn.small {
+    padding: 2px 6px;
+    font-size: 0.7rem;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 
 #active-measurement-name-input {
     font-size: 2rem;

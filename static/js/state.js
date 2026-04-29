@@ -21,7 +21,19 @@ const state = {
     centerColumnAutoHidden: false,
     editingOriginalName: null,
     heartbeatInterval: null,
-    lastValidValues: new WeakMap() // Track numeric input history
+    lastValidValues: new WeakMap(), // Track numeric input history
+    chartConfig: {
+        comparison: {
+            xLog: false,
+            yLog: false,
+            includeLinear: false,
+            includePower: true
+        },
+        active: {
+            xLog: false,
+            yLog: false
+        }
+    }
 };
 
 // Persist sessionID

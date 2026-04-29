@@ -122,7 +122,21 @@
         <!-- Right Column: Comparison Chart -->
         <div class="column" id="right-column">
             <div class="column-content-wrapper">
-                <h1>Compare Measurements</h1>
+                <div class="right-header">
+                    <h1>Compare Measurements</h1>
+                    <div class="chart-controls">
+                        <div class="control-group">
+                            <label>Scale:</label>
+                            <button id="toggle-comp-log-x" class="toggle-btn" title="Toggle X-axis Log/Linear">X-Log</button>
+                            <button id="toggle-comp-log-y" class="toggle-btn" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                        </div>
+                        <div class="control-group">
+                            <label>Regression:</label>
+                            <label class="checkbox-label"><input type="checkbox" id="comp-include-linear"> Linear</label>
+                            <label class="checkbox-label"><input type="checkbox" id="comp-include-power" checked> Power</label>
+                        </div>
+                    </div>
+                </div>
                 <div id="comparison-chart-container" style="position: relative; width: 100%;">
                     <button id="reset-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
                     <canvas id="comparison-chart"></canvas>
@@ -136,7 +150,11 @@
     <div id="floating-chart-window" class="floating-window">
         <div class="window-header" id="chart-window-header">
             <span id="window-title">Analysis Chart</span>
-            <button id="close-chart-window" class="close-btn">&times;</button>
+            <div class="header-controls">
+                <button id="toggle-active-log-x" class="toggle-btn small" title="Toggle X-axis Log/Linear">X-Log</button>
+                <button id="toggle-active-log-y" class="toggle-btn small" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                <button id="close-chart-window" class="close-btn">&times;</button>
+            </div>
         </div>
         <div class="window-content">
             <div id="active-chart-container" style="position: relative; width: 100%;">

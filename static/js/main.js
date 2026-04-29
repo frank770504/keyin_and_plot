@@ -48,6 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
 
+        // Chart Controls
+        toggleCompLogX: document.getElementById('toggle-comp-log-x'),
+        toggleCompLogY: document.getElementById('toggle-comp-log-y'),
+        compIncludeLinear: document.getElementById('comp-include-linear'),
+        compIncludePower: document.getElementById('comp-include-power'),
+        toggleActiveLogX: document.getElementById('toggle-active-log-x'),
+        toggleActiveLogY: document.getElementById('toggle-active-log-y'),
+
         // Layout
         leftColumn: document.getElementById('left-column'),
         collapseLeftBtn: document.getElementById('collapse-left'),
@@ -300,16 +308,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderActiveChart(points) {
-        const chartData = {
-            datasets: [{
-                label: state.activeMeasurement,
-                data: points.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
-                backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-            }]
+        const chartData = [{
+            label: state.activeMeasurement,
+            data: points.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+        }];
+
+        const chartOptions = {
+            xAxisType: state.chartConfig.active.xLog ? 'logarithmic' : 'linear',
+            yAxisType: state.chartConfig.active.yLog ? 'logarithmic' : 'linear'
         };
+
         if (activeChart) chartService.destroyChart(activeChart);
-        activeChart = chartService.initializeOrUpdateChart(elements.activeChartCanvas, chartData.datasets);
+        activeChart = chartService.initializeOrUpdateChart(elements.activeChartCanvas, chartData, chartOptions);
     }
 
     // 3. User Actions
@@ -399,6 +413,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 await api.deleteMeasurement(targetName);
+                state.comparisonSelected.delete(targetName);
+                handleDrawSelected();
+
                 if (state.activeMeasurement === targetName) {
                     stateManager.setActiveMeasurement(null);
                     workspaceUI.toggleCenterColumn(elements, false);
@@ -542,6 +559,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 serial_id: serialId,
                 spindle_id: spindleId
             });
+            // Clear cache as points might be recalculated
+            chartService.clearChartCache(state.activeMeasurement);
             // Reload all data after metadata change, especially for spindle-based recalculations
             await loadActiveMeasurementData();
         } catch (error) {
@@ -556,6 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm('Are you sure you want to delete this point?')) {
             try {
                 await api.deletePoint(state.activeMeasurement, pointId);
+                chartService.clearChartCache(state.activeMeasurement);
                 await loadActiveMeasurementData();
                 workspaceUI.ensureEmptyRow(elements, handleDeletePoint); // Ensure we still have an empty row
             } catch (error) {
@@ -606,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id) {
                 // Update existing point
                 result = await api.updatePoint(state.activeMeasurement, id, nVal, etaVal, torqueVal);
+                chartService.clearChartCache(state.activeMeasurement);
                 chartNeedsUpdate = true;
             } else {
                 // Create new point - LOCK to prevent duplicates if user is still typing
@@ -613,6 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendingAdds.add(tr);
                 try {
                     result = await api.addPoint(state.activeMeasurement, nVal, etaVal, torqueVal);
+                    chartService.clearChartCache(state.activeMeasurement);
                     tr.dataset.id = result.id;
                     id = result.id; // Update local var for success check
                     workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
@@ -693,26 +715,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const regressionPoints = regressionData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
             let label;
+            const r2 = regressionData.r_squared.toFixed(3);
             if (type === 'linear') {
-                const { r_squared, slope, intercept } = regressionData;
-                label = `Linear: $\\sigma = ${slope.toFixed(3)}\\,\\dot{\\gamma} + ${intercept.toFixed(3)}, R^2 = ${r_squared.toFixed(3)}$`;
+                const { slope, intercept } = regressionData;
+                label = `Linear: $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2 = ${r2}$`;
             } else {
-                const { r_squared, a, b } = regressionData;
-                label = `Power: $\\sigma = ${a.toFixed(3)}\\,\\dot{\\gamma}^{${b.toFixed(3)}}, R^2 = ${r_squared.toFixed(3)}$`;
+                const { a, b } = regressionData;
+                label = `Power: $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2 = ${r2}$`;
             }
 
             const newDataset = {
                 label: label,
                 data: regressionPoints,
                 borderColor: type === 'linear' ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                borderDash: type === 'linear' ? [10, 5] : [5, 5],
                 backgroundColor: 'rgba(0,0,0,0)',
                 type: 'line',
                 showLine: true,
-                fill: false
+                fill: false,
+                pointRadius: 0,
+                tension: 0.1
             };
 
             const otherDatasets = activeChart.data.datasets.filter(d =>
-                d.label !== label && !d.label.startsWith(type === 'linear' ? 'Linear:' : 'Power:')
+                !d.label.startsWith(type === 'linear' ? 'Linear:' : 'Power:')
             );
             activeChart.data.datasets = [...otherDatasets, newDataset];
             activeChart.update();
@@ -745,9 +772,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const chartData = await chartService.getSelectedMeasurementsForChart(selectedNames);
+            const chartData = await chartService.getSelectedMeasurementsForChart(selectedNames, {
+                includeLinear: state.chartConfig.comparison.includeLinear,
+                includePower: state.chartConfig.comparison.includePower
+            });
+
+            const chartOptions = {
+                xAxisType: state.chartConfig.comparison.xLog ? 'logarithmic' : 'linear',
+                yAxisType: state.chartConfig.comparison.yLog ? 'logarithmic' : 'linear'
+            };
+
             if (comparisonChart) chartService.destroyChart(comparisonChart);
-            comparisonChart = chartService.initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets);
+            comparisonChart = chartService.initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets, chartOptions);
 
             elements.resetZoomBtn.style.display = 'flex';
 
@@ -907,6 +943,42 @@ document.addEventListener('DOMContentLoaded', () => {
         if (comparisonChart) {
             comparisonChart.resetZoom();
         }
+    });
+
+    // --- Chart Control Listeners ---
+    const updateCompChart = () => handleDrawSelected();
+    const updateActiveChart = () => {
+        if (state.activeMeasurement) loadActiveMeasurementData();
+    };
+
+    elements.toggleCompLogX.addEventListener('click', () => {
+        state.chartConfig.comparison.xLog = !state.chartConfig.comparison.xLog;
+        elements.toggleCompLogX.classList.toggle('active', state.chartConfig.comparison.xLog);
+        updateCompChart();
+    });
+    elements.toggleCompLogY.addEventListener('click', () => {
+        state.chartConfig.comparison.yLog = !state.chartConfig.comparison.yLog;
+        elements.toggleCompLogY.classList.toggle('active', state.chartConfig.comparison.yLog);
+        updateCompChart();
+    });
+    elements.compIncludeLinear.addEventListener('change', () => {
+        state.chartConfig.comparison.includeLinear = elements.compIncludeLinear.checked;
+        updateCompChart();
+    });
+    elements.compIncludePower.addEventListener('change', () => {
+        state.chartConfig.comparison.includePower = elements.compIncludePower.checked;
+        updateCompChart();
+    });
+
+    elements.toggleActiveLogX.addEventListener('click', () => {
+        state.chartConfig.active.xLog = !state.chartConfig.active.xLog;
+        elements.toggleActiveLogX.classList.toggle('active', state.chartConfig.active.xLog);
+        updateActiveChart();
+    });
+    elements.toggleActiveLogY.addEventListener('click', () => {
+        state.chartConfig.active.yLog = !state.chartConfig.active.yLog;
+        elements.toggleActiveLogY.classList.toggle('active', state.chartConfig.active.yLog);
+        updateActiveChart();
     });
 
 

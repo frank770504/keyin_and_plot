@@ -3,7 +3,7 @@
 export function createFloatingLegend(chartInstance, legendElement) {
     if (!chartInstance || !legendElement) return;
 
-    // Reset content but keep layout structure if possible? 
+    // Reset content but keep layout structure if possible?
     // Actually, simpler to rebuild since it's cheap.
     legendElement.innerHTML = '';
     legendElement.style.display = 'flex'; // Ensure flex display
@@ -38,6 +38,14 @@ export function createFloatingLegend(chartInstance, legendElement) {
         colorBox.className = 'legend-color-box';
         colorBox.style.backgroundColor = item.fillStyle;
         colorBox.style.border = `1px solid ${item.strokeStyle}`;
+
+        // Show dash if the dataset is a dashed line
+        const ds = chartInstance.data.datasets[item.datasetIndex];
+        if (ds && ds.borderDash && ds.borderDash.length > 0) {
+            colorBox.style.height = '0';
+            colorBox.style.borderTop = `3px dashed ${item.strokeStyle}`;
+            colorBox.style.backgroundColor = 'transparent';
+        }
 
         const text = document.createElement('span');
         text.textContent = item.text;
