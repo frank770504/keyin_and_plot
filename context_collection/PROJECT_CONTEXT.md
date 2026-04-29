@@ -51,11 +51,13 @@ Used to prevent direct modification of production records and streamline creatio
 - **Batch Sync**: On "Save", the frontend ensures all rows are synced before the final commit.
 - **Auto-Calculation**: Backend calculates Shear Rate and Shear Stress in real-time based on `N` (RPM), `eta` (mPa·s), and the selected `SpindleFactor`.
 
-### D. Analysis & Regression
-- **Analysis Window**: Floating scatter plot of the active measurement.
-- **Linear Regression**: $\sigma = m \dot{\gamma} + c$
-- **Power Law Regression**: $\sigma = a \dot{\gamma}^b$
-- **Comparison View**: Reactive overlay of multiple measurements. Selecting measurements via the "Plot" column (which supports master-toggling and enhanced click targets) automatically updates the chart. Includes a "Reset View" button to restore auto-fit scales.
+### D. Analysis & Regression (Unified Reactive Engine)
+- **Unified Controls**: Both the Comparison Chart and the Analysis Window feature identical reactive controls for scale and analysis.
+- **Logarithmic Scaling**: Independent X-axis and Y-axis toggles between linear and logarithmic scales.
+- **Reactive Regressions**: Support for overlaying Linear ($\sigma = m \dot{\gamma} + c$) and Power Law ($\sigma = a \dot{\gamma}^b$) regressions via persistent checkboxes.
+- **Comparison View**: Reactive overlay of multiple measurements based on the "Plot" column.
+- **Performance**: Integrated client-side caching ensures near-instant re-renders when toggling visibility or regression modes.
+- **Visual Polish**: Unique point style and color combinations for each measurement; persistent "Reset View" (⟲) button for auto-scaling.
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Measurement List, Workspace, Comparison Chart):
