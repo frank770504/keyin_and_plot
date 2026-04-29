@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clearRegressionBtn: document.getElementById('clear-regression-btn'),
 
         // Right Column
-        drawSelectedBtn: document.getElementById('draw-selected-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
 
@@ -221,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function refreshMeasurementList() {
-        measurementUI.renderMeasurementList(elements, setActiveMeasurement);
+        measurementUI.renderMeasurementList(elements, setActiveMeasurement, handleDrawSelected);
         measurementUI.updateSortIcons(elements);
     }
 
@@ -733,7 +732,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleDrawSelected() {
         const selectedNames = Array.from(state.comparisonSelected);
-        if (selectedNames.length === 0) return alert('Select measurements.');
+        if (selectedNames.length === 0) {
+            if (comparisonChart) {
+                chartService.destroyChart(comparisonChart);
+                comparisonChart = null;
+            }
+            elements.customLegend.style.display = 'none';
+            return;
+        }
 
         try {
             const chartData = await chartService.getSelectedMeasurementsForChart(selectedNames);
@@ -872,8 +878,6 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.regressionBtn.addEventListener('click', () => handleRegression('linear'));
     elements.powerRegressionBtn.addEventListener('click', () => handleRegression('power'));
     elements.clearRegressionBtn.addEventListener('click', clearRegressions);
-
-    elements.drawSelectedBtn.addEventListener('click', handleDrawSelected);
 
 
     // --- Initial Load & Polling ---

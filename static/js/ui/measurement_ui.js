@@ -27,7 +27,7 @@ export function getProcessedMeasurements() {
     return filtered;
 }
 
-export function renderMeasurementList(elements, onSelect) {
+export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
     const measurements = getProcessedMeasurements();
     elements.measurementListBody.innerHTML = '';
 
@@ -42,11 +42,15 @@ export function renderMeasurementList(elements, onSelect) {
 
         // Checkbox for comparison
         const tdCheck = document.createElement('td');
+        tdCheck.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = state.comparisonSelected.has(measurement.name);
         checkbox.addEventListener('change', () => {
             toggleComparisonSelection(measurement.name);
+            if (onComparisonToggle) onComparisonToggle();
         });
         tdCheck.appendChild(checkbox);
         tr.appendChild(tdCheck);
