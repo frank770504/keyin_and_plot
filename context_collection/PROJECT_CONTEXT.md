@@ -55,7 +55,7 @@ Used to prevent direct modification of production records and streamline creatio
 - **Analysis Window**: Floating scatter plot of the active measurement.
 - **Linear Regression**: $\sigma = m \dot{\gamma} + c$
 - **Power Law Regression**: $\sigma = a \dot{\gamma}^b$
-- **Comparison View**: Overlay multiple measurements on a single chart.
+- **Comparison View**: Reactive overlay of multiple measurements. Selecting measurements via the "Plot" column (which supports master-toggling and enhanced click targets) automatically updates the chart. Includes a "Reset View" button to restore auto-fit scales.
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Measurement List, Workspace, Comparison Chart):
