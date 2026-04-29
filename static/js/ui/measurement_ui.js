@@ -44,6 +44,9 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
         const tdCheck = document.createElement('td');
         tdCheck.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (e.target !== checkbox) {
+                checkbox.click();
+            }
         });
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';

@@ -652,6 +652,10 @@ canvas {
 }
 
 
+#measurement-list-table td:first-child {
+    cursor: pointer;
+}
+
 #measurement-list-table td:first-child input[type="checkbox"] {
     cursor: pointer;
     transform: scale(1.2); /* Make it slightly easier to click */
