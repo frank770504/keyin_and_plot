@@ -1,22 +1,22 @@
 # Key-in and Plot
 
-An interactive web application for managing and visualizing 2D datasets. It provides a multi-column interface to create datasets, add data points, and perform regression analysis.
+An interactive web application for managing and visualizing 2D measurements. It provides a multi-column interface to create measurements, add data points, and perform regression analysis.
 
 ## Features
 
 *   **Three-Column Layout**: A flexible interface with collapsible sidebars.
-    *   **Left Column**: Manage your datasets (create, delete, and select an active dataset).
-    *   **Center Column**: A workspace for the active dataset, with tabs for viewing raw data points and for visualizing the data with regression analysis.
-    *   **Right Column**: A comparison tool to select and plot multiple datasets and their power law regressions on a single chart.
+    *   **Left Column**: Manage your measurements (create, delete, and select an active measurement).
+    *   **Center Column**: A workspace for the active measurement, with tabs for viewing raw data points and for visualizing the data with regression analysis.
+    *   **Right Column**: A comparison tool to select and plot multiple measurements and their power law regressions on a single chart.
 *   **Data Management**:
-    *   Create and delete datasets.
-    *   Add and delete (x, y) data points for any dataset.
+    *   Create and delete measurements.
+    *   Add and delete (x, y) data points for any measurement.
 *   **Analysis and Visualization**:
-    *   View scatter plots for individual datasets.
-    *   Calculate and display **Linear** and **Power Law** regression lines on the plot for the active dataset.
+    *   View scatter plots for individual measurements.
+    *   Calculate and display **Linear** and **Power Law** regression lines on the plot for the active measurement.
 *   **Comparison View**:
-    *   Select multiple datasets to render them on a shared comparison chart.
-    *   Automatically displays the power law regression line for each selected dataset in the comparison view.
+    *   Select multiple measurements to render them on a shared comparison chart.
+    *   Automatically displays the power law regression line for each selected measurement in the comparison view.
 
 ## Tech Stack
 

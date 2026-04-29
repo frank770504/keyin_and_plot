@@ -8,11 +8,11 @@ const generateSessionId = () => {
 };
 
 const state = {
-    allDatasets: [],
-    activeDataset: null,
+    allMeasurements: [],
+    activeMeasurement: null,
     isEditing: false,
     sortState: { column: 'name', direction: 'asc' },
-    datasetFilter: '',
+    measurementFilter: '',
     userName: localStorage.getItem('userName') || null,
     sessionID: sessionStorage.getItem('sessionID') || generateSessionId(),
     isGlobalEditor: false,
@@ -29,16 +29,16 @@ sessionStorage.setItem('sessionID', state.sessionID);
 
 export default state;
 
-export function setAllDatasets(datasets) {
-    state.allDatasets = datasets;
+export function setAllMeasurements(measurements) {
+    state.allMeasurements = measurements;
 }
 
 export function setEditingOriginalName(name) {
     state.editingOriginalName = name;
 }
 
-export function setActiveDataset(name) {
-    state.activeDataset = name;
+export function setActiveMeasurement(name) {
+    state.activeMeasurement = name;
 }
 
 export function setEditing(isEditing) {
@@ -75,8 +75,8 @@ export function setSortState(column, direction) {
     state.sortState = { column, direction };
 }
 
-export function setDatasetFilter(term) {
-    state.datasetFilter = term;
+export function setMeasurementFilter(term) {
+    state.measurementFilter = term;
 }
 
 export function toggleComparisonSelection(name) {

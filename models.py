@@ -15,7 +15,8 @@ class GlobalLock(db.Model):
         return (now - self.last_heartbeat).total_seconds() > timeout_seconds
 
 
-class Dataset(db.Model):
+class Measurement(db.Model):
+    __tablename__ = 'measurements'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=False, nullable=False)
     date = db.Column(db.String(20), nullable=True)
@@ -24,13 +25,14 @@ class Dataset(db.Model):
     is_draft = db.Column(db.Boolean, default=False)
     original_id = db.Column(db.Integer, nullable=True)
     # Draft-related session columns removed
-    points = db.relationship('Point', backref='dataset', cascade="all, delete-orphan", lazy=True)
+    points = db.relationship('Point', backref='measurement', cascade="all, delete-orphan", lazy=True)
 
     def __repr__(self):
-        return f'<Dataset {self.name} (Draft: {self.is_draft})>'
+        return f'<Measurement {self.name} (Draft: {self.is_draft})>'
 
 
 class Point(db.Model):
+    __tablename__ = 'points'
     id = db.Column(db.Integer, primary_key=True)
     N = db.Column(db.Float, nullable=False)
     eta = db.Column(db.Float, nullable=False)
@@ -39,7 +41,7 @@ class Point(db.Model):
     shear_stress = db.Column(db.Float, nullable=True)
     is_draft = db.Column(db.Boolean, default=False)
     original_id = db.Column(db.Integer, nullable=True)
-    dataset_id = db.Column(db.Integer, db.ForeignKey('dataset.id'), nullable=False)
+    measurement_id = db.Column(db.Integer, db.ForeignKey('measurements.id'), nullable=False)
 
     def __repr__(self):
         return f'<Point(N={self.N}, eta={self.eta})>'

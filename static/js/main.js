@@ -3,7 +3,7 @@ import * as api from './api.js';
 import * as chartService from './chart_service.js';
 import state, * as stateManager from './state.js';
 import * as layout from './ui/layout.js';
-import * as datasetUI from './ui/dataset_ui.js';
+import * as measurementUI from './ui/measurement_ui.js';
 import * as workspaceUI from './ui/workspace_ui.js';
 import { createFloatingLegend, makeDraggable } from './ui/legend_ui.js';
 
@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const elements = {
         // Left Column
-        datasetListBody: document.getElementById('dataset-list-body'),
-        datasetSearchInput: document.getElementById('dataset-search'),
-        datasetListHeaders: document.querySelectorAll('#dataset-list-table th[data-sort]'),
-        createDatasetBtn: document.getElementById('create-dataset-btn'),
+        measurementListBody: document.getElementById('measurement-list-body'),
+        measurementSearchInput: document.getElementById('measurement-search'),
+        measurementListHeaders: document.querySelectorAll('#measurement-list-table th[data-sort]'),
+        addMeasurementBtn: document.getElementById('add-measurement-btn'),
 
         // Lock & User UI
         lockStatusText: document.getElementById('lock-status-text'),
@@ -22,14 +22,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Center Column
         centerColumn: document.getElementById('center-column'),
-        activeDatasetName: document.getElementById('active-dataset-name'),
-        activeDatasetNameInput: document.getElementById('active-dataset-name-input'),
+        activeMeasurementName: document.getElementById('active-measurement-name'),
+        activeMeasurementNameInput: document.getElementById('active-measurement-name-input'),
         editBtn: document.getElementById('edit-btn'),
         cancelEditBtn: document.getElementById('cancel-edit-btn'),
-        deleteDatasetBtn: document.getElementById('delete-dataset-btn'),
-        datasetDateInput: document.getElementById('dataset-date'),
-        datasetSerialIdInput: document.getElementById('dataset-serial-id'),
-        datasetSpindleSelect: document.getElementById('dataset-spindle'),
+        deleteMeasurementBtn: document.getElementById('delete-measurement-btn'),
+        measurementDateInput: document.getElementById('measurement-date'),
+        measurementSerialIdInput: document.getElementById('measurement-serial-id'),
+        measurementSpindleSelect: document.getElementById('measurement-spindle'),
         pointsTableBody: document.querySelector('#points-table tbody'),
         openAnalysisBtn: document.getElementById('open-analysis-btn'),
 
@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Layout
         leftColumn: document.getElementById('left-column'),
-        centerColumn: document.getElementById('center-column'),
         collapseLeftBtn: document.getElementById('collapse-left'),
         collapseCenterBtn: document.getElementById('collapse-center'),
         gutterLeft: document.getElementById('gutter-left'),
@@ -149,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const canWrite = state.isGlobalEditor || !locked;
-        elements.createDatasetBtn.disabled = !canWrite;
+        elements.addMeasurementBtn.disabled = !canWrite;
 
         // If someone else took the lock while we were editing
         if (locked && !isMe && state.isEditing) {
@@ -206,24 +205,24 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
-            loadActiveDatasetData();
+            loadActiveMeasurementData();
         }
     }
 
     // 1. Data Loading & List Management
-    async function loadAndRenderDatasets() {
+    async function loadAndRenderMeasurements() {
         try {
-            const datasets = await api.getDatasets();
-            stateManager.setAllDatasets(datasets);
-            refreshDatasetList();
+            const measurements = await api.getMeasurements();
+            stateManager.setAllMeasurements(measurements);
+            refreshMeasurementList();
         } catch (error) {
-            console.error('Error loading datasets:', error);
+            console.error('Error loading measurements:', error);
         }
     }
 
-    function refreshDatasetList() {
-        datasetUI.renderDatasetList(elements, setActiveDataset);
-        datasetUI.updateSortIcons(elements);
+    function refreshMeasurementList() {
+        measurementUI.renderMeasurementList(elements, setActiveMeasurement);
+        measurementUI.updateSortIcons(elements);
     }
 
     function showUnsavedChangesDialog() {
@@ -238,11 +237,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Workspace & Active Dataset
-    async function setActiveDataset(name) {
+    // 2. Workspace & Active Measurement
+    async function setActiveMeasurement(name) {
         // --- Handle Unsaved Changes ---
-        if (state.isEditing && state.activeDataset) {
-            // If clicking a different dataset OR clicking the same one to deselect
+        if (state.isEditing && state.activeMeasurement) {
+            // If clicking a different measurement OR clicking the same one to deselect
             const action = await showUnsavedChangesDialog();
 
             if (action === 'save') {
@@ -251,21 +250,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 await cancelEditMode();
             } else {
                 // "stay" or dialog closed without action
-                refreshDatasetList();
+                refreshMeasurementList();
                 return;
             }
         }
 
-        if (state.activeDataset === name) {
+        if (state.activeMeasurement === name) {
             // Deselect
-            stateManager.setActiveDataset(null);
+            stateManager.setActiveMeasurement(null);
             workspaceUI.toggleCenterColumn(elements, false);
-            elements.activeDatasetName.textContent = 'No Dataset Selected';
+            elements.activeMeasurementName.textContent = 'No Measurement Selected';
             elements.editBtn.style.display = 'none';
             elements.cancelEditBtn.style.display = 'none';
         } else {
             // Select
-            stateManager.setActiveDataset(name);
+            stateManager.setActiveMeasurement(name);
             stateManager.setEditing(false); // Reset edit mode
             elements.editBtn.style.display = 'inline-block';
             elements.editBtn.textContent = 'Edit';
@@ -274,34 +273,34 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (activeChart) activeChart.resize();
             });
             workspaceUI.updateEditModeUI(elements);
-            elements.activeDatasetName.textContent = name;
-            await loadActiveDatasetData();
+            elements.activeMeasurementName.textContent = name;
+            await loadActiveMeasurementData();
         }
-        refreshDatasetList();
+        refreshMeasurementList();
     }
 
-    async function loadActiveDatasetData() {
-        if (!state.activeDataset) return;
+    async function loadActiveMeasurementData() {
+        if (!state.activeMeasurement) return;
 
         try {
-            const data = await api.getDatasetPoints(state.activeDataset);
+            const data = await api.getMeasurementPoints(state.activeMeasurement);
             const points = data.points;
 
-            elements.datasetDateInput.value = data.date || '';
-            elements.datasetSerialIdInput.value = data.serial_id || '';
-            elements.datasetSpindleSelect.value = data.spindle_id || '';
+            elements.measurementDateInput.value = data.date || '';
+            elements.measurementSerialIdInput.value = data.serial_id || '';
+            elements.measurementSpindleSelect.value = data.spindle_id || '';
 
             workspaceUI.renderPointsTable(elements, points, handleDeletePoint);
             renderActiveChart(points);
         } catch (error) {
-            console.error(`Error loading data for ${state.activeDataset}:`, error);
+            console.error(`Error loading data for ${state.activeMeasurement}:`, error);
         }
     }
 
     function renderActiveChart(points) {
         const chartData = {
             datasets: [{
-                label: state.activeDataset,
+                label: state.activeMeasurement,
                 data: points.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
                 borderColor: 'rgba(75, 192, 192, 1)',
@@ -322,33 +321,33 @@ document.addEventListener('DOMContentLoaded', () => {
             direction = 'asc';
         }
         stateManager.setSortState(column, direction);
-        refreshDatasetList();
+        refreshMeasurementList();
     }
 
-    function handleDatasetSearch() {
-        stateManager.setDatasetFilter(elements.datasetSearchInput.value);
-        refreshDatasetList();
+    function handleMeasurementSearch() {
+        stateManager.setMeasurementFilter(elements.measurementSearchInput.value);
+        refreshMeasurementList();
     }
 
-    async function handleCreateDataset() {
+    async function handleAddMeasurement() {
         const lockAcquired = await ensureLock();
         if (!lockAcquired) return;
 
         try {
             // Create a draft with a default name on the backend
-            const result = await api.createDataset();
+            const result = await api.addMeasurement();
             const newName = result.name;
 
-            // Update local state and UI to point to this new dataset
-            stateManager.setActiveDataset(newName);
-            elements.activeDatasetName.textContent = newName;
-            elements.activeDatasetNameInput.value = newName;
+            // Update local state and UI to point to this new measurement
+            stateManager.setActiveMeasurement(newName);
+            elements.activeMeasurementName.textContent = newName;
+            elements.activeMeasurementNameInput.value = newName;
 
             // Show the center column if it was hidden
             workspaceUI.toggleCenterColumn(elements, true);
 
             // We are already in draft mode on the backend, so we just update the frontend state
-            stateManager.setEditingOriginalName(null); // Marker for a NEW dataset
+            stateManager.setEditingOriginalName(null); // Marker for a NEW measurement
             stateManager.setEditing(true);
             elements.editBtn.style.display = 'inline-block'; // Ensure it's visible
             elements.editBtn.textContent = 'Save';
@@ -360,10 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
             if (activeChart) chartService.destroyChart(activeChart);
 
-            // Refresh the dataset list so the new draft name shows up (if the API returns it in the list)
-            // Note: Our current list API might only show production datasets.
-            // We should ensure the user can see their work.
-            await loadAndRenderDatasets();
+            // Refresh the measurement list so the new draft name shows up
+            await loadAndRenderMeasurements();
 
         } catch (error) {
             alert(error.message);
@@ -371,26 +368,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function handleDeleteDataset(name) {
-        const targetName = name || state.activeDataset;
+    async function handleDeleteMeasurement(name) {
+        const targetName = name || state.activeMeasurement;
         if (!targetName) return;
 
-        if (confirm(`Are you sure you want to delete the dataset "${targetName}"?`)) {
+        if (confirm(`Are you sure you want to delete the measurement "${targetName}"?`)) {
             const lockAcquired = await ensureLock();
             if (!lockAcquired) return;
 
             try {
-                await api.deleteDataset(targetName);
-                if (state.activeDataset === targetName) {
-                    stateManager.setActiveDataset(null);
+                await api.deleteMeasurement(targetName);
+                if (state.activeMeasurement === targetName) {
+                    stateManager.setActiveMeasurement(null);
                     workspaceUI.toggleCenterColumn(elements, false);
-                    elements.activeDatasetName.textContent = 'No Dataset Selected';
+                    elements.activeMeasurementName.textContent = 'No Measurement Selected';
                     if (activeChart) {
                         chartService.destroyChart(activeChart);
                         activeChart = null;
                     }
                 }
-                loadAndRenderDatasets();
+                loadAndRenderMeasurements();
             } catch (error) {
                 alert(error.message);
             } finally {
@@ -400,22 +397,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function startEditMode() {
-        if (!state.activeDataset) return;
+        if (!state.activeMeasurement) return;
 
         const lockAcquired = await ensureLock();
         if (!lockAcquired) return;
 
         try {
-            await api.startEdit(state.activeDataset);
+            await api.startEdit(state.activeMeasurement);
 
-            stateManager.setEditingOriginalName(state.activeDataset); // Store for potential rollback
+            stateManager.setEditingOriginalName(state.activeMeasurement); // Store for potential rollback
             stateManager.setEditing(true);
             elements.editBtn.textContent = 'Save';
             elements.cancelEditBtn.style.display = 'inline-block';
             workspaceUI.updateEditModeUI(elements);
 
             // Reload to get the new DRAFT IDs for points
-            await loadActiveDatasetData();
+            await loadActiveMeasurementData();
 
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
         } catch (error) {
@@ -430,8 +427,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const syncPromises = rows.map(row => syncTableRow(row));
             await Promise.all(syncPromises);
 
-            const response = await api.commitEdit(state.activeDataset);
-            const finalName = response.name || state.activeDataset;
+            const response = await api.commitEdit(state.activeMeasurement);
+            const finalName = response.name || state.activeMeasurement;
 
             stateManager.setEditing(false);
             stateManager.setEditingOriginalName(null);
@@ -439,11 +436,11 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
 
-            stateManager.setActiveDataset(finalName);
-            elements.activeDatasetName.textContent = finalName;
+            stateManager.setActiveMeasurement(finalName);
+            elements.activeMeasurementName.textContent = finalName;
 
-            await loadActiveDatasetData();
-            loadAndRenderDatasets(); // Refresh list to reflect potential name change
+            await loadActiveMeasurementData();
+            loadAndRenderMeasurements(); // Refresh list to reflect potential name change
 
             await releaseLockIfPossible();
         } catch (error) {
@@ -453,20 +450,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function cancelEditMode() {
         try {
-            const isNewDataset = (state.editingOriginalName === null);
-            // Use the current active dataset name to hit the rollback API
-            await api.rollbackEdit(state.activeDataset);
+            const isNewMeasurement = (state.editingOriginalName === null);
+            // Use the current active measurement name to hit the rollback API
+            await api.rollbackEdit(state.activeMeasurement);
 
-            if (isNewDataset) {
-                // If it was a new unsaved dataset, we have nothing to revert to
-                stateManager.setActiveDataset(null);
-                elements.activeDatasetName.textContent = 'No Dataset Selected';
+            if (isNewMeasurement) {
+                // If it was a new unsaved measurement, we have nothing to revert to
+                stateManager.setActiveMeasurement(null);
+                elements.activeMeasurementName.textContent = 'No Measurement Selected';
                 workspaceUI.toggleCenterColumn(elements, false);
             } else {
                 // If the name was changed during draft, we must revert to the original name
-                if (state.activeDataset !== state.editingOriginalName) {
-                    stateManager.setActiveDataset(state.editingOriginalName);
-                    elements.activeDatasetName.textContent = state.editingOriginalName;
+                if (state.activeMeasurement !== state.editingOriginalName) {
+                    stateManager.setActiveMeasurement(state.editingOriginalName);
+                    elements.activeMeasurementName.textContent = state.editingOriginalName;
                 }
             }
 
@@ -476,52 +473,52 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
 
-            if (!isNewDataset) {
-                await loadActiveDatasetData(); // Reload original data
+            if (!isNewMeasurement) {
+                await loadActiveMeasurementData(); // Reload original data
             }
 
-            await loadAndRenderDatasets(); // Refresh list to remove the draft if it was new
+            await loadAndRenderMeasurements(); // Refresh list to remove the draft if it was new
             await releaseLockIfPossible();
         } catch (error) {
             alert(error.message);
         }
     }
 
-    async function handleDatasetRename() {
-        if (!state.activeDataset || !state.isEditing) return;
-        const newName = elements.activeDatasetNameInput.value.trim();
-        if (newName === state.activeDataset) return;
+    async function handleMeasurementRename() {
+        if (!state.activeMeasurement || !state.isEditing) return;
+        const newName = elements.activeMeasurementNameInput.value.trim();
+        if (newName === state.activeMeasurement) return;
         if (!newName) {
-            alert("Dataset name cannot be empty.");
-            elements.activeDatasetNameInput.value = state.activeDataset;
+            alert("Measurement name cannot be empty.");
+            elements.activeMeasurementNameInput.value = state.activeMeasurement;
             return;
         }
 
         try {
-            await api.updateMetadata(state.activeDataset, { name: newName });
-            stateManager.setActiveDataset(newName);
-            elements.activeDatasetName.textContent = newName;
-            loadAndRenderDatasets(); // Refresh list
+            await api.updateMetadata(state.activeMeasurement, { name: newName });
+            stateManager.setActiveMeasurement(newName);
+            elements.activeMeasurementName.textContent = newName;
+            loadAndRenderMeasurements(); // Refresh list
         } catch (error) {
             console.error('Failed to rename:', error);
             alert(error.message);
-            elements.activeDatasetNameInput.value = state.activeDataset;
+            elements.activeMeasurementNameInput.value = state.activeMeasurement;
         }
     }
 
     async function handleMetadataChange() {
-        if (!state.activeDataset || !state.isEditing) return;
-        const date = elements.datasetDateInput.value;
-        const serialId = elements.datasetSerialIdInput.value;
-        const spindleId = elements.datasetSpindleSelect.value;
+        if (!state.activeMeasurement || !state.isEditing) return;
+        const date = elements.measurementDateInput.value;
+        const serialId = elements.measurementSerialIdInput.value;
+        const spindleId = elements.measurementSpindleSelect.value;
         try {
-            await api.updateMetadata(state.activeDataset, {
+            await api.updateMetadata(state.activeMeasurement, {
                 date: date,
                 serial_id: serialId,
                 spindle_id: spindleId
             });
             // Reload all data after metadata change, especially for spindle-based recalculations
-            await loadActiveDatasetData();
+            await loadActiveMeasurementData();
         } catch (error) {
             console.error('Failed to update metadata:', error);
             alert('Failed to save metadata.');
@@ -530,11 +527,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Points Logic
     async function handleDeletePoint(pointId) {
-        if (!state.activeDataset || !state.isEditing) return;
+        if (!state.activeMeasurement || !state.isEditing) return;
         if (confirm('Are you sure you want to delete this point?')) {
             try {
-                await api.deletePoint(state.activeDataset, pointId);
-                await loadActiveDatasetData();
+                await api.deletePoint(state.activeMeasurement, pointId);
+                await loadActiveMeasurementData();
                 workspaceUI.ensureEmptyRow(elements, handleDeletePoint); // Ensure we still have an empty row
             } catch (error) {
                 alert(error.message);
@@ -546,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.isEditing) return;
 
         // --- Check for Spindle ---
-        const spindleId = elements.datasetSpindleSelect.value;
+        const spindleId = elements.measurementSpindleSelect.value;
         if (!spindleId) {
             alert('Please select a Spindle ID before adding data points.');
             return;
@@ -583,14 +580,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (id) {
                 // Update existing point
-                result = await api.updatePoint(state.activeDataset, id, nVal, etaVal, torqueVal);
+                result = await api.updatePoint(state.activeMeasurement, id, nVal, etaVal, torqueVal);
                 chartNeedsUpdate = true;
             } else {
                 // Create new point - LOCK to prevent duplicates if user is still typing
                 if (pendingAdds.has(tr)) return;
                 pendingAdds.add(tr);
                 try {
-                    result = await api.addPoint(state.activeDataset, nVal, etaVal, torqueVal);
+                    result = await api.addPoint(state.activeMeasurement, nVal, etaVal, torqueVal);
                     tr.dataset.id = result.id;
                     id = result.id; // Update local var for success check
                     workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
@@ -626,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (chartNeedsUpdate) {
             try {
-                const data = await api.getDatasetPoints(state.activeDataset);
+                const data = await api.getMeasurementPoints(state.activeMeasurement);
                 renderActiveChart(data.points);
             } catch (error) { console.error('Chart reload failed:', error); }
         }
@@ -665,9 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Chart & Regression
     async function handleRegression(type) {
-        if (!state.activeDataset || !activeChart) return;
+        if (!state.activeMeasurement || !activeChart) return;
         try {
-            const regressionData = await api.getRegressionData(state.activeDataset, type);
+            const regressionData = await api.getRegressionData(state.activeMeasurement, type);
 
             const regressionPoints = regressionData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
             let label;
@@ -712,10 +709,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleDrawSelected() {
         const selectedNames = Array.from(state.comparisonSelected);
-        if (selectedNames.length === 0) return alert('Select datasets.');
+        if (selectedNames.length === 0) return alert('Select measurements.');
 
         try {
-            const chartData = await chartService.getSelectedDatasetsForChart(selectedNames);
+            const chartData = await chartService.getSelectedMeasurementsForChart(selectedNames);
             if (comparisonChart) chartService.destroyChart(comparisonChart);
             comparisonChart = chartService.initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets);
 
@@ -818,9 +815,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     elements.pointsTableBody.addEventListener('keydown', handleTableKeydown);
-    elements.datasetSearchInput.addEventListener('input', handleDatasetSearch);
-    elements.datasetListHeaders.forEach(th => th.addEventListener('click', handleSort));
-    elements.createDatasetBtn.addEventListener('click', handleCreateDataset);
+    elements.measurementSearchInput.addEventListener('input', handleMeasurementSearch);
+    elements.measurementListHeaders.forEach(th => th.addEventListener('click', handleSort));
+    elements.addMeasurementBtn.addEventListener('click', handleAddMeasurement);
 
     elements.editBtn.addEventListener('click', () => {
         if (!state.isEditing) {
@@ -831,12 +828,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     elements.cancelEditBtn.addEventListener('click', cancelEditMode);
 
-    elements.deleteDatasetBtn.addEventListener('click', () => handleDeleteDataset(state.activeDataset));
-    elements.activeDatasetNameInput.addEventListener('change', handleDatasetRename);
+    elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement(state.activeMeasurement));
+    elements.activeMeasurementNameInput.addEventListener('change', handleMeasurementRename);
 
-    elements.datasetDateInput.addEventListener('change', handleMetadataChange);
-    elements.datasetSerialIdInput.addEventListener('change', handleMetadataChange);
-    elements.datasetSpindleSelect.addEventListener('change', handleMetadataChange);
+    elements.measurementDateInput.addEventListener('change', handleMetadataChange);
+    elements.measurementSerialIdInput.addEventListener('change', handleMetadataChange);
+    elements.measurementSpindleSelect.addEventListener('change', handleMetadataChange);
 
     elements.pointsTableBody.addEventListener('input', handleTableNumericValidation);
     elements.pointsTableBody.addEventListener('change', handleTableInput);
@@ -851,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Load & Polling ---
     initUserConfig();
-    loadAndRenderDatasets();
+    loadAndRenderMeasurements();
     pollLockStatus();
     setInterval(pollLockStatus, 10000); // Poll lock status every 10s
 });

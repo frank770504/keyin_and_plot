@@ -165,25 +165,25 @@ export function updateEditModeUI(elements) {
         centerColumn.classList.remove('read-only-mode');
         elements.editBtn.classList.add('editing');
 
-        elements.activeDatasetName.style.display = 'none';
-        elements.activeDatasetNameInput.style.display = 'block';
-        elements.activeDatasetNameInput.value = state.activeDataset;
+        elements.activeMeasurementName.style.display = 'none';
+        elements.activeMeasurementNameInput.style.display = 'block';
+        elements.activeMeasurementNameInput.value = state.activeMeasurement;
 
-        elements.deleteDatasetBtn.style.display = 'inline-block';
+        elements.deleteMeasurementBtn.style.display = 'inline-block';
     } else {
         centerColumn.classList.add('read-only-mode');
         elements.editBtn.classList.remove('editing');
 
-        elements.activeDatasetName.style.display = 'block';
-        elements.activeDatasetNameInput.style.display = 'none';
+        elements.activeMeasurementName.style.display = 'block';
+        elements.activeMeasurementNameInput.style.display = 'none';
 
-        elements.deleteDatasetBtn.style.display = 'none';
+        elements.deleteMeasurementBtn.style.display = 'none';
         elements.cancelEditBtn.style.display = 'none';
     }
 
-    elements.datasetDateInput.disabled = !isEditing;
-    elements.datasetSerialIdInput.disabled = !isEditing;
-    elements.datasetSpindleSelect.disabled = !isEditing;
+    elements.measurementDateInput.disabled = !isEditing;
+    elements.measurementSerialIdInput.disabled = !isEditing;
+    elements.measurementSpindleSelect.disabled = !isEditing;
 
     const tableInputs = elements.pointsTableBody.querySelectorAll('input');
     tableInputs.forEach(input => {

@@ -93,7 +93,7 @@ body {
     margin: 0;
 }
 
-#active-dataset-name-input {
+#active-measurement-name-input {
     font-size: 2rem;
     font-weight: bold;
     margin: 0;
@@ -104,7 +104,7 @@ body {
     border-radius: 4px;
 }
 
-.dataset-actions {
+.measurement-actions {
     margin-bottom: 10px;
 }
 
@@ -260,7 +260,7 @@ body {
 }
 
 #center-column {
-    display: none; /* Hidden until dataset selected */
+    display: none; /* Hidden until measurement selected */
     width: 450px; /* Set a default reasonable width */
     background-color: #fafafa;
     /* border-right: 1px solid #ddd; Removed for gutter */
@@ -306,55 +306,55 @@ ul {
     padding: 0;
 }
 
-/* Dataset List Table Styles */
-.dataset-list-wrapper {
+/* Measurement List Table Styles */
+.measurement-list-wrapper {
     overflow-x: auto;
     width: 100%;
 }
 
-#dataset-list-table {
+#measurement-list-table {
     width: 450px; /* Fixed width to prevent shrinking/stretching */
     border-collapse: collapse;
     font-size: 0.9rem;
     table-layout: fixed; /* Ensures column widths remain stable */
 }
 
-#dataset-list-table th.checkbox-column,
-#dataset-list-table td:first-child {
+#measurement-list-table th.checkbox-column,
+#measurement-list-table td:first-child {
     width: 50px;
     text-align: center;
 }
 
-#dataset-list-table th[data-sort="name"],
-#dataset-list-table td:nth-child(2) {
+#measurement-list-table th[data-sort="name"],
+#measurement-list-table td:nth-child(2) {
     width: 150px;
 }
 
-#dataset-list-table th[data-sort="date"],
-#dataset-list-table td:nth-child(3) {
+#measurement-list-table th[data-sort="date"],
+#measurement-list-table td:nth-child(3) {
     width: 120px;
 }
 
-#dataset-list-table th[data-sort="serial_id"],
-#dataset-list-table td:nth-child(4) {
+#measurement-list-table th[data-sort="serial_id"],
+#measurement-list-table td:nth-child(4) {
     width: 100px;
 }
 
-#dataset-list-table th,
-#dataset-list-table td {
+#measurement-list-table th,
+#measurement-list-table td {
     border: 1px solid #eee;
     padding: 8px;
     text-align: left;
 }
 
-#dataset-list-table th {
+#measurement-list-table th {
     background-color: #f9f9f9;
     font-weight: bold;
     cursor: pointer; /* Indicate clickable */
     user-select: none; /* Prevent text selection */
 }
 
-#dataset-list-table th:hover {
+#measurement-list-table th:hover {
     background-color: #eee;
 }
 
@@ -363,16 +363,16 @@ ul {
     font-size: 0.8em;
 }
 
-#dataset-list-table tbody tr {
+#measurement-list-table tbody tr {
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
-#dataset-list-table tbody tr:hover {
+#measurement-list-table tbody tr:hover {
     background-color: #f0f0f0;
 }
 
-#dataset-list-table tbody tr.dataset-draft {
+#measurement-list-table tbody tr.measurement-draft {
     font-style: italic;
     color: #6c757d;
 }
@@ -603,14 +603,14 @@ canvas {
 }
 
 /* Checkbox Column Styles */
-#dataset-list-table th.checkbox-column,
-#dataset-list-table td:first-child {
+#measurement-list-table th.checkbox-column,
+#measurement-list-table td:first-child {
     width: 30px;
     text-align: center;
     padding: 8px 5px;
 }
 
-#dataset-list-table td:first-child input[type="checkbox"] {
+#measurement-list-table td:first-child input[type="checkbox"] {
     cursor: pointer;
     transform: scale(1.2); /* Make it slightly easier to click */
 }

@@ -1,5 +1,5 @@
 // static/js/chart_service.js
-import { getDatasetPoints, getRegressionData } from './api.js';
+import { getMeasurementPoints, getRegressionData } from './api.js';
 
 const katexChartPlugin = {
     id: 'katexChartPlugin',
@@ -134,10 +134,10 @@ const externalTooltipHandler = (context) => {
     tooltipEl.style.padding = tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
 };
 
-export function initializeOrUpdateChart(ctx, datasets) {
+export function initializeOrUpdateChart(ctx, chartDatasets) {
     return new Chart(ctx, {
         type: 'scatter',
-        data: { datasets: datasets },
+        data: { datasets: chartDatasets },
         plugins: [katexChartPlugin],
         options: {
             maintainAspectRatio: true,
@@ -193,7 +193,7 @@ export function destroyChart(chartInstance) {
     }
 }
 
-export async function getSelectedDatasetsForChart(datasets) {
+export async function getSelectedMeasurementsForChart(measurementNames) {
     const chartData = { datasets: [] };
     const colors = [
         'rgba(255, 99, 132, 0.5)',
@@ -212,18 +212,10 @@ export async function getSelectedDatasetsForChart(datasets) {
         'rgba(255, 159, 64, 1)'
     ];
 
-    for (let i = 0; i < datasets.length; i++) {
-        const name = datasets[i];
-        const points = await getDatasetPoints(name); // Now fetch just points, API returns object
-        // Wait, getDatasetPoints in api.js returns { points: [...], date: ..., serial_id: ... }
-        // The old code assumed it returned an array? No, looking at old main.js, loadActiveDatasetData handled the object.
-        // But getSelectedDatasetsForChart in old api.js used getDatasetPoints.
-        // Let's check old api.js getDatasetPoints implementation I just overwrote.
-        // It returned response.json().
-        // In app.py get_dataset returns object.
-        // So `points` here is the object. The array is points.points.
-
-        const pointsArray = points.points;
+    for (let i = 0; i < measurementNames.length; i++) {
+        const name = measurementNames[i];
+        const data = await getMeasurementPoints(name); // API returns object { points: [...] }
+        const pointsArray = data.points;
         const colorIndex = i % colors.length;
 
         // Add raw data points
@@ -263,7 +255,7 @@ export async function getSelectedDatasetsForChart(datasets) {
                 pointRadius: 0
             });
         } catch (error) {
-            console.warn(`Could not get power regression for dataset ${name}:`, error.message);
+            console.warn(`Could not get power regression for measurement ${name}:`, error.message);
         }
     }
     return chartData;

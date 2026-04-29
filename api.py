@@ -2,12 +2,12 @@
 APIs
 """
 
+from datetime import datetime, UTC
 from flask import Blueprint, jsonify, request
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from datetime import datetime, timedelta, UTC
 
-from models import db, Dataset, Point, GlobalLock
+from models import db, Measurement, Point, GlobalLock
 
 api_bp = Blueprint('api', __name__)
 
@@ -18,12 +18,12 @@ SPINDLE_ID2FACTOR = {
 }
 
 
-def get_best_dataset(name):
+def get_best_measurement(name):
     """Helper to return the draft if it exists, otherwise the original."""
-    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
     if draft:
         return draft
-    return Dataset.query.filter_by(name=name, is_draft=False).first()
+    return Measurement.query.filter_by(name=name, is_draft=False).first()
 
 
 def check_lock():
@@ -69,7 +69,9 @@ def get_lock_status():
         "locked": True,
         "user_name": lock.user_name,
         "is_me": (lock.session_id == session_id) if session_id else False,
-        "last_active": (datetime.now(UTC).replace(tzinfo=None) - lock.last_heartbeat).total_seconds()
+        "last_active": (
+            (datetime.now(UTC).replace(tzinfo=None) -
+                lock.last_heartbeat).total_seconds())
     })
 
 
@@ -136,39 +138,39 @@ def lock_heartbeat():
     return jsonify({"error": error}), 403
 
 
-# --- Dataset Endpoints ---
+# --- Measurement Endpoints ---
 
-@api_bp.route('/datasets/<string:name>/edit/start', methods=['POST'])
+@api_bp.route('/measurements/<string:name>/edit/start', methods=['POST'])
 def start_edit_mode(name):
-    """Clone a dataset to create a draft for editing."""
+    """Clone a measurement to create a draft for editing."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    dataset = Dataset.query.filter_by(name=name, is_draft=False).first()
-    if not dataset:
-        return jsonify({"error": "Dataset not found"}), 404
+    measurement = Measurement.query.filter_by(name=name, is_draft=False).first()
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
 
     # Check if a draft already exists
-    existing_draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    existing_draft = Measurement.query.filter_by(name=name, is_draft=True).first()
     if existing_draft:
         # If a draft exists, we just return success (someone might have left it)
         # In a single-editor system, the editor owns all drafts.
         return jsonify({"message": "Draft already exists", "is_draft": True}), 200
 
-    # Create the draft dataset
-    draft_dataset = Dataset(
-        name=dataset.name,
-        date=dataset.date,
-        serial_id=dataset.serial_id,
-        spindle_id=dataset.spindle_id,
+    # Create the draft measurement
+    draft_measurement = Measurement(
+        name=measurement.name,
+        date=measurement.date,
+        serial_id=measurement.serial_id,
+        spindle_id=measurement.spindle_id,
         is_draft=True,
-        original_id=dataset.id
+        original_id=measurement.id
     )
-    db.session.add(draft_dataset)
+    db.session.add(draft_measurement)
     db.session.flush()
 
-    for p in dataset.points:
+    for p in measurement.points:
         draft_point = Point(
             N=p.N,
             eta=p.eta,
@@ -177,7 +179,7 @@ def start_edit_mode(name):
             shear_stress=p.shear_stress,
             is_draft=True,
             original_id=p.id,
-            dataset=draft_dataset
+            measurement=draft_measurement
         )
         db.session.add(draft_point)
 
@@ -188,33 +190,33 @@ def start_edit_mode(name):
     }), 201
 
 
-@api_bp.route('/datasets/<string:name>/duplicate', methods=['POST'])
-def duplicate_dataset(name):
-    """Create a new independent dataset by cloning an existing one."""
+@api_bp.route('/measurements/<string:name>/duplicate', methods=['POST'])
+def duplicate_measurement(name):
+    """Create a new independent measurement by cloning an existing one."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    original = Dataset.query.filter_by(name=name, is_draft=False).first()
+    original = Measurement.query.filter_by(name=name, is_draft=False).first()
     if not original:
-        return jsonify({"error": "Dataset not found"}), 404
+        return jsonify({"error": "Measurement not found"}), 404
 
     # Generate a unique name
     base_name = f"{original.name} (Copy)"
     new_name = base_name
     counter = 1
-    while Dataset.query.filter_by(name=new_name, is_draft=False).first():
+    while Measurement.query.filter_by(name=new_name, is_draft=False).first():
         new_name = f"{base_name} {counter}"
         counter += 1
 
-    new_dataset = Dataset(
+    new_measurement = Measurement(
         name=new_name,
         date=original.date,
         serial_id=original.serial_id,
         spindle_id=original.spindle_id,
         is_draft=False
     )
-    db.session.add(new_dataset)
+    db.session.add(new_measurement)
     db.session.flush()
 
     for p in original.points:
@@ -225,36 +227,40 @@ def duplicate_dataset(name):
             shear_rate=p.shear_rate,
             shear_stress=p.shear_stress,
             is_draft=False,
-            dataset=new_dataset
+            measurement=new_measurement
         )
         db.session.add(new_p)
 
     db.session.commit()
     return jsonify({
-        "message": "Dataset duplicated successfully",
+        "message": "Measurement duplicated successfully",
         "new_name": new_name
     }), 201
 
 
-@api_bp.route('/datasets/<string:name>/edit/commit', methods=['POST'])
+@api_bp.route('/measurements/<string:name>/edit/commit', methods=['POST'])
 def commit_edit_mode(name):
-    """Merge draft changes back into the original dataset or promote a new draft."""
+    """Merge draft changes back into the original measurement or promote a new draft."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to commit"}), 404
 
     if draft.original_id is None:
-        # Case: New Dataset Creation
-        # Check if the final name is already taken by a PRODUCTION dataset
+        # Case: New Measurement Creation
+        # Check if the final name is already taken by a PRODUCTION measurement
         final_name = draft.name
-        if Dataset.query.filter(Dataset.name == final_name, Dataset.is_draft == False, Dataset.id != draft.id).first():
+        if Measurement.query.filter(Measurement.name == final_name,
+                                    not Measurement.is_draft,
+                                    Measurement.id != draft.id).first():
             base_name = final_name
             counter = 1
-            while Dataset.query.filter(Dataset.name == final_name, Dataset.is_draft == False, Dataset.id != draft.id).first():
+            while Measurement.query.filter(Measurement.name == final_name,
+                                           not Measurement.is_draft,
+                                           Measurement.id != draft.id).first():
                 final_name = f"{base_name} ({counter})"
                 counter += 1
             draft.name = final_name
@@ -264,12 +270,15 @@ def commit_edit_mode(name):
         for p in draft.points:
             p.is_draft = False
         db.session.commit()
-        return jsonify({"message": "New dataset created successfully", "name": final_name}), 201
+        return jsonify({
+            "message": "New measurement created successfully",
+            "name": final_name
+        }), 201
 
-    # Case: Editing existing dataset
-    original = Dataset.query.get(draft.original_id)
+    # Case: Editing existing measurement
+    original = Measurement.query.get(draft.original_id)
     if not original:
-        return jsonify({"error": "Original dataset not found"}), 404
+        return jsonify({"error": "Original measurement not found"}), 404
 
     # Update original metadata
     original.name = draft.name
@@ -298,7 +307,7 @@ def commit_edit_mode(name):
                 shear_rate=dp.shear_rate,
                 shear_stress=dp.shear_stress,
                 is_draft=False,
-                dataset=original
+                measurement=original
             )
             db.session.add(new_p)
 
@@ -311,14 +320,14 @@ def commit_edit_mode(name):
     return jsonify({"message": "Changes committed successfully"}), 200
 
 
-@api_bp.route('/datasets/<string:name>/edit/rollback', methods=['POST'])
+@api_bp.route('/measurements/<string:name>/edit/rollback', methods=['POST'])
 def rollback_edit_mode(name):
     """Discard the draft and exit edit mode."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
+    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to rollback"}), 404
 
@@ -327,44 +336,52 @@ def rollback_edit_mode(name):
     return jsonify({"message": "Draft discarded"}), 200
 
 
-@api_bp.route('/datasets/<string:name>/regression', methods=['GET'])
+@api_bp.route('/measurements/<string:name>/regression', methods=['GET'])
 def get_regression(name):
-    """Calculate and return a linear regression for the dataset."""
-    dataset = get_best_dataset(name)
-    if not dataset:
-        return jsonify({"error": "Dataset not found"}), 404
+    """Calculate and return a linear regression for the measurement."""
+    measurement = get_best_measurement(name)
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
 
-    valid_points = [p for p in dataset.points if p.shear_rate is not None and p.shear_stress is not None]
+    valid_points = [
+        p for p in measurement.points
+        if p.shear_rate is not None and p.shear_stress is not None
+    ]
     if len(valid_points) < 2:
         return jsonify({"error": "Not enough data points"}), 400
 
-    X_values = np.array([p.shear_rate for p in valid_points]).reshape(-1, 1)
-    Y_values = np.array([p.shear_stress for p in valid_points])
+    x_values = np.array([p.shear_rate for p in valid_points]).reshape(-1, 1)
+    y_values = np.array([p.shear_stress for p in valid_points])
 
     model = LinearRegression()
-    model.fit(X_values, Y_values)
+    model.fit(x_values, y_values)
 
-    X_min, X_max = np.min(X_values), np.max(X_values)
-    X_line = np.linspace(X_min, X_max, 100).reshape(-1, 1)
-    Y_line = model.predict(X_line)
+    x_min, x_max = np.min(x_values), np.max(x_values)
+    x_line = np.linspace(x_min, x_max, 100).reshape(-1, 1)
+    y_line = model.predict(x_line)
 
-    regression_points = [{"shear_rate": X_line[i][0], "shear_stress": Y_line[i]} for i in range(len(X_line))]
+    regression_points = [{
+        "shear_rate": x_line[i][0],
+        "shear_stress": y_line[i]} for i in range(len(x_line))]
     return jsonify({
         "regression_points": regression_points,
-        "r_squared": model.score(X_values, Y_values),
+        "r_squared": model.score(x_values, y_values),
         "slope": model.coef_[0],
         "intercept": model.intercept_
     })
 
 
-@api_bp.route('/datasets/<string:name>/power-regression', methods=['GET'])
+@api_bp.route('/measurements/<string:name>/power-regression', methods=['GET'])
 def get_power_regression(name):
-    """Calculate and return a power law regression for the dataset."""
-    dataset = get_best_dataset(name)
-    if not dataset:
-        return jsonify({"error": "Dataset not found"}), 404
+    """Calculate and return a power law regression for the measurement."""
+    measurement = get_best_measurement(name)
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
 
-    positive_points = [p for p in dataset.points if p.shear_rate and p.shear_stress and p.shear_rate > 0 and p.shear_stress > 0]
+    positive_points = [
+            p for p in measurement.points
+            if p.shear_rate and p.shear_stress and p.shear_rate > 0 and p.shear_stress > 0
+    ]
     if len(positive_points) < 2:
         return jsonify({"error": "Not enough positive data points"}), 400
 
@@ -377,12 +394,14 @@ def get_power_regression(name):
     a = np.exp(model.intercept_)
     b = model.coef_[0]
 
-    X_min = np.min([p.shear_rate for p in positive_points])
-    X_max = np.max([p.shear_rate for p in positive_points])
-    X_line = np.linspace(X_min, X_max, 100)
-    Y_line = a * (X_line ** b)
+    x_min = np.min([p.shear_rate for p in positive_points])
+    x_max = np.max([p.shear_rate for p in positive_points])
+    x_line = np.linspace(x_min, x_max, 100)
+    y_line = a * (x_line ** b)
 
-    regression_points = [{"shear_rate": X_line[i], "shear_stress": Y_line[i]} for i in range(len(X_line))]
+    regression_points = [{
+        "shear_rate": x_line[i],
+        "shear_stress": y_line[i]} for i in range(len(x_line))]
     return jsonify({
         "regression_points": regression_points,
         "r_squared": model.score(log_X, log_Y),
@@ -390,10 +409,13 @@ def get_power_regression(name):
     })
 
 
-@api_bp.route('/datasets', methods=['GET'])
-def get_datasets():
-    """Return a list of all non-draft datasets, plus the current user's active draft."""
-    all_datasets = Dataset.query.filter_by(is_draft=False).all()
+@api_bp.route('/measurements', methods=['GET'])
+def get_measurements():
+    """
+        Return a list of all non-draft measurements,
+        plus the current user's active draft.
+    """
+    all_measurements = Measurement.query.filter_by(is_draft=False).all()
 
     # Check if there is an active draft for this session
     session_id = request.headers.get('X-Session-ID')
@@ -402,80 +424,83 @@ def get_datasets():
         if lock:
             # Current session has the lock. Look for ANY draft.
             # (Assuming only one draft exists globally for now per the GlobalLock policy)
-            active_draft = Dataset.query.filter_by(is_draft=True).first()
-            if active_draft and active_draft not in all_datasets:
-                all_datasets.append(active_draft)
+            active_draft = Measurement.query.filter_by(is_draft=True).first()
+            if active_draft and active_draft not in all_measurements:
+                all_measurements.append(active_draft)
 
     return jsonify([{
-        "name": d.name, "date": d.date, "serial_id": d.serial_id, "spindle_id": d.spindle_id,
+        "name": d.name, "date": d.date,
+        "serial_id": d.serial_id, "spindle_id": d.spindle_id,
         "is_draft": d.is_draft
-    } for d in all_datasets])
+    } for d in all_measurements])
 
 
-@api_bp.route('/datasets', methods=['POST'])
-def create_dataset():
-    """Create a new, empty dataset as a draft."""
+@api_bp.route('/measurements', methods=['POST'])
+def add_measurement():
+    """Create a new, empty measurement as a draft."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
     data = request.get_json() or {}
-    name = data.get('name', '').strip() or "New Dataset"
+    name = data.get('name', '').strip() or "New Measurement"
 
     # Check for name collisions in production
-    if Dataset.query.filter_by(name=name, is_draft=False).first():
+    if Measurement.query.filter_by(name=name, is_draft=False).first():
         # If default name exists, append suffix
         base_name = name
         counter = 1
-        while Dataset.query.filter_by(name=name, is_draft=False).first():
+        while Measurement.query.filter_by(name=name, is_draft=False).first():
             name = f"{base_name} ({counter})"
             counter += 1
 
-    new_ds = Dataset(name=name, is_draft=True, original_id=None)
-    db.session.add(new_ds)
+    new_measurement = Measurement(name=name, is_draft=True, original_id=None)
+    db.session.add(new_measurement)
     db.session.commit()
     return jsonify({
-        "message": f"Dataset '{name}' initialized as draft",
+        "message": f"Measurement '{name}' initialized as draft",
         "name": name
     }), 201
 
 
-@api_bp.route('/datasets/<string:name>', methods=['GET'])
-def get_dataset(name):
-    """Return points and metadata for a dataset."""
-    dataset = get_best_dataset(name)
-    if not dataset:
-        return jsonify({"error": "Dataset not found"}), 404
+@api_bp.route('/measurements/<string:name>', methods=['GET'])
+def get_measurement(name):
+    """Return points and metadata for a measurement."""
+    measurement = get_best_measurement(name)
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
 
     return jsonify({
         "points": [{
             "id": p.id, "N": p.N, "eta": p.eta, "torque": p.torque,
             "shear_rate": p.shear_rate, "shear_stress": p.shear_stress
-        } for p in dataset.points],
-        "date": dataset.date,
-        "serial_id": dataset.serial_id,
-        "spindle_id": dataset.spindle_id
+        } for p in measurement.points],
+        "date": measurement.date,
+        "serial_id": measurement.serial_id,
+        "spindle_id": measurement.spindle_id
     })
 
 
-@api_bp.route('/datasets/<string:name>', methods=['PUT'])
-def update_dataset(name):
-    """Update dataset metadata (Renaming and metadata)."""
+@api_bp.route('/measurements/<string:name>', methods=['PUT'])
+def update_measurement(name):
+    """Update measurement metadata (Renaming and metadata)."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    dataset = get_best_dataset(name)
-    if not dataset:
-        return jsonify({"error": "Dataset not found"}), 404
+    measurement = get_best_measurement(name)
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
 
     data = request.get_json()
-    if 'date' in data: dataset.date = data['date']
-    if 'serial_id' in data: dataset.serial_id = data['serial_id']
+    if 'date' in data:
+        measurement.date = data['date']
+    if 'serial_id' in data:
+        measurement.serial_id = data['serial_id']
     if 'spindle_id' in data:
-        dataset.spindle_id = data['spindle_id']
-        factor = SPINDLE_ID2FACTOR.get(dataset.spindle_id)
-        for p in dataset.points:
+        measurement.spindle_id = data['spindle_id']
+        factor = SPINDLE_ID2FACTOR.get(measurement.spindle_id)
+        for p in measurement.points:
             if factor:
                 p.shear_rate = factor * p.N
                 p.shear_stress = p.eta * p.shear_rate * 0.001
@@ -485,42 +510,46 @@ def update_dataset(name):
     if 'name' in data:
         new_name = data['name'].strip()
         if new_name and new_name != name:
-            if Dataset.query.filter_by(name=new_name, is_draft=False).first():
+            if Measurement.query.filter_by(name=new_name, is_draft=False).first():
                 return jsonify({"error": "Name already exists"}), 409
-            dataset.name = new_name
+            measurement.name = new_name
 
     db.session.commit()
     return jsonify({"message": "Updated successfully"}), 200
 
 
-@api_bp.route('/datasets/<string:name>', methods=['DELETE'])
-def delete_dataset(name):
-    """Delete a dataset and its draft."""
+@api_bp.route('/measurements/<string:name>', methods=['DELETE'])
+def delete_measurement(name):
+    """Delete a measurement and its draft."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    original = Dataset.query.filter_by(name=name, is_draft=False).first()
-    if original: db.session.delete(original)
-    draft = Dataset.query.filter_by(name=name, is_draft=True).first()
-    if draft: db.session.delete(draft)
+    original = Measurement.query.filter_by(name=name, is_draft=False).first()
+    if original:
+        db.session.delete(original)
+    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
+    if draft:
+        db.session.delete(draft)
 
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
 
 
-@api_bp.route('/datasets/<string:name>/points', methods=['POST'])
+@api_bp.route('/measurements/<string:name>/points', methods=['POST'])
 def add_point(name):
-    """Add a point to a dataset."""
+    """Add a point to a measurement."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    dataset = get_best_dataset(name)
-    if not dataset: return jsonify({"error": "Dataset not found"}), 404
+    measurement = get_best_measurement(name)
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
 
-    factor = SPINDLE_ID2FACTOR.get(dataset.spindle_id)
-    if not factor: return jsonify({"error": "Select a valid spindle first"}), 400
+    factor = SPINDLE_ID2FACTOR.get(measurement.spindle_id)
+    if not factor:
+        return jsonify({"error": "Select a valid spindle first"}), 400
 
     data = request.get_json()
     try:
@@ -531,45 +560,51 @@ def add_point(name):
 
     sr = factor * N
     ss = eta * sr * 0.001
-    new_p = Point(N=N, eta=eta, torque=torque, shear_rate=sr, shear_stress=ss, is_draft=dataset.is_draft, dataset=dataset)
+    new_p = Point(N=N, eta=eta, torque=torque, shear_rate=sr, shear_stress=ss,
+                  is_draft=measurement.is_draft, measurement=measurement)
     db.session.add(new_p)
     db.session.commit()
     return jsonify({"id": new_p.id, "shear_rate": sr, "shear_stress": ss}), 201
 
 
-@api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['DELETE'])
+@api_bp.route('/measurements/<string:name>/points/<int:point_id>', methods=['DELETE'])
 def delete_point(name, point_id):
     """Delete a point."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    dataset = get_best_dataset(name)
-    point = Point.query.filter_by(id=point_id, dataset_id=dataset.id).first()
-    if not point: return jsonify({"error": "Point not found"}), 404
+    measurement = get_best_measurement(name)
+    point = Point.query.filter_by(id=point_id, measurement_id=measurement.id).first()
+    if not point:
+        return jsonify({"error": "Point not found"}), 404
 
     db.session.delete(point)
     db.session.commit()
     return jsonify({"message": "Point deleted"}), 200
 
 
-@api_bp.route('/datasets/<string:name>/points/<int:point_id>', methods=['PUT'])
+@api_bp.route('/measurements/<string:name>/points/<int:point_id>', methods=['PUT'])
 def update_point(name, point_id):
     """Update a point."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    dataset = get_best_dataset(name)
-    point = Point.query.filter_by(id=point_id, dataset_id=dataset.id).first()
-    if not point: return jsonify({"error": "Point not found"}), 404
+    measurement = get_best_measurement(name)
+    point = Point.query.filter_by(id=point_id, measurement_id=measurement.id).first()
+    if not point:
+        return jsonify({"error": "Point not found"}), 404
 
     data = request.get_json()
-    if 'N' in data: point.N = float(data['N'])
-    if 'eta' in data: point.eta = float(data['eta'])
-    if 'torque' in data: point.torque = float(data['torque']) if data['torque'] else None
+    if 'N' in data:
+        point.N = float(data['N'])
+    if 'eta' in data:
+        point.eta = float(data['eta'])
+    if 'torque' in data:
+        point.torque = float(data['torque']) if data['torque'] else None
 
-    factor = SPINDLE_ID2FACTOR.get(dataset.spindle_id)
+    factor = SPINDLE_ID2FACTOR.get(measurement.spindle_id)
     if factor:
         point.shear_rate = factor * point.N
         point.shear_stress = point.eta * point.shear_rate * 0.001
@@ -577,4 +612,6 @@ def update_point(name, point_id):
         point.shear_rate = point.shear_stress = None
 
     db.session.commit()
-    return jsonify({"shear_rate": point.shear_rate, "shear_stress": point.shear_stress}), 200
+    return jsonify({
+        "shear_rate": point.shear_rate,
+        "shear_stress": point.shear_stress}), 200

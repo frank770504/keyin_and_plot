@@ -1,14 +1,14 @@
-// static/js/ui/dataset_ui.js
+// static/js/ui/measurement_ui.js
 import state, { toggleComparisonSelection } from '../state.js';
 
-export function getProcessedDatasets() {
-    const searchTerm = state.datasetFilter.toLowerCase();
+export function getProcessedMeasurements() {
+    const searchTerm = state.measurementFilter.toLowerCase();
     const { column, direction } = state.sortState;
 
-    let filtered = state.allDatasets.filter(d =>
-        d.name.toLowerCase().includes(searchTerm) ||
-        (d.date && d.date.includes(searchTerm)) ||
-        (d.serial_id && d.serial_id.toLowerCase().includes(searchTerm))
+    let filtered = state.allMeasurements.filter(m =>
+        m.name.toLowerCase().includes(searchTerm) ||
+        (m.date && m.date.includes(searchTerm)) ||
+        (m.serial_id && m.serial_id.toLowerCase().includes(searchTerm))
     );
 
     // Sort
@@ -27,55 +27,55 @@ export function getProcessedDatasets() {
     return filtered;
 }
 
-export function renderDatasetList(elements, onSelect) {
-    const datasets = getProcessedDatasets();
-    elements.datasetListBody.innerHTML = '';
+export function renderMeasurementList(elements, onSelect) {
+    const measurements = getProcessedMeasurements();
+    elements.measurementListBody.innerHTML = '';
 
-    datasets.forEach(dataset => {
+    measurements.forEach(measurement => {
         const tr = document.createElement('tr');
-        // Click on row selects active dataset (middle column)
+        // Click on row selects active measurement (middle column)
         tr.addEventListener('click', (e) => {
             // Prevent if clicking on checkbox
             if (e.target.type === 'checkbox') return;
-            onSelect(dataset.name);
+            onSelect(measurement.name);
         });
 
         // Checkbox for comparison
         const tdCheck = document.createElement('td');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.checked = state.comparisonSelected.has(dataset.name);
+        checkbox.checked = state.comparisonSelected.has(measurement.name);
         checkbox.addEventListener('change', () => {
-            toggleComparisonSelection(dataset.name);
+            toggleComparisonSelection(measurement.name);
         });
         tdCheck.appendChild(checkbox);
         tr.appendChild(tdCheck);
 
         const tdName = document.createElement('td');
-        tdName.textContent = dataset.is_draft ? `${dataset.name} (Draft)` : dataset.name;
+        tdName.textContent = measurement.is_draft ? `${measurement.name} (Draft)` : measurement.name;
         tr.appendChild(tdName);
 
         const tdDate = document.createElement('td');
-        tdDate.textContent = dataset.date || '';
+        tdDate.textContent = measurement.date || '';
         tr.appendChild(tdDate);
 
         const tdSerial = document.createElement('td');
-        tdSerial.textContent = dataset.serial_id || '';
+        tdSerial.textContent = measurement.serial_id || '';
         tr.appendChild(tdSerial);
 
-        if (dataset.name === state.activeDataset) {
+        if (measurement.name === state.activeMeasurement) {
             tr.classList.add('active');
         }
-        if (dataset.is_draft) {
-            tr.classList.add('dataset-draft');
+        if (measurement.is_draft) {
+            tr.classList.add('measurement-draft');
         }
 
-        elements.datasetListBody.appendChild(tr);
+        elements.measurementListBody.appendChild(tr);
     });
 }
 
 export function updateSortIcons(elements) {
-    elements.datasetListHeaders.forEach(th => {
+    elements.measurementListHeaders.forEach(th => {
         const column = th.dataset.sort;
         if (!column) return; // Skip non-sortable headers like checkbox
 
