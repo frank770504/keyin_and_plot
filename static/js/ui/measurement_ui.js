@@ -51,6 +51,7 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
         checkbox.addEventListener('change', () => {
             toggleComparisonSelection(measurement.name);
             if (onComparisonToggle) onComparisonToggle();
+            updateMasterCheckbox(measurements);
         });
         tdCheck.appendChild(checkbox);
         tr.appendChild(tdCheck);
@@ -76,7 +77,34 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
 
         elements.measurementListBody.appendChild(tr);
     });
+
+    updateMasterCheckbox(measurements);
 }
+
+export function updateMasterCheckbox(visibleMeasurements) {
+    const masterCheckbox = document.getElementById('master-plot-checkbox');
+    if (!masterCheckbox) return;
+
+    if (visibleMeasurements.length === 0) {
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = false;
+        return;
+    }
+
+    const selectedVisible = visibleMeasurements.filter(m => state.comparisonSelected.has(m.name));
+
+    if (selectedVisible.length === 0) {
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = false;
+    } else if (selectedVisible.length === visibleMeasurements.length) {
+        masterCheckbox.checked = true;
+        masterCheckbox.indeterminate = false;
+    } else {
+        masterCheckbox.checked = false;
+        masterCheckbox.indeterminate = true;
+    }
+}
+
 
 export function updateSortIcons(elements) {
     elements.measurementListHeaders.forEach(th => {

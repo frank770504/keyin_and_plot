@@ -609,13 +609,24 @@ canvas {
     flex-shrink: 0;
 }
 
-/* Checkbox Column Styles */
-#measurement-list-table th.checkbox-column,
-#measurement-list-table td:first-child {
-    width: 30px;
+#measurement-list-table th.checkbox-column {
+    width: 60px; /* Increased slightly to fit checkbox + label */
     text-align: center;
     padding: 8px 5px;
 }
+
+#measurement-list-table th.checkbox-column .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+#measurement-list-table th.checkbox-column input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
 
 #measurement-list-table td:first-child input[type="checkbox"] {
     cursor: pointer;

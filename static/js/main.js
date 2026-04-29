@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         measurementListBody: document.getElementById('measurement-list-body'),
         measurementSearchInput: document.getElementById('measurement-search'),
         measurementListHeaders: document.querySelectorAll('#measurement-list-table th[data-sort]'),
+        masterPlotCheckbox: document.getElementById('master-plot-checkbox'),
         addMeasurementBtn: document.getElementById('add-measurement-btn'),
 
         // Lock & User UI
@@ -754,6 +755,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    async function handleMasterPlotToggle() {
+        const visibleMeasurements = measurementUI.getProcessedMeasurements();
+        const shouldSelect = elements.masterPlotCheckbox.checked;
+
+        visibleMeasurements.forEach(m => {
+            if (shouldSelect) {
+                state.comparisonSelected.add(m.name);
+            } else {
+                state.comparisonSelected.delete(m.name);
+            }
+        });
+
+        // Trigger chart update
+        handleDrawSelected();
+        // Refresh list to update individual checkboxes
+        refreshMeasurementList();
+    }
+
     function handleTableKeydown(e) {
         if (e.target.tagName !== 'INPUT') return;
 
@@ -846,6 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     elements.pointsTableBody.addEventListener('keydown', handleTableKeydown);
     elements.measurementSearchInput.addEventListener('input', handleMeasurementSearch);
+    elements.masterPlotCheckbox.addEventListener('change', handleMasterPlotToggle);
     elements.measurementListHeaders.forEach(th => th.addEventListener('click', handleSort));
     elements.addMeasurementBtn.addEventListener('click', handleAddMeasurement);
 
