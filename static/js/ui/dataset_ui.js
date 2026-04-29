@@ -52,7 +52,7 @@ export function renderDatasetList(elements, onSelect) {
         tr.appendChild(tdCheck);
 
         const tdName = document.createElement('td');
-        tdName.textContent = dataset.name;
+        tdName.textContent = dataset.is_draft ? `${dataset.name} (Draft)` : dataset.name;
         tr.appendChild(tdName);
 
         const tdDate = document.createElement('td');
@@ -65,6 +65,9 @@ export function renderDatasetList(elements, onSelect) {
 
         if (dataset.name === state.activeDataset) {
             tr.classList.add('active');
+        }
+        if (dataset.is_draft) {
+            tr.classList.add('dataset-draft');
         }
 
         elements.datasetListBody.appendChild(tr);

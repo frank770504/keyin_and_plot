@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
         datasetListBody: document.getElementById('dataset-list-body'),
         datasetSearchInput: document.getElementById('dataset-search'),
         datasetListHeaders: document.querySelectorAll('#dataset-list-table th[data-sort]'),
-        newDatasetNameInput: document.getElementById('new-dataset-name'),
         createDatasetBtn: document.getElementById('create-dataset-btn'),
 
         // Lock & User UI
@@ -151,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const canWrite = state.isGlobalEditor || !locked;
         elements.createDatasetBtn.disabled = !canWrite;
-        elements.newDatasetNameInput.disabled = !canWrite;
 
         // If someone else took the lock while we were editing
         if (locked && !isMe && state.isEditing) {
@@ -333,19 +331,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleCreateDataset() {
-        const name = elements.newDatasetNameInput.value.trim();
-        if (!name) return alert('Please enter a dataset name.');
-
         const lockAcquired = await ensureLock();
         if (!lockAcquired) return;
 
         try {
-            await api.createDataset(name);
-            elements.newDatasetNameInput.value = '';
-            loadAndRenderDatasets();
+            // Create a draft with a default name on the backend
+            const result = await api.createDataset();
+            const newName = result.name;
+
+            // Update local state and UI to point to this new dataset
+            stateManager.setActiveDataset(newName);
+            elements.activeDatasetName.textContent = newName;
+            elements.activeDatasetNameInput.value = newName;
+
+            // Show the center column if it was hidden
+            workspaceUI.toggleCenterColumn(elements, true);
+
+            // We are already in draft mode on the backend, so we just update the frontend state
+            stateManager.setEditingOriginalName(null); // Marker for a NEW dataset
+            stateManager.setEditing(true);
+            elements.editBtn.style.display = 'inline-block'; // Ensure it's visible
+            elements.editBtn.textContent = 'Save';
+            elements.cancelEditBtn.style.display = 'inline-block';
+            workspaceUI.updateEditModeUI(elements);
+
+            // Clear any old data and prepare for entry
+            workspaceUI.renderPointsTable(elements, [], handleDeletePoint);
+            workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
+            if (activeChart) chartService.destroyChart(activeChart);
+
+            // Refresh the dataset list so the new draft name shows up (if the API returns it in the list)
+            // Note: Our current list API might only show production datasets.
+            // We should ensure the user can see their work.
+            await loadAndRenderDatasets();
+
         } catch (error) {
             alert(error.message);
-        } finally {
             await releaseLockIfPossible();
         }
     }
@@ -404,12 +425,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function commitEditMode() {
         try {
-            await api.commitEdit(state.activeDataset);
+            // Ensure all rows are synced before committing
+            const rows = Array.from(elements.pointsTableBody.querySelectorAll('tr'));
+            const syncPromises = rows.map(row => syncTableRow(row));
+            await Promise.all(syncPromises);
+
+            const response = await api.commitEdit(state.activeDataset);
+            const finalName = response.name || state.activeDataset;
+
             stateManager.setEditing(false);
             stateManager.setEditingOriginalName(null);
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
+
+            stateManager.setActiveDataset(finalName);
+            elements.activeDatasetName.textContent = finalName;
+
             await loadActiveDatasetData();
             loadAndRenderDatasets(); // Refresh list to reflect potential name change
 
@@ -421,13 +453,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function cancelEditMode() {
         try {
+            const isNewDataset = (state.editingOriginalName === null);
             // Use the current active dataset name to hit the rollback API
             await api.rollbackEdit(state.activeDataset);
 
-            // If the name was changed during draft, we must revert to the original name
-            if (state.activeDataset !== state.editingOriginalName) {
-                stateManager.setActiveDataset(state.editingOriginalName);
-                elements.activeDatasetName.textContent = state.editingOriginalName;
+            if (isNewDataset) {
+                // If it was a new unsaved dataset, we have nothing to revert to
+                stateManager.setActiveDataset(null);
+                elements.activeDatasetName.textContent = 'No Dataset Selected';
+                workspaceUI.toggleCenterColumn(elements, false);
+            } else {
+                // If the name was changed during draft, we must revert to the original name
+                if (state.activeDataset !== state.editingOriginalName) {
+                    stateManager.setActiveDataset(state.editingOriginalName);
+                    elements.activeDatasetName.textContent = state.editingOriginalName;
+                }
             }
 
             stateManager.setEditing(false);
@@ -435,8 +475,12 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
-            await loadActiveDatasetData(); // Reload original data
 
+            if (!isNewDataset) {
+                await loadActiveDatasetData(); // Reload original data
+            }
+
+            await loadAndRenderDatasets(); // Refresh list to remove the draft if it was new
             await releaseLockIfPossible();
         } catch (error) {
             alert(error.message);

@@ -40,13 +40,15 @@ The application enforces a single-editor workflow to ensure data integrity:
 4.  **Heartbeat & Expiry**: A 30s heartbeat keeps the lock alive. If a session is abandoned, the lock expires after 120s of inactivity.
 
 ### B. Draft System
-Used to prevent direct modification of production records:
-1.  **Edit Start**: Clones the `Dataset` and its `Points` into new records with `is_draft=True`.
-2.  **Commit**: Merges draft changes back to the original record and deletes the draft.
-3.  **Rollback**: Deletes the draft, reverting the view to the production state.
+Used to prevent direct modification of production records and streamline creation:
+1.  **Edit Start**: Clones an existing `Dataset` into a new record with `is_draft=True`.
+2.  **Creation**: Clicking "Create Dataset" initializes a brand new draft (`is_draft=True`, `original_id=None`).
+3.  **Commit**: Merges draft changes back to the original or "promotes" a new draft to production by flipping the `is_draft` flag.
+4.  **Rollback**: Deletes the draft.
 
 ### C. Real-time Data Entry & Sync
 - **Editable Table**: Syncs data to the backend as the user types (on `change` events).
+- **Batch Sync**: On "Save", the frontend ensures all rows are synced before the final commit.
 - **Auto-Calculation**: Backend calculates Shear Rate and Shear Stress in real-time based on `N` (RPM), `eta` (mPa·s), and the selected `SpindleFactor`.
 
 ### D. Analysis & Regression
@@ -57,11 +59,12 @@ Used to prevent direct modification of production records:
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Dataset List, Workspace, Comparison Chart):
-1.  **Independent Gutters**: Vertical gutters separate the columns, acting as drag handles for resizing and housing toggle buttons for collapsing.
-2.  **Independent State**: Collapsing one pane (e.g., Dataset List) does not affect the visibility of others.
-3.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging to prevent layout glitches.
-4.  **Width Memory**: Panes remember their last valid width when un-collapsing.
-5.  **Fixed-Width Viewport**: The Dataset List table maintains a fixed 450px width; resizing the pane acts as a viewport/clipper for the content.
+1.  **Dataset List**: Houses the "Create Dataset" button at the top and a search bar. Drafts are visually marked with a `(Draft)` suffix.
+2.  **Independent Gutters**: Vertical gutters separate the columns, acting as drag handles for resizing and housing toggle buttons for collapsing.
+3.  **Independent State**: Collapsing one pane (e.g., Dataset List) does not affect the visibility of others.
+4.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging to prevent layout glitches.
+5.  **Width Memory**: Panes remember their last valid width when un-collapsing.
+6.  **Fixed-Width Viewport**: The Dataset List table maintains a fixed 450px width; resizing the pane acts as a viewport/clipper for the content.
 
 ## 5. Database Schema
 
@@ -86,10 +89,11 @@ The UI features a consistent three-column layout (Dataset List, Workspace, Compa
     - `POST /api/lock/release`: Relinquish the lock.
     - `POST /api/lock/heartbeat`: Update `last_heartbeat`.
 - **Datasets**:
-    - `GET /api/datasets`: List all.
+    - `GET /api/datasets`: List production datasets + user's active draft.
     - `GET /api/datasets/<name>`: Get points (prefers draft).
-    - `POST /api/datasets/<name>/edit/start`: Initialize edit mode.
-    - `POST /api/datasets/<name>/edit/commit`: Save changes.
+    - `POST /api/datasets`: Initialize a new draft dataset.
+    - `POST /api/datasets/<name>/edit/start`: Initialize edit mode for existing.
+    - `POST /api/datasets/<name>/edit/commit`: Save changes (promotes or merges).
 - **Points**:
     - `POST /api/datasets/<name>/points`: Add data point.
     - `PUT /api/datasets/<name>/points/<id>`: Update point.

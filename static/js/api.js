@@ -5,7 +5,7 @@ async function fetchWithLock(url, options = {}) {
     const headers = options.headers || {};
     headers['X-Session-ID'] = state.sessionID;
     headers['Content-Type'] = 'application/json';
-    
+
     return fetch(url, { ...options, headers });
 }
 
@@ -42,7 +42,7 @@ export async function sendHeartbeat() {
 // --- Dataset APIs ---
 
 export async function getDatasets() {
-    const response = await fetch('/api/datasets');
+    const response = await fetchWithLock('/api/datasets');
     if (!response.ok) throw new Error('Failed to fetch datasets');
     return await response.json();
 }
@@ -60,7 +60,7 @@ export async function createDataset(name) {
 }
 
 export async function getDatasetPoints(name) {
-    const response = await fetch(`/api/datasets/${name}`);
+    const response = await fetchWithLock(`/api/datasets/${name}`);
     if (!response.ok) throw new Error('Failed to fetch dataset details');
     return await response.json();
 }

@@ -238,7 +238,7 @@ def duplicate_dataset(name):
 
 @api_bp.route('/datasets/<string:name>/edit/commit', methods=['POST'])
 def commit_edit_mode(name):
-    """Merge draft changes back into the original dataset."""
+    """Merge draft changes back into the original dataset or promote a new draft."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
@@ -247,6 +247,26 @@ def commit_edit_mode(name):
     if not draft:
         return jsonify({"error": "No draft found to commit"}), 404
 
+    if draft.original_id is None:
+        # Case: New Dataset Creation
+        # Check if the final name is already taken by a PRODUCTION dataset
+        final_name = draft.name
+        if Dataset.query.filter(Dataset.name == final_name, Dataset.is_draft == False, Dataset.id != draft.id).first():
+            base_name = final_name
+            counter = 1
+            while Dataset.query.filter(Dataset.name == final_name, Dataset.is_draft == False, Dataset.id != draft.id).first():
+                final_name = f"{base_name} ({counter})"
+                counter += 1
+            draft.name = final_name
+
+        # Promote draft to production
+        draft.is_draft = False
+        for p in draft.points:
+            p.is_draft = False
+        db.session.commit()
+        return jsonify({"message": "New dataset created successfully", "name": final_name}), 201
+
+    # Case: Editing existing dataset
     original = Dataset.query.get(draft.original_id)
     if not original:
         return jsonify({"error": "Original dataset not found"}), 404
@@ -372,32 +392,52 @@ def get_power_regression(name):
 
 @api_bp.route('/datasets', methods=['GET'])
 def get_datasets():
-    """Return a list of all non-draft datasets."""
+    """Return a list of all non-draft datasets, plus the current user's active draft."""
     all_datasets = Dataset.query.filter_by(is_draft=False).all()
+
+    # Check if there is an active draft for this session
+    session_id = request.headers.get('X-Session-ID')
+    if session_id:
+        lock = GlobalLock.query.filter_by(session_id=session_id).first()
+        if lock:
+            # Current session has the lock. Look for ANY draft.
+            # (Assuming only one draft exists globally for now per the GlobalLock policy)
+            active_draft = Dataset.query.filter_by(is_draft=True).first()
+            if active_draft and active_draft not in all_datasets:
+                all_datasets.append(active_draft)
+
     return jsonify([{
-        "name": d.name, "date": d.date, "serial_id": d.serial_id, "spindle_id": d.spindle_id
+        "name": d.name, "date": d.date, "serial_id": d.serial_id, "spindle_id": d.spindle_id,
+        "is_draft": d.is_draft
     } for d in all_datasets])
 
 
 @api_bp.route('/datasets', methods=['POST'])
 def create_dataset():
-    """Create a new, empty dataset."""
+    """Create a new, empty dataset as a draft."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    data = request.get_json()
-    name = data.get('name', '').strip()
-    if not name:
-        return jsonify({"error": "Dataset name required"}), 400
+    data = request.get_json() or {}
+    name = data.get('name', '').strip() or "New Dataset"
 
+    # Check for name collisions in production
     if Dataset.query.filter_by(name=name, is_draft=False).first():
-        return jsonify({"error": "Dataset already exists"}), 409
+        # If default name exists, append suffix
+        base_name = name
+        counter = 1
+        while Dataset.query.filter_by(name=name, is_draft=False).first():
+            name = f"{base_name} ({counter})"
+            counter += 1
 
-    new_ds = Dataset(name=name)
+    new_ds = Dataset(name=name, is_draft=True, original_id=None)
     db.session.add(new_ds)
     db.session.commit()
-    return jsonify({"message": f"Dataset '{name}' created"}), 201
+    return jsonify({
+        "message": f"Dataset '{name}' initialized as draft",
+        "name": name
+    }), 201
 
 
 @api_bp.route('/datasets/<string:name>', methods=['GET'])
