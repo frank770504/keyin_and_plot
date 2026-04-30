@@ -373,6 +373,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showLine: true,
             fill: false,
             pointRadius: 0,
+            hitRadius: 15,
+            pointHitRadius: 15,
             tension: 0.1
         };
     }

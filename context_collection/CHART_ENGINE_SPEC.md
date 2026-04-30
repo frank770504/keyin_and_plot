@@ -17,6 +17,12 @@ The Unified Reactive Chart Engine provides a high-performance, consistent visual
     - **Power Law**: Thin solid line with slight smoothing (`tension: 0.1`) and `[5, 5]` dash pattern.
     - **Linear**: Thin solid line with `[10, 5]` dash pattern.
 
+### C. Interaction & Tooltips
+- **Forgiving Hover Detection**: Regression lines use an expanded `hitRadius` and `pointHitRadius` (15px) to ensure tooltips are easy to trigger without pixel-perfect precision.
+- **Nearest-Point Logic**: The engine uses `mode: 'nearest'` and `intersect: false` globally, allowing tooltips to follow the cursor smoothly across all data points and regression segments.
+- **High-Density Search**: Leveraging 100-point regression segments from the backend ensures reliable interaction even at extreme zoom levels.
+- **Coordinate Robustness**: Tooltip positioning is calculated relative to the chart area, ensuring accuracy during active panning and zooming.
+
 ## 3. Performance & Efficiency
 
 ### A. Client-Side Data Caching

@@ -57,6 +57,7 @@ Used to prevent direct modification of production records and streamline creatio
 - **Reactive Regressions**: Support for overlaying Linear ($\sigma = m \dot{\gamma} + c$) and Power Law ($\sigma = a \dot{\gamma}^b$) regressions via persistent checkboxes.
 - **Comparison View**: Reactive overlay of multiple measurements based on the "Plot" column.
 - **Performance**: Integrated client-side caching ensures near-instant re-renders when toggling visibility or regression modes.
+- **Enhanced Interaction**: Optimized hover detection with expanded hit zones ensures reliable tooltips for regression lines regardless of zoom level or aspect ratio.
 - **Visual Polish**: Unique point style and color combinations for each measurement; persistent "Reset View" (⟲) button for auto-scaling.
 
 ### E. Unified Multi-Pane Layout

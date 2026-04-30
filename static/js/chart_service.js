@@ -200,6 +200,11 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
                     }
                 }
             },
+            interaction: {
+                mode: 'nearest',
+                intersect: false,
+                axis: 'xy'
+            },
             plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -306,6 +311,8 @@ function createRegressionDataset(name, regData, type, color) {
         showLine: true,
         fill: false,
         pointRadius: 0,
+        hitRadius: 15,      // Increased for easier hovering
+        pointHitRadius: 15, // Ensure points (even if radius 0) are detectable
         tension: 0.1 // Slight smoothing
     };
 }
