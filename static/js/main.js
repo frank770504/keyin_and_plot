@@ -301,7 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Temporary name display until data is loaded
             const m = state.allMeasurements.find(m => m.id === id);
-            elements.activeMeasurementName.textContent = m ? m.liquid_name : `ID: ${id}`;
+            const logicalId = (m && m.original_id) ? m.original_id : id;
+            elements.activeMeasurementName.textContent = m ? m.liquid_name : `ID: ${logicalId}`;
 
             await loadActiveMeasurementData();
         }
@@ -314,8 +315,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data = await api.fetchMeasurementData(state.activeMeasurement);
             const points = data.points;
+            const logicalId = data.original_id || data.id;
 
-            elements.activeMeasurementId.value = data.id;
+            elements.activeMeasurementId.value = logicalId;
             elements.activeMeasurementName.textContent = data.liquid_name;
             elements.activeMeasurementNameInput.value = data.liquid_name;
             elements.measurementDateInput.value = data.date || '';

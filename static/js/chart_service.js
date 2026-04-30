@@ -255,7 +255,8 @@ export async function getSelectedMeasurementsForChart(measurementIds, options = 
         }
 
         const pointsArray = measurementData.points;
-        const displayName = `${measurementData.liquid_name} - ${measurementData.id}`;
+        const logicalId = measurementData.original_id || measurementData.id;
+        const displayName = `${measurementData.liquid_name} - ${logicalId}`;
         const color = COLORS[i % COLORS.length];
         const pointStyle = POINT_STYLES[i % POINT_STYLES.length];
 
