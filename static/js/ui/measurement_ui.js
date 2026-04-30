@@ -57,7 +57,7 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
         tr.appendChild(tdCheck);
 
         const tdId = document.createElement('td');
-        tdId.textContent = measurement.id;
+        tdId.textContent = measurement.original_id || measurement.id;
         tr.appendChild(tdId);
 
         const tdName = document.createElement('td');

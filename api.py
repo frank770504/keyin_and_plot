@@ -399,27 +399,36 @@ def get_power_regression(measurement_id):
 @api_bp.route('/measurements', methods=['GET'])
 def get_measurements():
     """
-        Return a list of all non-draft measurements,
-        plus the current user's active draft.
+        Return a list of measurements. If a production measurement has an active draft,
+        return only the draft to avoid duplicates in the UI.
     """
-    all_measurements = Measurement.query.filter_by(is_draft=False).all()
-
+    production_measurements = Measurement.query.filter_by(is_draft=False).all()
+    
     # Check if there is an active draft for this session
     session_id = request.headers.get('X-Session-ID')
+    active_draft = None
     if session_id:
         lock = GlobalLock.query.filter_by(session_id=session_id).first()
         if lock:
-            # Current session has the lock. Look for ANY draft.
-            # (Assuming only one draft exists globally for now per the GlobalLock policy)
             active_draft = Measurement.query.filter_by(is_draft=True).first()
-            if active_draft and active_draft not in all_measurements:
-                all_measurements.append(active_draft)
+
+    results = []
+    draft_original_id = active_draft.original_id if active_draft else None
+
+    for m in production_measurements:
+        if m.id == draft_original_id:
+            # Skip the original because we will add the draft instead
+            continue
+        results.append(m)
+
+    if active_draft:
+        results.append(active_draft)
 
     return jsonify([{
         "id": d.id, "liquid_name": d.liquid_name, "date": d.date,
         "serial_id": d.serial_id, "spindle_id": d.spindle_id,
         "is_draft": d.is_draft, "original_id": d.original_id
-    } for d in all_measurements])
+    } for d in results])
 
 
 @api_bp.route('/measurements', methods=['POST'])
