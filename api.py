@@ -18,12 +18,22 @@ SPINDLE_ID2FACTOR = {
 }
 
 
-def get_best_measurement(name):
+def get_best_measurement(measurement_id):
     """Helper to return the draft if it exists, otherwise the original."""
-    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
-    if draft:
-        return draft
-    return Measurement.query.filter_by(name=name, is_draft=False).first()
+    # If we are looking for a specific ID, it might be a draft or a production record.
+    # In the single-editor model, there is only one draft.
+    # If the requested ID is for an original, we should check if a draft exists for it.
+
+    m = Measurement.query.get(measurement_id)
+    if not m:
+        return None
+
+    if not m.is_draft:
+        # Check if there is a draft referencing this original
+        draft = Measurement.query.filter_by(original_id=m.id, is_draft=True).first()
+        if draft:
+            return draft
+    return m
 
 
 def check_lock():
@@ -140,27 +150,25 @@ def lock_heartbeat():
 
 # --- Measurement Endpoints ---
 
-@api_bp.route('/measurements/<string:name>/edit/start', methods=['POST'])
-def start_edit_mode(name):
+@api_bp.route('/measurements/<int:measurement_id>/edit/start', methods=['POST'])
+def start_edit_mode(measurement_id):
     """Clone a measurement to create a draft for editing."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    measurement = Measurement.query.filter_by(name=name, is_draft=False).first()
+    measurement = Measurement.query.filter_by(id=measurement_id, is_draft=False).first()
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
-    # Check if a draft already exists
-    existing_draft = Measurement.query.filter_by(name=name, is_draft=True).first()
+    # Check if a draft already exists for THIS measurement
+    existing_draft = Measurement.query.filter_by(original_id=measurement_id, is_draft=True).first()
     if existing_draft:
-        # If a draft exists, we just return success (someone might have left it)
-        # In a single-editor system, the editor owns all drafts.
         return jsonify({"message": "Draft already exists", "is_draft": True}), 200
 
     # Create the draft measurement
     draft_measurement = Measurement(
-        name=measurement.name,
+        liquid_name=measurement.liquid_name,
         date=measurement.date,
         serial_id=measurement.serial_id,
         spindle_id=measurement.spindle_id,
@@ -186,31 +194,24 @@ def start_edit_mode(name):
     db.session.commit()
     return jsonify({
         "message": "Draft created successfully",
-        "is_draft": True
+        "is_draft": True,
+        "id": draft_measurement.id
     }), 201
 
 
-@api_bp.route('/measurements/<string:name>/duplicate', methods=['POST'])
-def duplicate_measurement(name):
+@api_bp.route('/measurements/<int:measurement_id>/duplicate', methods=['POST'])
+def duplicate_measurement(measurement_id):
     """Create a new independent measurement by cloning an existing one."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    original = Measurement.query.filter_by(name=name, is_draft=False).first()
+    original = Measurement.query.filter_by(id=measurement_id, is_draft=False).first()
     if not original:
         return jsonify({"error": "Measurement not found"}), 404
 
-    # Generate a unique name
-    base_name = f"{original.name} (Copy)"
-    new_name = base_name
-    counter = 1
-    while Measurement.query.filter_by(name=new_name, is_draft=False).first():
-        new_name = f"{base_name} {counter}"
-        counter += 1
-
     new_measurement = Measurement(
-        name=new_name,
+        liquid_name=f"{original.liquid_name} (Copy)",
         date=original.date,
         serial_id=original.serial_id,
         spindle_id=original.spindle_id,
@@ -234,37 +235,23 @@ def duplicate_measurement(name):
     db.session.commit()
     return jsonify({
         "message": "Measurement duplicated successfully",
-        "new_name": new_name
+        "new_id": new_measurement.id
     }), 201
 
 
-@api_bp.route('/measurements/<string:name>/edit/commit', methods=['POST'])
-def commit_edit_mode(name):
+@api_bp.route('/measurements/<int:measurement_id>/edit/commit', methods=['POST'])
+def commit_edit_mode(measurement_id):
     """Merge draft changes back into the original measurement or promote a new draft."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
+    draft = Measurement.query.filter_by(id=measurement_id, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to commit"}), 404
 
     if draft.original_id is None:
         # Case: New Measurement Creation
-        # Check if the final name is already taken by a PRODUCTION measurement
-        final_name = draft.name
-        if Measurement.query.filter(Measurement.name == final_name,
-                                    not Measurement.is_draft,
-                                    Measurement.id != draft.id).first():
-            base_name = final_name
-            counter = 1
-            while Measurement.query.filter(Measurement.name == final_name,
-                                           not Measurement.is_draft,
-                                           Measurement.id != draft.id).first():
-                final_name = f"{base_name} ({counter})"
-                counter += 1
-            draft.name = final_name
-
         # Promote draft to production
         draft.is_draft = False
         for p in draft.points:
@@ -272,7 +259,7 @@ def commit_edit_mode(name):
         db.session.commit()
         return jsonify({
             "message": "New measurement created successfully",
-            "name": final_name
+            "id": draft.id
         }), 201
 
     # Case: Editing existing measurement
@@ -281,7 +268,7 @@ def commit_edit_mode(name):
         return jsonify({"error": "Original measurement not found"}), 404
 
     # Update original metadata
-    original.name = draft.name
+    original.liquid_name = draft.liquid_name
     original.date = draft.date
     original.serial_id = draft.serial_id
     original.spindle_id = draft.spindle_id
@@ -317,17 +304,17 @@ def commit_edit_mode(name):
 
     db.session.delete(draft)
     db.session.commit()
-    return jsonify({"message": "Changes committed successfully"}), 200
+    return jsonify({"message": "Changes committed successfully", "id": original.id}), 200
 
 
-@api_bp.route('/measurements/<string:name>/edit/rollback', methods=['POST'])
-def rollback_edit_mode(name):
+@api_bp.route('/measurements/<int:measurement_id>/edit/rollback', methods=['POST'])
+def rollback_edit_mode(measurement_id):
     """Discard the draft and exit edit mode."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
+    draft = Measurement.query.filter_by(id=measurement_id, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to rollback"}), 404
 
@@ -336,10 +323,10 @@ def rollback_edit_mode(name):
     return jsonify({"message": "Draft discarded"}), 200
 
 
-@api_bp.route('/measurements/<string:name>/regression', methods=['GET'])
-def get_regression(name):
+@api_bp.route('/measurements/<int:measurement_id>/regression', methods=['GET'])
+def get_regression(measurement_id):
     """Calculate and return a linear regression for the measurement."""
-    measurement = get_best_measurement(name)
+    measurement = get_best_measurement(measurement_id)
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
@@ -371,10 +358,10 @@ def get_regression(name):
     })
 
 
-@api_bp.route('/measurements/<string:name>/power-regression', methods=['GET'])
-def get_power_regression(name):
+@api_bp.route('/measurements/<int:measurement_id>/power-regression', methods=['GET'])
+def get_power_regression(measurement_id):
     """Calculate and return a power law regression for the measurement."""
-    measurement = get_best_measurement(name)
+    measurement = get_best_measurement(measurement_id)
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
@@ -429,9 +416,9 @@ def get_measurements():
                 all_measurements.append(active_draft)
 
     return jsonify([{
-        "name": d.name, "date": d.date,
+        "id": d.id, "liquid_name": d.liquid_name, "date": d.date,
         "serial_id": d.serial_id, "spindle_id": d.spindle_id,
-        "is_draft": d.is_draft
+        "is_draft": d.is_draft, "original_id": d.original_id
     } for d in all_measurements])
 
 
@@ -443,52 +430,48 @@ def add_measurement():
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
     data = request.get_json() or {}
-    name = data.get('name', '').strip() or "New Measurement"
+    liquid_name = data.get('liquid_name', '').strip() or "New Measurement"
 
-    # Check for name collisions in production
-    if Measurement.query.filter_by(name=name, is_draft=False).first():
-        # If default name exists, append suffix
-        base_name = name
-        counter = 1
-        while Measurement.query.filter_by(name=name, is_draft=False).first():
-            name = f"{base_name} ({counter})"
-            counter += 1
-
-    new_measurement = Measurement(name=name, is_draft=True, original_id=None)
+    new_measurement = Measurement(liquid_name=liquid_name, is_draft=True, original_id=None)
     db.session.add(new_measurement)
     db.session.commit()
     return jsonify({
-        "message": f"Measurement '{name}' initialized as draft",
-        "name": name
+        "message": f"Measurement '{liquid_name}' initialized as draft",
+        "id": new_measurement.id,
+        "liquid_name": liquid_name
     }), 201
 
 
-@api_bp.route('/measurements/<string:name>', methods=['GET'])
-def get_measurement(name):
+@api_bp.route('/measurements/<int:measurement_id>', methods=['GET'])
+def get_measurement(measurement_id):
     """Return points and metadata for a measurement."""
-    measurement = get_best_measurement(name)
+    measurement = get_best_measurement(measurement_id)
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
     return jsonify({
+        "id": measurement.id,
+        "liquid_name": measurement.liquid_name,
         "points": [{
             "id": p.id, "N": p.N, "eta": p.eta, "torque": p.torque,
             "shear_rate": p.shear_rate, "shear_stress": p.shear_stress
         } for p in measurement.points],
         "date": measurement.date,
         "serial_id": measurement.serial_id,
-        "spindle_id": measurement.spindle_id
+        "spindle_id": measurement.spindle_id,
+        "is_draft": measurement.is_draft,
+        "original_id": measurement.original_id
     })
 
 
-@api_bp.route('/measurements/<string:name>', methods=['PUT'])
-def update_measurement(name):
+@api_bp.route('/measurements/<int:measurement_id>', methods=['PUT'])
+def update_measurement(measurement_id):
     """Update measurement metadata (Renaming and metadata)."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    measurement = get_best_measurement(name)
+    measurement = get_best_measurement(measurement_id)
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
@@ -507,43 +490,48 @@ def update_measurement(name):
             else:
                 p.shear_rate = p.shear_stress = None
 
-    if 'name' in data:
-        new_name = data['name'].strip()
-        if new_name and new_name != name:
-            if Measurement.query.filter_by(name=new_name, is_draft=False).first():
-                return jsonify({"error": "Name already exists"}), 409
-            measurement.name = new_name
+    if 'liquid_name' in data:
+        new_name = data['liquid_name'].strip()
+        if new_name:
+            measurement.liquid_name = new_name
 
     db.session.commit()
     return jsonify({"message": "Updated successfully"}), 200
 
 
-@api_bp.route('/measurements/<string:name>', methods=['DELETE'])
-def delete_measurement(name):
+@api_bp.route('/measurements/<int:measurement_id>', methods=['DELETE'])
+def delete_measurement(measurement_id):
     """Delete a measurement and its draft."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    original = Measurement.query.filter_by(name=name, is_draft=False).first()
-    if original:
-        db.session.delete(original)
-    draft = Measurement.query.filter_by(name=name, is_draft=True).first()
-    if draft:
-        db.session.delete(draft)
+    m = Measurement.query.get(measurement_id)
+    if not m:
+        return jsonify({"error": "Measurement not found"}), 404
+
+    if not m.is_draft:
+        # Also delete any associated draft
+        draft = Measurement.query.filter_by(original_id=m.id, is_draft=True).first()
+        if draft:
+            db.session.delete(draft)
+        db.session.delete(m)
+    else:
+        # If we are deleting a draft specifically
+        db.session.delete(m)
 
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
 
 
-@api_bp.route('/measurements/<string:name>/points', methods=['POST'])
-def add_point(name):
+@api_bp.route('/measurements/<int:measurement_id>/points', methods=['POST'])
+def add_point(measurement_id):
     """Add a point to a measurement."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    measurement = get_best_measurement(name)
+    measurement = get_best_measurement(measurement_id)
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
@@ -567,14 +555,17 @@ def add_point(name):
     return jsonify({"id": new_p.id, "shear_rate": sr, "shear_stress": ss}), 201
 
 
-@api_bp.route('/measurements/<string:name>/points/<int:point_id>', methods=['DELETE'])
-def delete_point(name, point_id):
+@api_bp.route('/measurements/<int:measurement_id>/points/<int:point_id>', methods=['DELETE'])
+def delete_point(measurement_id, point_id):
     """Delete a point."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    measurement = get_best_measurement(name)
+    measurement = get_best_measurement(measurement_id)
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
+
     point = Point.query.filter_by(id=point_id, measurement_id=measurement.id).first()
     if not point:
         return jsonify({"error": "Point not found"}), 404
@@ -584,14 +575,17 @@ def delete_point(name, point_id):
     return jsonify({"message": "Point deleted"}), 200
 
 
-@api_bp.route('/measurements/<string:name>/points/<int:point_id>', methods=['PUT'])
-def update_point(name, point_id):
+@api_bp.route('/measurements/<int:measurement_id>/points/<int:point_id>', methods=['PUT'])
+def update_point(measurement_id, point_id):
     """Update a point."""
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    measurement = get_best_measurement(name)
+    measurement = get_best_measurement(measurement_id)
+    if not measurement:
+        return jsonify({"error": "Measurement not found"}), 404
+
     point = Point.query.filter_by(id=point_id, measurement_id=measurement.id).first()
     if not point:
         return jsonify({"error": "Point not found"}), 404

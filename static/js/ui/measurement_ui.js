@@ -34,7 +34,7 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
         tr.addEventListener('click', (e) => {
             // Prevent if clicking on checkbox
             if (e.target.type === 'checkbox') return;
-            onSelect(measurement.name);
+            onSelect(measurement.id);
         });
 
         // Checkbox for comparison
@@ -47,17 +47,21 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
         });
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.checked = state.comparisonSelected.has(measurement.name);
+        checkbox.checked = state.comparisonSelected.has(measurement.id);
         checkbox.addEventListener('change', () => {
-            toggleComparisonSelection(measurement.name);
+            toggleComparisonSelection(measurement.id);
             if (onComparisonToggle) onComparisonToggle();
             updateMasterCheckbox(measurements);
         });
         tdCheck.appendChild(checkbox);
         tr.appendChild(tdCheck);
 
+        const tdId = document.createElement('td');
+        tdId.textContent = measurement.id;
+        tr.appendChild(tdId);
+
         const tdName = document.createElement('td');
-        tdName.textContent = measurement.is_draft ? `${measurement.name} (Draft)` : measurement.name;
+        tdName.textContent = measurement.is_draft ? `${measurement.liquid_name} (Draft)` : measurement.liquid_name;
         tr.appendChild(tdName);
 
         const tdDate = document.createElement('td');
@@ -68,7 +72,7 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
         tdSerial.textContent = measurement.serial_id || '';
         tr.appendChild(tdSerial);
 
-        if (measurement.name === state.activeMeasurement) {
+        if (measurement.id === state.activeMeasurement) {
             tr.classList.add('active');
         }
         if (measurement.is_draft) {
@@ -91,7 +95,7 @@ export function updateMasterCheckbox(visibleMeasurements) {
         return;
     }
 
-    const selectedVisible = visibleMeasurements.filter(m => state.comparisonSelected.has(m.name));
+    const selectedVisible = visibleMeasurements.filter(m => state.comparisonSelected.has(m.id));
 
     if (selectedVisible.length === 0) {
         masterCheckbox.checked = false;

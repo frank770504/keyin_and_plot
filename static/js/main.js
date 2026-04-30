@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Center Column
         centerColumn: document.getElementById('center-column'),
+        activeMeasurementId: document.getElementById('active-measurement-id'),
         activeMeasurementName: document.getElementById('active-measurement-name'),
         activeMeasurementNameInput: document.getElementById('active-measurement-name-input'),
         editBtn: document.getElementById('edit-btn'),
@@ -225,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stateManager.clearHeartbeat();
         if (state.isEditing) {
             stateManager.setEditing(false);
-            stateManager.setEditingOriginalName(null);
+            stateManager.setEditingOriginalId(null);
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
@@ -236,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Data Loading & List Management
     async function loadAndRenderMeasurements() {
         try {
-            const measurements = await api.getMeasurements();
+            const measurements = await api.fetchMeasurements();
             stateManager.setAllMeasurements(measurements);
             refreshMeasurementList();
         } catch (error) {
@@ -262,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Workspace & Active Measurement
-    async function setActiveMeasurement(name) {
+    async function setActiveMeasurement(id) {
         // --- Handle Unsaved Changes ---
         if (state.isEditing && state.activeMeasurement) {
             // If clicking a different measurement OR clicking the same one to deselect
@@ -279,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (state.activeMeasurement === name) {
+        if (state.activeMeasurement === id) {
             // Deselect
             stateManager.setActiveMeasurement(null);
             workspaceUI.toggleCenterColumn(elements, false);
@@ -288,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.cancelEditBtn.style.display = 'none';
         } else {
             // Select
-            stateManager.setActiveMeasurement(name);
+            stateManager.setActiveMeasurement(id);
             stateManager.setEditing(false); // Reset edit mode
             elements.editBtn.style.display = 'inline-block';
             elements.editBtn.textContent = 'Edit';
@@ -297,7 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (activeChart) activeChart.resize();
             });
             workspaceUI.updateEditModeUI(elements);
-            elements.activeMeasurementName.textContent = name;
+
+            // Temporary name display until data is loaded
+            const m = state.allMeasurements.find(m => m.id === id);
+            elements.activeMeasurementName.textContent = m ? m.liquid_name : `ID: ${id}`;
+
             await loadActiveMeasurementData();
         }
         refreshMeasurementList();
@@ -307,26 +312,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.activeMeasurement) return;
 
         try {
-            const data = await api.getMeasurementPoints(state.activeMeasurement);
+            const data = await api.fetchMeasurementData(state.activeMeasurement);
             const points = data.points;
 
+            elements.activeMeasurementId.value = data.id;
+            elements.activeMeasurementName.textContent = data.liquid_name;
+            elements.activeMeasurementNameInput.value = data.liquid_name;
             elements.measurementDateInput.value = data.date || '';
             elements.measurementSerialIdInput.value = data.serial_id || '';
             elements.measurementSpindleSelect.value = data.spindle_id || '';
 
             workspaceUI.renderPointsTable(elements, points, handleDeletePoint);
-            renderActiveChart(points);
+            renderActiveChart(data);
             updateSaveButtonState();
         } catch (error) {
-            console.error(`Error loading data for ${state.activeMeasurement}:`, error);
+            console.error(`Error loading data for ID ${state.activeMeasurement}:`, error);
         }
     }
 
-    async function renderActiveChart(points) {
+    async function renderActiveChart(measurementData) {
         if (!state.activeMeasurement) return;
 
+        const points = measurementData.points;
+        const displayName = `${measurementData.liquid_name} - ${measurementData.id}`;
+
         const datasets = [{
-            label: state.activeMeasurement,
+            label: displayName,
             data: points.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
             backgroundColor: 'rgba(75, 192, 192, 0.5)',
             borderColor: 'rgba(75, 192, 192, 1)',
@@ -338,15 +349,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add Regressions if enabled
         if (state.chartConfig.active.includeLinear) {
             try {
-                const reg = await api.getRegressionData(state.activeMeasurement, 'linear');
-                datasets.push(createRegressionDataset(state.activeMeasurement, reg, 'linear', 'rgba(255, 99, 132, 1)'));
+                const reg = await api.fetchRegression(state.activeMeasurement, 'linear');
+                datasets.push(createRegressionDataset(displayName, reg, 'linear', 'rgba(255, 99, 132, 1)'));
             } catch (e) { console.warn('Active linear reg failed', e); }
         }
 
         if (state.chartConfig.active.includePower) {
             try {
-                const reg = await api.getRegressionData(state.activeMeasurement, 'power');
-                datasets.push(createRegressionDataset(state.activeMeasurement, reg, 'power', 'rgba(54, 162, 235, 1)'));
+                const reg = await api.fetchRegression(state.activeMeasurement, 'power');
+                datasets.push(createRegressionDataset(displayName, reg, 'power', 'rgba(54, 162, 235, 1)'));
             } catch (e) { console.warn('Active power reg failed', e); }
         }
 
@@ -360,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.resetActiveZoomBtn.style.display = 'flex';
     }
 
-    // Helper for creating regression datasets (could be moved to chartService later if needed more broadly)
+    // Helper for creating regression datasets
     function createRegressionDataset(name, regData, type, color) {
         const points = regData.regression_points.map(p => ({ x: p.shear_rate, y: p.shear_stress }));
         let label;
@@ -368,10 +379,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (type === 'linear') {
             const { slope, intercept } = regData;
-            label = `Linear: $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2=${r2}$`;
+            label = `${name} (Linear): $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2=${r2}$`;
         } else {
             const { a, b } = regData;
-            label = `Power: $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2=${r2}$`;
+            label = `${name} (Power): $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2=${r2}$`;
         }
 
         return {
@@ -412,12 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSaveButtonState() {
         if (!state.isEditing) return;
 
-        const name = elements.activeMeasurementNameInput.value.trim();
+        const liquidName = elements.activeMeasurementNameInput.value.trim();
         const date = elements.measurementDateInput.value;
         const serialId = elements.measurementSerialIdInput.value.trim();
         const spindleId = elements.measurementSpindleSelect.value;
 
-        const isValid = name && date && serialId && spindleId;
+        const isValid = liquidName && date && serialId && spindleId;
         elements.editBtn.disabled = !isValid;
     }
 
@@ -427,12 +438,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Create a draft with a default name on the backend
-            const result = await api.addMeasurement();
-            const newName = result.name;
+            const result = await api.createMeasurement("New Measurement");
+            const newId = result.id;
+            const liquidName = result.liquid_name;
 
             // Update local state and UI to point to this new measurement
-            stateManager.setActiveMeasurement(newName);
-            elements.activeMeasurementName.textContent = newName;
+            stateManager.setActiveMeasurement(newId);
+            elements.activeMeasurementName.textContent = liquidName;
 
             // CLEAR INPUTS as per request
             elements.activeMeasurementNameInput.value = "";
@@ -444,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workspaceUI.toggleCenterColumn(elements, true);
 
             // We are already in draft mode on the backend, so we just update the frontend state
-            stateManager.setEditingOriginalName(null); // Marker for a NEW measurement
+            stateManager.setEditingOriginalId(null); // Marker for a NEW measurement
             stateManager.setEditing(true);
             elements.editBtn.style.display = 'inline-block'; // Ensure it's visible
             elements.editBtn.textContent = 'Save';
@@ -458,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
             if (activeChart) chartService.destroyChart(activeChart);
 
-            // Refresh the measurement list so the new draft name shows up
+            // Refresh the measurement list so the new draft shows up
             await loadAndRenderMeasurements();
 
         } catch (error) {
@@ -467,20 +479,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function handleDeleteMeasurement(name) {
-        const targetName = name || state.activeMeasurement;
-        if (!targetName) return;
+    async function handleDeleteMeasurement(id) {
+        const targetId = id || state.activeMeasurement;
+        if (!targetId) return;
 
-        if (confirm(`Are you sure you want to delete the measurement "${targetName}"?`)) {
+        if (confirm(`Are you sure you want to delete this measurement (ID: ${targetId})?`)) {
             const lockAcquired = await ensureLock();
             if (!lockAcquired) return;
 
             try {
-                await api.deleteMeasurement(targetName);
-                state.comparisonSelected.delete(targetName);
+                await api.deleteMeasurement(targetId);
+                state.comparisonSelected.delete(targetId);
                 handleDrawSelected();
 
-                if (state.activeMeasurement === targetName) {
+                if (state.activeMeasurement === targetId) {
                     stateManager.setActiveMeasurement(null);
                     workspaceUI.toggleCenterColumn(elements, false);
                     elements.activeMeasurementName.textContent = 'No Measurement Selected';
@@ -505,9 +517,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!lockAcquired) return;
 
         try {
-            await api.startEdit(state.activeMeasurement);
+            const result = await api.startEditMode(state.activeMeasurement);
+            const draftId = result.id;
 
-            stateManager.setEditingOriginalName(state.activeMeasurement); // Store for potential rollback
+            stateManager.setEditingOriginalId(state.activeMeasurement); // Store for potential rollback
+            stateManager.setActiveMeasurement(draftId); // Backend returned the draft ID
             stateManager.setEditing(true);
             elements.editBtn.textContent = 'Save';
             elements.cancelEditBtn.style.display = 'inline-block';
@@ -530,18 +544,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const syncPromises = rows.map(row => syncTableRow(row));
             await Promise.all(syncPromises);
 
-            const response = await api.commitEdit(state.activeMeasurement);
-            const finalName = response.name || state.activeMeasurement;
+            const response = await api.commitEditMode(state.activeMeasurement);
+            const finalId = response.id || state.activeMeasurement;
 
             stateManager.setEditing(false);
-            stateManager.setEditingOriginalName(null);
+            stateManager.setEditingOriginalId(null);
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
 
-            stateManager.setActiveMeasurement(finalName);
-            elements.activeMeasurementName.textContent = finalName;
-
+            stateManager.setActiveMeasurement(finalId);
             await loadActiveMeasurementData();
             loadAndRenderMeasurements(); // Refresh list to reflect potential name change
 
@@ -553,25 +565,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function cancelEditMode() {
         try {
-            const isNewMeasurement = (state.editingOriginalName === null);
-            // Use the current active measurement name to hit the rollback API
-            await api.rollbackEdit(state.activeMeasurement);
+            const isNewMeasurement = (state.editingOriginalId === null);
+            await api.rollbackEditMode(state.activeMeasurement);
 
             if (isNewMeasurement) {
-                // If it was a new unsaved measurement, we have nothing to revert to
                 stateManager.setActiveMeasurement(null);
                 elements.activeMeasurementName.textContent = 'No Measurement Selected';
                 workspaceUI.toggleCenterColumn(elements, false);
             } else {
-                // If the name was changed during draft, we must revert to the original name
-                if (state.activeMeasurement !== state.editingOriginalName) {
-                    stateManager.setActiveMeasurement(state.editingOriginalName);
-                    elements.activeMeasurementName.textContent = state.editingOriginalName;
-                }
+                stateManager.setActiveMeasurement(state.editingOriginalId);
             }
 
             stateManager.setEditing(false);
-            stateManager.setEditingOriginalName(null);
+            stateManager.setEditingOriginalId(null);
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
@@ -593,21 +599,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateSaveButtonState(); // Update UI state immediately
 
-        if (newName === state.activeMeasurement) return;
-        if (!newName) {
-            // We allow empty name in the input during draft editing, but Save remains disabled
-            return;
-        }
+        if (!newName) return;
 
         try {
-            await api.updateMetadata(state.activeMeasurement, { name: newName });
-            stateManager.setActiveMeasurement(newName);
+            await api.updateMeasurementMetadata(state.activeMeasurement, { liquid_name: newName });
             elements.activeMeasurementName.textContent = newName;
             loadAndRenderMeasurements(); // Refresh list
         } catch (error) {
             console.error('Failed to rename:', error);
             alert(error.message);
-            elements.activeMeasurementNameInput.value = state.activeMeasurement;
             updateSaveButtonState();
         }
     }
@@ -618,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const serialId = elements.measurementSerialIdInput.value;
         const spindleId = elements.measurementSpindleSelect.value;
         try {
-            await api.updateMetadata(state.activeMeasurement, {
+            await api.updateMeasurementMetadata(state.activeMeasurement, {
                 date: date,
                 serial_id: serialId,
                 spindle_id: spindleId
@@ -638,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.activeMeasurement || !state.isEditing) return;
         if (confirm('Are you sure you want to delete this point?')) {
             try {
-                await api.deletePoint(state.activeMeasurement, pointId);
+                await api.deleteDataPoint(state.activeMeasurement, pointId);
                 chartService.clearChartCache(state.activeMeasurement);
                 await loadActiveMeasurementData();
                 workspaceUI.ensureEmptyRow(elements, handleDeletePoint); // Ensure we still have an empty row
@@ -689,7 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (id) {
                 // Update existing point
-                result = await api.updatePoint(state.activeMeasurement, id, nVal, etaVal, torqueVal);
+                result = await api.updateDataPoint(state.activeMeasurement, id, { N: nVal, eta: etaVal, torque: torqueVal });
                 chartService.clearChartCache(state.activeMeasurement);
                 chartNeedsUpdate = true;
             } else {
@@ -697,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (pendingAdds.has(tr)) return;
                 pendingAdds.add(tr);
                 try {
-                    result = await api.addPoint(state.activeMeasurement, nVal, etaVal, torqueVal);
+                    result = await api.addDataPoint(state.activeMeasurement, { N: nVal, eta: etaVal, torque: torqueVal });
                     chartService.clearChartCache(state.activeMeasurement);
                     tr.dataset.id = result.id;
                     id = result.id; // Update local var for success check
@@ -734,8 +734,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (chartNeedsUpdate) {
             try {
-                const data = await api.getMeasurementPoints(state.activeMeasurement);
-                renderActiveChart(data.points);
+                const data = await api.fetchMeasurementData(state.activeMeasurement);
+                renderActiveChart(data);
             } catch (error) { console.error('Chart reload failed:', error); }
         }
     }
@@ -772,8 +772,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleDrawSelected() {
-        const selectedNames = Array.from(state.comparisonSelected);
-        if (selectedNames.length === 0) {
+        const selectedIds = Array.from(state.comparisonSelected);
+        if (selectedIds.length === 0) {
             if (comparisonChart) {
                 chartService.destroyChart(comparisonChart);
                 comparisonChart = null;
@@ -784,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const chartData = await chartService.getSelectedMeasurementsForChart(selectedNames, {
+            const chartData = await chartService.getSelectedMeasurementsForChart(selectedIds, {
                 includeLinear: state.chartConfig.comparison.includeLinear,
                 includePower: state.chartConfig.comparison.includePower
             });
@@ -813,9 +813,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         visibleMeasurements.forEach(m => {
             if (shouldSelect) {
-                state.comparisonSelected.add(m.name);
+                state.comparisonSelected.add(m.id);
             } else {
-                state.comparisonSelected.delete(m.name);
+                state.comparisonSelected.delete(m.id);
             }
         });
 

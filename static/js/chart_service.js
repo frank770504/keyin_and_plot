@@ -1,5 +1,5 @@
 // static/js/chart_service.js
-import { getMeasurementPoints, getRegressionData } from './api.js';
+import { fetchMeasurementData, fetchRegression } from './api.js';
 
 // --- Constants & Configuration ---
 const COLORS = [
@@ -20,9 +20,9 @@ const POINT_STYLES = ['circle', 'rect', 'triangle', 'rectRot', 'cross', 'crossRo
 // Simple cache for measurement points to avoid redundant API calls
 const dataCache = new Map();
 
-export function clearChartCache(name = null) {
-    if (name) {
-        dataCache.delete(name);
+export function clearChartCache(id = null) {
+    if (id) {
+        dataCache.delete(id);
     } else {
         dataCache.clear();
     }
@@ -150,7 +150,7 @@ const externalTooltipHandler = (context) => {
     tooltipEl.style.opacity = 1;
     tooltipEl.style.left = positionX + tooltip.caretX + 'px';
     tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-    tooltipEl.style.padding = tooltip.options.padding + 'px ' + tooltip.options.padding + 'px';
+    tooltipEl.style.padding = tooltip.opacity > 0 ? (tooltip.options.padding + 'px ' + tooltip.options.padding + 'px') : '0';
 };
 
 // --- Main Chart Interface ---
@@ -238,29 +238,30 @@ export function destroyChart(chartInstance) {
     }
 }
 
-export async function getSelectedMeasurementsForChart(measurementNames, options = {}) {
+export async function getSelectedMeasurementsForChart(measurementIds, options = {}) {
     const { includeLinear = false, includePower = true } = options;
     const chartData = { datasets: [] };
 
-    for (let i = 0; i < measurementNames.length; i++) {
-        const name = measurementNames[i];
-        let pointsArray;
+    for (let i = 0; i < measurementIds.length; i++) {
+        const id = measurementIds[i];
+        let measurementData;
 
         // Caching logic
-        if (dataCache.has(name)) {
-            pointsArray = dataCache.get(name);
+        if (dataCache.has(id)) {
+            measurementData = dataCache.get(id);
         } else {
-            const data = await getMeasurementPoints(name);
-            pointsArray = data.points;
-            dataCache.set(name, pointsArray);
+            measurementData = await fetchMeasurementData(id);
+            dataCache.set(id, measurementData);
         }
 
+        const pointsArray = measurementData.points;
+        const displayName = `${measurementData.liquid_name} - ${measurementData.id}`;
         const color = COLORS[i % COLORS.length];
         const pointStyle = POINT_STYLES[i % POINT_STYLES.length];
 
         // Add raw data points
         chartData.datasets.push({
-            label: name,
+            label: displayName,
             data: pointsArray.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
             backgroundColor: color.replace('1)', '0.5)'),
             borderColor: color,
@@ -273,16 +274,16 @@ export async function getSelectedMeasurementsForChart(measurementNames, options 
         // Fetch Regression Data
         if (includePower) {
             try {
-                const reg = await getRegressionData(name, 'power');
-                chartData.datasets.push(createRegressionDataset(name, reg, 'power', color));
-            } catch (e) { console.warn(`Power reg failed for ${name}`, e); }
+                const reg = await fetchRegression(id, 'power');
+                chartData.datasets.push(createRegressionDataset(displayName, reg, 'power', color));
+            } catch (e) { console.warn(`Power reg failed for ${displayName}`, e); }
         }
 
         if (includeLinear) {
             try {
-                const reg = await getRegressionData(name, 'linear');
-                chartData.datasets.push(createRegressionDataset(name, reg, 'linear', color));
-            } catch (e) { console.warn(`Linear reg failed for ${name}`, e); }
+                const reg = await fetchRegression(id, 'linear');
+                chartData.datasets.push(createRegressionDataset(displayName, reg, 'linear', color));
+            } catch (e) { console.warn(`Linear reg failed for ${displayName}`, e); }
         }
     }
     return chartData;
@@ -317,4 +318,3 @@ function createRegressionDataset(name, regData, type, color) {
         tension: 0.1 // Slight smoothing
     };
 }
-

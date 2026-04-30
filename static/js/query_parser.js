@@ -19,10 +19,11 @@ export function parseQuery(query, comparisonSelected) {
         return (m) => {
             try {
                 const term = trimmedQuery.toLowerCase();
-                const name = (m.name || '').toString().toLowerCase();
+                const name = (m.liquid_name || '').toString().toLowerCase();
+                const id = (m.id || '').toString();
                 const date = (m.date || '').toString();
                 const serial = (m.serial_id || '').toString().toLowerCase();
-                return name.includes(term) || date.includes(term) || serial.includes(term);
+                return name.includes(term) || id.includes(term) || date.includes(term) || serial.includes(term);
             } catch (e) {
                 return false;
             }
@@ -64,7 +65,7 @@ function tokenize(str) {
         }
         else if (match[5]) {
             const parts = match[5].split(':');
-            if (parts.length > 1 && ['name', 'date', 'serial', 'is'].includes(parts[0])) {
+            if (parts.length > 1 && ['name', 'id', 'date', 'serial', 'is'].includes(parts[0])) {
                 tokens.push({ type: 'FIELD', field: parts[0], val: parts.slice(1).join(':') });
             } else {
                 tokens.push({ type: 'VALUE', val: match[5] });
@@ -125,24 +126,27 @@ function evaluate(node, m, comparisonSelected) {
         case 'FIELD':
             const val = (node.val || '').toLowerCase();
             switch (node.field) {
-                case 'name': 
-                    return (m.name || '').toString().toLowerCase().includes(val);
-                case 'date': 
+                case 'name':
+                    return (m.liquid_name || '').toString().toLowerCase().includes(val);
+                case 'id':
+                    return (m.id || '').toString().includes(val);
+                case 'date':
                     return (m.date || '').toString().includes(val);
-                case 'serial': 
+                case 'serial':
                     return (m.serial_id || '').toString().toLowerCase().includes(val);
                 case 'is':
-                    if (val === 'plot' || val === 'selected') return comparisonSelected.has(m.name);
+                    if (val === 'plot' || val === 'selected') return comparisonSelected.has(m.id);
                     if (val === 'draft') return !!m.is_draft;
                     return false;
             }
             return false;
         case 'VALUE':
             const v = (node.val || '').toLowerCase();
-            const name = (m.name || '').toString().toLowerCase();
+            const name = (m.liquid_name || '').toString().toLowerCase();
+            const id = (m.id || '').toString();
             const date = (m.date || '').toString();
             const serial = (m.serial_id || '').toString().toLowerCase();
-            return name.includes(v) || date.includes(v) || serial.includes(v);
+            return name.includes(v) || id.includes(v) || date.includes(v) || serial.includes(v);
         default: return false;
     }
 }

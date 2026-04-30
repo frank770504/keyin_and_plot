@@ -1,149 +1,128 @@
 // static/js/api.js
 import state from './state.js';
 
+/**
+ * Enhanced fetch wrapper that automatically includes the Session ID
+ * and handles common error scenarios.
+ */
 async function fetchWithLock(url, options = {}) {
-    const headers = options.headers || {};
-    headers['X-Session-ID'] = state.sessionID;
-    headers['Content-Type'] = 'application/json';
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Session-ID': state.sessionID,
+        ...(options.headers || {})
+    };
 
-    return fetch(url, { ...options, headers });
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 403 || response.status === 409) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Permission Denied');
+    }
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
 }
-
-// --- Lock APIs ---
 
 export async function getLockStatus() {
-    const response = await fetchWithLock('/api/lock');
-    return await response.json();
+    return fetchWithLock('/api/lock');
 }
 
-export async function acquireLock(userName, sessionID) {
-    const response = await fetch('/api/lock/acquire', {
+export async function acquireLock(userName) {
+    return fetchWithLock('/api/lock/acquire', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_name: userName, session_id: sessionID })
+        body: JSON.stringify({ user_name: userName, session_id: state.sessionID })
     });
-    if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to acquire lock');
-    }
-    return await response.json();
 }
 
 export async function releaseLock() {
-    const response = await fetchWithLock('/api/lock/release', { method: 'POST' });
-    if (!response.ok) throw new Error('Failed to release lock');
+    // We use sendBeacon for reliable release on tab close, // but a standard POST for manual "Cancel/Save"
+    return fetchWithLock('/api/lock/release', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: state.sessionID })
+    });
 }
 
 export async function sendHeartbeat() {
-    const response = await fetchWithLock('/api/lock/heartbeat', { method: 'POST' });
-    if (!response.ok) throw new Error('Lock lost');
+    return fetchWithLock('/api/lock/heartbeat', { method: 'POST' });
 }
 
-// --- Measurement APIs ---
-
-export async function getMeasurements() {
-    const response = await fetchWithLock('/api/measurements');
-    if (!response.ok) throw new Error('Failed to fetch measurements');
-    return await response.json();
+export async function fetchMeasurements() {
+    return fetchWithLock('/api/measurements');
 }
 
-export async function addMeasurement(name) {
-    const response = await fetchWithLock('/api/measurements', {
+export async function createMeasurement(liquidName) {
+    return fetchWithLock('/api/measurements', {
         method: 'POST',
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ liquid_name: liquidName })
     });
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add measurement');
-    }
-    return await response.json();
 }
 
-export async function getMeasurementPoints(name) {
-    const response = await fetchWithLock(`/api/measurements/${name}`);
-    if (!response.ok) throw new Error('Failed to fetch measurement details');
-    return await response.json();
+export async function fetchMeasurementData(id) {
+    const response = await fetchWithLock(`/api/measurements/${id}`);
+    return response;
 }
 
-export async function startEdit(name) {
-    const response = await fetchWithLock(`/api/measurements/${name}/edit/start`, { method: 'POST' });
-    if (!response.ok) throw new Error('Failed to start edit mode');
-    return await response.json();
+export async function startEditMode(id) {
+    const response = await fetchWithLock(`/api/measurements/${id}/edit/start`, { method: 'POST' });
+    return response;
 }
 
-export async function commitEdit(name) {
-    const response = await fetchWithLock(`/api/measurements/${name}/edit/commit`, { method: 'POST' });
-    if (!response.ok) throw new Error('Failed to commit changes');
-    return await response.json();
+export async function commitEditMode(id) {
+    const response = await fetchWithLock(`/api/measurements/${id}/edit/commit`, { method: 'POST' });
+    return response;
 }
 
-export async function rollbackEdit(name) {
-    const response = await fetchWithLock(`/api/measurements/${name}/edit/rollback`, { method: 'POST' });
-    if (!response.ok) throw new Error('Failed to rollback changes');
+export async function rollbackEditMode(id) {
+    const response = await fetchWithLock(`/api/measurements/${id}/edit/rollback`, { method: 'POST' });
+    return response;
 }
 
-export async function updateMetadata(name, data) {
-    const response = await fetchWithLock(`/api/measurements/${name}`, {
+export async function updateMeasurementMetadata(id, metadata) {
+    const response = await fetchWithLock(`/api/measurements/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data)
+        body: JSON.stringify(metadata)
     });
-    if (!response.ok) throw new Error('Failed to update metadata');
-    return await response.json();
+    return response;
 }
 
-export async function deleteMeasurement(name) {
-    const response = await fetchWithLock(`/api/measurements/${name}`, { method: 'DELETE' });
-    if (!response.ok) throw new Error('Failed to delete measurement');
-    return await response.json();
+export async function deleteMeasurement(id) {
+    const response = await fetchWithLock(`/api/measurements/${id}`, { method: 'DELETE' });
+    return response;
 }
 
-export async function duplicateMeasurement(name) {
-    const response = await fetchWithLock(`/api/measurements/${name}/duplicate`, { method: 'POST' });
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to duplicate measurement');
-    }
-    return await response.json();
+export async function duplicateMeasurement(id) {
+    const response = await fetchWithLock(`/api/measurements/${id}/duplicate`, { method: 'POST' });
+    return response;
 }
 
-export async function addPoint(measurementName, N, eta, torque) {
-    const response = await fetchWithLock(`/api/measurements/${measurementName}/points`, {
+export async function addDataPoint(measurementId, pointData) {
+    const response = await fetchWithLock(`/api/measurements/${measurementId}/points`, {
         method: 'POST',
-        body: JSON.stringify({ N, eta, torque })
+        body: JSON.stringify(pointData)
     });
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add point');
-    }
-    return await response.json();
+    return response;
 }
 
-export async function updatePoint(measurementName, pointId, N, eta, torque) {
-    const response = await fetchWithLock(`/api/measurements/${measurementName}/points/${pointId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ N, eta, torque })
-    });
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update point');
-    }
-    return await response.json();
-}
-
-export async function deletePoint(measurementName, pointId) {
-    const response = await fetchWithLock(`/api/measurements/${measurementName}/points/${pointId}`, {
+export async function deleteDataPoint(measurementId, pointId) {
+    const response = await fetchWithLock(`/api/measurements/${measurementId}/points/${pointId}`, {
         method: 'DELETE'
     });
-    if (!response.ok) throw new Error('Failed to delete point');
-    return await response.json();
+    return response;
 }
 
-export async function getRegressionData(name, type) {
-    const url = type === 'linear' ? `/api/measurements/${name}/regression` : `/api/measurements/${name}/power-regression`;
-    const response = await fetch(url);
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch regression data');
-    }
-    return await response.json();
+export async function updateDataPoint(measurementId, pointId, pointData) {
+    const response = await fetchWithLock(`/api/measurements/${measurementId}/points/${pointId}`, {
+        method: 'PUT',
+        body: JSON.stringify(pointData)
+    });
+    return response;
+}
+
+export async function fetchRegression(id, type = 'linear') {
+    const url = type === 'linear' ? `/api/measurements/${id}/regression` : `/api/measurements/${id}/power-regression`;
+    return fetchWithLock(url);
 }

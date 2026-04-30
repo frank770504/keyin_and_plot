@@ -40,7 +40,8 @@
                                         <span>Plot</span>
                                     </div>
                                 </th>
-                                <th data-sort="name">Name <span class="sort-icon"></span></th>
+                                <th data-sort="id">ID <span class="sort-icon"></span></th>
+                                <th data-sort="liquid_name">Liquid Name <span class="sort-icon"></span></th>
                                 <th data-sort="date">Date <span class="sort-icon"></span></th>
                                 <th data-sort="serial_id">Serial ID <span class="sort-icon"></span></th>
                             </tr>
@@ -69,6 +70,10 @@
 
                 <fieldset class="metadata-area">
                     <legend>Metadata</legend>
+                    <div class="metadata-row">
+                        <label for="active-measurement-id">Measurement ID:</label>
+                        <input type="text" id="active-measurement-id" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                    </div>
                     <div class="metadata-row">
                         <label for="measurement-date">Experiment Date:</label>
                         <input type="date" id="measurement-date">

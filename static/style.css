@@ -411,19 +411,24 @@ ul {
     text-align: center;
 }
 
-#measurement-list-table th[data-sort="name"],
+#measurement-list-table th[data-sort="id"],
 #measurement-list-table td:nth-child(2) {
-    width: 150px;
+    width: 60px;
+}
+
+#measurement-list-table th[data-sort="liquid_name"],
+#measurement-list-table td:nth-child(3) {
+    width: 140px;
 }
 
 #measurement-list-table th[data-sort="date"],
-#measurement-list-table td:nth-child(3) {
-    width: 120px;
+#measurement-list-table td:nth-child(4) {
+    width: 110px;
 }
 
 #measurement-list-table th[data-sort="serial_id"],
-#measurement-list-table td:nth-child(4) {
-    width: 100px;
+#measurement-list-table td:nth-child(5) {
+    width: 90px;
 }
 
 #measurement-list-table th,

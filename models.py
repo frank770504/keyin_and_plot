@@ -18,7 +18,7 @@ class GlobalLock(db.Model):
 class Measurement(db.Model):
     __tablename__ = 'measurements'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=False, nullable=False)
+    liquid_name = db.Column(db.String(100), unique=False, nullable=False)
     date = db.Column(db.String(20), nullable=True)
     serial_id = db.Column(db.String(100), nullable=True)
     spindle_id = db.Column(db.String(50), nullable=True)
@@ -28,7 +28,7 @@ class Measurement(db.Model):
     points = db.relationship('Point', backref='measurement', cascade="all, delete-orphan", lazy=True)
 
     def __repr__(self):
-        return f'<Measurement {self.name} (Draft: {self.is_draft})>'
+        return f'<Measurement {self.liquid_name} (Draft: {self.is_draft})>'
 
 
 class Point(db.Model):

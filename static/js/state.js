@@ -9,17 +9,17 @@ const generateSessionId = () => {
 
 const state = {
     allMeasurements: [],
-    activeMeasurement: null,
+    activeMeasurement: null, // Now stores ID
     isEditing: false,
-    sortState: { column: 'name', direction: 'asc' },
+    sortState: { column: 'liquid_name', direction: 'asc' },
     measurementFilter: '',
     userName: localStorage.getItem('userName') || null,
     sessionID: sessionStorage.getItem('sessionID') || generateSessionId(),
     isGlobalEditor: false,
     lockOwner: null,
-    comparisonSelected: new Set(),
+    comparisonSelected: new Set(), // Now stores IDs
     centerColumnAutoHidden: false,
-    editingOriginalName: null,
+    editingOriginalId: null, // Renamed from editingOriginalName, now stores ID
     heartbeatInterval: null,
     lastValidValues: new WeakMap(), // Track numeric input history
     chartConfig: {
@@ -47,12 +47,12 @@ export function setAllMeasurements(measurements) {
     state.allMeasurements = measurements;
 }
 
-export function setEditingOriginalName(name) {
-    state.editingOriginalName = name;
+export function setEditingOriginalId(id) {
+    state.editingOriginalId = id;
 }
 
-export function setActiveMeasurement(name) {
-    state.activeMeasurement = name;
+export function setActiveMeasurement(id) {
+    state.activeMeasurement = id;
 }
 
 export function setEditing(isEditing) {
@@ -93,11 +93,11 @@ export function setMeasurementFilter(term) {
     state.measurementFilter = term;
 }
 
-export function toggleComparisonSelection(name) {
-    if (state.comparisonSelected.has(name)) {
-        state.comparisonSelected.delete(name);
+export function toggleComparisonSelection(id) {
+    if (state.comparisonSelected.has(id)) {
+        state.comparisonSelected.delete(id);
     } else {
-        state.comparisonSelected.add(name);
+        state.comparisonSelected.add(id);
     }
 }
 
