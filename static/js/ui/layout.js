@@ -103,6 +103,22 @@ export class ResizableColumn {
                 this.toggleCollapse();
             });
         }
+        this.initResizeObserver();
+    }
+
+    initResizeObserver() {
+        if (this.onResize) {
+            let resizeTimer;
+            const ro = new ResizeObserver(() => {
+                // ResizeObserver fires whenever the observed element changes size
+                // Debounce to prevent infinite loops and improve performance
+                cancelAnimationFrame(resizeTimer);
+                resizeTimer = requestAnimationFrame(() => {
+                    this.onResize();
+                });
+            });
+            ro.observe(this.column);
+        }
     }
 
     startDrag(e) {
@@ -113,12 +129,14 @@ export class ResizableColumn {
         }
 
         this.isDragging = true;
+        document.body.classList.add('resizing');
         document.body.style.cursor = 'col-resize';
         this.gutter.classList.add('dragging');
 
         const mouseMoveHandler = (e) => this.doDrag(e);
         const mouseUpHandler = () => {
             this.isDragging = false;
+            document.body.classList.remove('resizing');
             document.body.style.cursor = '';
             this.gutter.classList.remove('dragging');
             document.removeEventListener('mousemove', mouseMoveHandler);
@@ -154,8 +172,6 @@ export class ResizableColumn {
             this.column.style.width = `${newWidth}px`;
             this.lastWidth = newWidth;
         }
-
-        if (this.onResize) this.onResize();
     }
 
     toggleCollapse() {
@@ -175,10 +191,6 @@ export class ResizableColumn {
             if (this.lastWidth < this.snapThreshold) this.lastWidth = 250;
             this.column.style.width = `${this.lastWidth}px`;
         }
-
-        setTimeout(() => {
-            if (this.onResize) this.onResize();
-        }, 310);
     }
 }
 

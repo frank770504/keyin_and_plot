@@ -61,6 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Layout
         leftColumn: document.getElementById('left-column'),
+        centerColumn: document.getElementById('center-column'),
+        rightColumn: document.getElementById('right-column'),
         collapseLeftBtn: document.getElementById('collapse-left'),
         collapseCenterBtn: document.getElementById('collapse-center'),
         gutterLeft: document.getElementById('gutter-left'),
@@ -80,6 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeChart) activeChart.resize();
         if (comparisonChart) comparisonChart.resize();
     }]);
+
+    // Extra observer for the right column (which isn't a ResizableColumn itself)
+    let rightColumnResizeTimer;
+    const rightColumnObserver = new ResizeObserver(() => {
+        cancelAnimationFrame(rightColumnResizeTimer);
+        rightColumnResizeTimer = requestAnimationFrame(() => {
+            if (comparisonChart) comparisonChart.resize();
+        });
+    });
+    rightColumnObserver.observe(elements.rightColumn);
 
     const analysisWindow = new layout.FloatingWindow(
         'floating-chart-window',

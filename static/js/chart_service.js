@@ -168,7 +168,8 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
         data: { datasets: chartDatasets },
         plugins: [katexChartPlugin],
         options: {
-            maintainAspectRatio: true,
+            responsive: true,
+            maintainAspectRatio: false,
             layout: {
                 padding: {
                     bottom: 40,
