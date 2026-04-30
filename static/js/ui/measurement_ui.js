@@ -1,15 +1,12 @@
 // static/js/ui/measurement_ui.js
 import state, { toggleComparisonSelection } from '../state.js';
+import { parseQuery } from '../query_parser.js';
 
 export function getProcessedMeasurements() {
-    const searchTerm = state.measurementFilter.toLowerCase();
     const { column, direction } = state.sortState;
 
-    let filtered = state.allMeasurements.filter(m =>
-        m.name.toLowerCase().includes(searchTerm) ||
-        (m.date && m.date.includes(searchTerm)) ||
-        (m.serial_id && m.serial_id.toLowerCase().includes(searchTerm))
-    );
+    const predicate = parseQuery(state.measurementFilter, state.comparisonSelected);
+    let filtered = state.allMeasurements.filter(predicate);
 
     // Sort
     filtered.sort((a, b) => {

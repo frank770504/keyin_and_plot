@@ -62,7 +62,7 @@ Used to prevent direct modification of production records and streamline creatio
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Measurement List, Workspace, Comparison Chart):
-1.  **Measurement List**: Houses the "Add Measurement" button at the top and a search bar. Drafts are visually marked with a `(Draft)` suffix.
+1.  **Measurement List**: Houses the "Add Measurement" button and an **Advanced Search (RQL)** bar supporting field-specific queries (e.g., `is:plot`, `name:Batch`). Drafts are visually marked with a `(Draft)` suffix.
 2.  **Independent Gutters**: Vertical gutters separate the columns, acting as drag handles for resizing and housing toggle buttons for collapsing.
 3.  **Independent State**: Collapsing one pane (e.g., Measurement List) does not affect the visibility of others.
 4.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging to prevent layout glitches.

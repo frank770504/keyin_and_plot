@@ -14,8 +14,8 @@ The comparison plotting system allows users to visualize multiple rheology measu
 ### B. Master Control (Batch Toggling)
 - **Master Checkbox**: A checkbox in the "Plot" table header allows for batch actions.
 - **Selection Logic**:
-    - **Check**: Selects all measurements currently *visible* in the list (respecting any active search filters).
-    - **Uncheck**: Deselects all measurements currently *visible* in the list.
+    - **Check**: Selects all measurements currently *visible* in the list (respecting any active RQL search filters).
+    - **Uncheck**: Deselects all measurements currently *visible* in the list (respecting any active RQL search filters).
 - **Visual Feedback**:
     - **Checked**: All visible measurements are plotted.
     - **Indeterminate (dash)**: Some, but not all, visible measurements are plotted.
