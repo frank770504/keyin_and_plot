@@ -10,6 +10,7 @@ Specific metadata fields can be targeted using a colon (`:`) separator:
 - `name:<string>`: Matches the measurement name.
 - `date:<string>`: Matches the experiment date string.
 - `serial:<string>`: Matches the Serial ID.
+- `note:<string>`: Matches the experiment notes.
 - `is:<flag>`: Matches boolean or state flags:
     - `is:plot` or `is:selected`: Shows only measurements selected for comparison.
     - `is:draft`: Shows only active draft measurements.

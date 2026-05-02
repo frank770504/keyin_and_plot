@@ -15,6 +15,7 @@ MAPPING_CONFIG = {
             {"field": "liquid_name", "row": 0, "col": 1, "transform": str.strip},
             {"field": "date", "row": 1, "col": 1, "transform": parse_date}, # returns datetime.date
             {"field": "serial_id", "row": 2, "col": 1, "transform": str.strip},
+            {"field": "experiment_note", "row": 3, "col": 1, "transform": str.strip},
             {"field": "spindle_id", "row": 4, "col": 1, "transform": str.strip},
         ],
         "points_start_row": 10

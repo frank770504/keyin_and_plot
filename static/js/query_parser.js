@@ -23,7 +23,8 @@ export function parseQuery(query, comparisonSelected) {
                 const id = (m.id || '').toString();
                 const date = (m.date || '').toString();
                 const serial = (m.serial_id || '').toString().toLowerCase();
-                return name.includes(term) || id.includes(term) || date.includes(term) || serial.includes(term);
+                const note = (m.experiment_note || '').toString().toLowerCase();
+                return name.includes(term) || id.includes(term) || date.includes(term) || serial.includes(term) || note.includes(term);
             } catch (e) {
                 return false;
             }
@@ -65,7 +66,7 @@ function tokenize(str) {
         }
         else if (match[5]) {
             const parts = match[5].split(':');
-            if (parts.length > 1 && ['name', 'id', 'date', 'serial', 'is'].includes(parts[0])) {
+            if (parts.length > 1 && ['name', 'id', 'date', 'serial', 'note', 'is'].includes(parts[0])) {
                 tokens.push({ type: 'FIELD', field: parts[0], val: parts.slice(1).join(':') });
             } else {
                 tokens.push({ type: 'VALUE', val: match[5] });
@@ -134,6 +135,8 @@ function evaluate(node, m, comparisonSelected) {
                     return (m.date || '').toString().includes(val);
                 case 'serial':
                     return (m.serial_id || '').toString().toLowerCase().includes(val);
+                case 'note':
+                    return (m.experiment_note || '').toString().toLowerCase().includes(val);
                 case 'is':
                     if (val === 'plot' || val === 'selected') return comparisonSelected.has(m.id);
                     if (val === 'draft') return !!m.is_draft;
@@ -146,7 +149,8 @@ function evaluate(node, m, comparisonSelected) {
             const id = (m.id || '').toString();
             const date = (m.date || '').toString();
             const serial = (m.serial_id || '').toString().toLowerCase();
-            return name.includes(v) || id.includes(v) || date.includes(v) || serial.includes(v);
+            const note = (m.experiment_note || '').toString().toLowerCase();
+            return name.includes(v) || id.includes(v) || date.includes(v) || serial.includes(v) || note.includes(v);
         default: return false;
     }
 }

@@ -42,7 +42,7 @@ The application enforces a single-editor workflow to ensure data integrity:
 ### B. Draft System
 Used to prevent direct modification of production records and streamline creation:
 1.  **Edit Start**: Clones an existing `Measurement` into a new record with `is_draft=True`.
-2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). The workspace inputs (Name, Date, Serial ID, Spindle) are cleared, and the "Save" button is disabled until all these mandatory fields are filled.
+2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). The workspace inputs (Name, Date, Serial ID, Note, Spindle) are cleared, and the "Save" button is disabled until all mandatory fields (Name, Date, Serial ID, Spindle) are filled.
 3.  **Commit**: Merges draft changes back to the original or "promotes" a new draft to production by flipping the `is_draft` flag.
 4.  **Rollback**: Deletes the draft.
 
@@ -77,7 +77,11 @@ The UI features a consistent three-column layout (Measurement List, Workspace, C
 - `last_heartbeat`: Timestamp for expiry tracking.
 
 ### Measurement
-- `name`: Unique identifier (string).
+- `liquid_name`: Unique identifier (string).
+- `date`: Experiment date.
+- `serial_id`: Serial ID.
+- `experiment_note`: Descriptive notes (text).
+- `spindle_id`: Selected spindle.
 - `is_draft`: Boolean flag.
 - `original_id`: Reference to original measurement if this is a draft.
 

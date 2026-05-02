@@ -25,7 +25,7 @@ The "Draft-First" workflow streamlines measurement creation by initializing a te
 ### A. Creation Trigger (`main.js`)
 - **Action**: Clicking "Create Measurement" (now located at the top of the Measurement column) calls the initialization API.
 - **State Transition**: Immediately sets `state.isEditing = true` and `state.editingOriginalName = null` (signaling a new record).
-- **UI Reset**: Clears all workspace inputs (Name, Date, Serial ID, and Spindle) to ensure a blank slate for the user.
+- **UI Reset**: Clears all workspace inputs (Name, Date, Serial ID, Note, and Spindle) to ensure a blank slate for the user.
 - **Validation**: Disables the "Save" button (grey/unclickable) until all four mandatory fields (Name, Date, Serial ID, Spindle) are populated.
 
 ### B. Persistence & Sync
