@@ -62,12 +62,12 @@ Used to prevent direct modification of production records and streamline creatio
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Measurement List, Workspace, Comparison Chart):
-1.  **Measurement List**: Houses the "Add Measurement" button and an **Advanced Search (RQL)** bar supporting field-specific queries (e.g., `is:plot`, `name:Batch`). Drafts are visually marked with a `(Draft)` suffix.
+1.  **Measurement List**: Houses the "Add Measurement" button and an **Advanced Search (RQL)** bar. Supports user-adjustable column widths and drag-and-drop reordering.
 2.  **Independent Gutters**: Vertical gutters separate the columns, acting as drag handles for resizing and housing toggle buttons for collapsing.
-3.  **Independent State**: Collapsing one pane (e.g., Measurement List) does not affect the visibility of others.
-4.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging to prevent layout glitches.
-5.  **Width Memory**: Panes remember their last valid width when un-collapsing.
-6.  **Fixed-Width Viewport**: The Measurement List table maintains a fixed 450px width; resizing the pane acts as a viewport/clipper for the content.
+3.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging.
+4.  **Width Memory**: Panes remember their last valid width when un-collapsing.
+5.  **Independent Table Viewports**: Tables use `width: max-content` and are wrapped in scrollable containers. Moving gutters clips or reveals the tables without stretching or shrinking them.
+6.  **Customizable Columns**: Users can resize columns (min 20px) and reorder them by dragging headers. These layout preferences are bound to Column IDs and persist in `localStorage`.
 
 ## 5. Database Schema
 
