@@ -11,7 +11,8 @@ The Unified Reactive Chart Engine provides a high-performance, consistent visual
 - **Stability**: Axis titles (LaTeX-rendered) maintain their position and formatting during scale transitions.
 
 ### B. Visual Encoding
-- **Color Palette**: A fixed 10-color cycle ensuring distinct colors for overlapping measurements.
+- **Dynamic Color Generation**: Replaces fixed palettes with a mathematical generator using the **Golden Ratio Conjugate** (~0.618) to step through the Hue spectrum in HSV space. This ensures visually distinct colors regardless of the number of selected measurements.
+- **Aesthetic Constraints**: Uses a "Balanced" configuration (Saturation: 0.5, Value: 0.9) to provide vibrant but readable lines.
 - **Point Styles**: A unique sequence of 9 point styles (circle, rect, triangle, etc.) paired with colors to provide secondary visual distinction for color-blind accessibility and high-density plots.
 - **Regression Styling**: 
     - **Power Law**: Thin solid line with slight smoothing (`tension: 0.1`) and `[5, 5]` dash pattern.

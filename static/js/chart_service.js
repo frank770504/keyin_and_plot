@@ -2,20 +2,47 @@
 import { fetchMeasurementData, fetchRegression } from './api.js';
 
 // --- Constants & Configuration ---
-const COLORS = [
-    'rgba(255, 99, 132, 1)',   // Red
-    'rgba(54, 162, 235, 1)',   // Blue
-    'rgba(255, 206, 86, 1)',   // Yellow
-    'rgba(75, 192, 192, 1)',   // Teal
-    'rgba(153, 102, 255, 1)',  // Purple
-    'rgba(255, 159, 64, 1)',   // Orange
-    'rgba(199, 199, 199, 1)',  // Grey
-    'rgba(83, 102, 255, 1)',   // Indigo
-    'rgba(40, 167, 69, 1)',    // Green
-    'rgba(220, 53, 69, 1)'     // Dark Red
-];
+const GOLDEN_RATIO_CONJUGATE = 0.618033988749895;
+let HUE_START = 0.35; // Starting hue
 
 const POINT_STYLES = ['circle', 'rect', 'triangle', 'rectRot', 'cross', 'crossRot', 'star', 'line', 'dash'];
+
+/**
+ * Converts HSV color to RGBA string.
+ * @param {number} h - Hue (0-1)
+ * @param {number} s - Saturation (0-1)
+ * @param {number} v - Value (0-1)
+ * @param {number} a - Alpha (0-1)
+ * @returns {string} rgba string
+ */
+function hsvToRgba(h, s, v, a = 1) {
+    let r, g, b;
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+}
+
+/**
+ * Generates a visually distinct color using the Golden Ratio.
+ * @param {number} index - Index of the measurement
+ * @param {number} alpha - Alpha value
+ * @returns {string} rgba string
+ */
+function getDynamicColor(index, alpha = 1) {
+    const h = (HUE_START + index * GOLDEN_RATIO_CONJUGATE) % 1;
+    return hsvToRgba(h, 0.75, 0.9, alpha); // Balanced: S=0.5, V=0.9
+}
 
 // Simple cache for measurement points to avoid redundant API calls
 const dataCache = new Map();
@@ -257,14 +284,14 @@ export async function getSelectedMeasurementsForChart(measurementIds, options = 
         const pointsArray = measurementData.points;
         const logicalId = measurementData.original_id || measurementData.id;
         const displayName = `${measurementData.liquid_name} - ${logicalId}`;
-        const color = COLORS[i % COLORS.length];
+        const color = getDynamicColor(i);
         const pointStyle = POINT_STYLES[i % POINT_STYLES.length];
 
         // Add raw data points
         chartData.datasets.push({
             label: displayName,
             data: pointsArray.map(p => ({ x: p.shear_rate, y: p.shear_stress })),
-            backgroundColor: color.replace('1)', '0.5)'),
+            backgroundColor: getDynamicColor(i, 0.5),
             borderColor: color,
             pointRadius: 5,
             pointHoverRadius: 7,

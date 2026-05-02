@@ -58,7 +58,7 @@ Used to prevent direct modification of production records and streamline creatio
 - **Comparison View**: Reactive overlay of multiple measurements based on the "Plot" column.
 - **Performance**: Integrated client-side caching ensures near-instant re-renders when toggling visibility or regression modes.
 - **Enhanced Interaction**: Optimized hover detection with expanded hit zones ensures reliable tooltips for regression lines regardless of zoom level or aspect ratio.
-- **Visual Polish**: Unique point style and color combinations for each measurement; persistent "Reset View" (⟲) button for auto-scaling.
+- **Visual Polish**: Dynamic color generation using the **Golden Ratio in HSV space** ensures an unlimited number of visually distinct colors; unique point styles per measurement; persistent "Reset View" (⟲) button for auto-scaling.
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Measurement List, Workspace, Comparison Chart):
