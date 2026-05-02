@@ -12,7 +12,7 @@ This specification outlines the logic for a one-time or utility script to import
 - **CSV Internal Structure**:
     - **Metadata (Fixed Rows)**:
         - Row 0, Col 1: `Formula ID` $\rightarrow$ `liquid_name`
-        - Row 1, Col 1: `Datae` or `Date` $\rightarrow$ `date` (Target format: MM/DD/YYYY)
+        - Row 1, Col 1: `Datae` or `Date` $\rightarrow$ `date` (Target format: YYYY-MM-DD)
         - Row 2, Col 1: `Serial ID` $\rightarrow$ `serial_id`
         - Row 4, Col 1: `Spindle` $\rightarrow$ `spindle_id`
     - **Experimental Data (Starting Row 10)**:
@@ -33,7 +33,7 @@ This specification outlines the logic for a one-time or utility script to import
 2.  **Metadata Extraction**:
     - Parse the filename to extract the `id`.
     - Read rows 0–4 for measurement metadata.
-    - Ensure the `date` string is correctly formatted (standardize to MM/DD/YYYY if the CSV value differs).
+    - Ensure the `date` string is correctly formatted (standardize to YYYY-MM-DD if the CSV value differs).
 3.  **Point Extraction**:
     - Skip headers and start at row 10.
     - **Data Cleaning**:

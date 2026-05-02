@@ -15,7 +15,7 @@ def parse_date(date_str):
     formats = ["%m/%d/%Y", "%d.%m.%Y"]
     for fmt in formats:
         try:
-            return datetime.strptime(date_str, fmt).strftime("%m/%d/%Y")
+            return datetime.strptime(date_str, fmt).strftime("%Y-%m-%d")
         except ValueError:
             continue
     return date_str
