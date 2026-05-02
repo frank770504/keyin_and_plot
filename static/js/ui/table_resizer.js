@@ -65,7 +65,13 @@ export class TableResizer {
     }
 
     saveWidths() {
-        const widths = this.headers.map(th => th.style.width);
+        const widths = {};
+        this.headers.forEach(th => {
+            const colId = th.dataset.colId || th.dataset.field; // field for points table
+            if (colId && th.style.width) {
+                widths[colId] = th.style.width;
+            }
+        });
         localStorage.setItem(this.storageKey, JSON.stringify(widths));
     }
 
@@ -74,9 +80,10 @@ export class TableResizer {
         if (saved) {
             try {
                 const widths = JSON.parse(saved);
-                this.headers.forEach((th, i) => {
-                    if (widths[i]) {
-                        th.style.width = widths[i];
+                this.headers.forEach(th => {
+                    const colId = th.dataset.colId || th.dataset.field;
+                    if (colId && widths[colId]) {
+                        th.style.width = widths[colId];
                     }
                 });
             } catch (e) {

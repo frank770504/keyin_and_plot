@@ -7,6 +7,7 @@ import * as measurementUI from './ui/measurement_ui.js';
 import * as workspaceUI from './ui/workspace_ui.js';
 import { createFloatingLegend, makeDraggable } from './ui/legend_ui.js';
 import { TableResizer } from './ui/table_resizer.js';
+import { ColumnReorderer } from './ui/column_reorderer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
@@ -90,6 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Table Resizing ---
     new TableResizer(elements.measurementListTable, 'table-widths-measurements');
     new TableResizer(elements.pointsTable, 'table-widths-points');
+
+    // --- Table Column Reordering ---
+    new ColumnReorderer(elements.measurementListTable, 'table-column-order-measurements', () => {
+        refreshMeasurementList();
+    });
 
     // Extra observer for the right column (which isn't a ResizableColumn itself)
     let rightColumnResizeTimer;

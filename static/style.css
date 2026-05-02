@@ -396,29 +396,24 @@ ul {
     table-layout: fixed; /* Ensures column widths remain stable */
 }
 
-#measurement-list-table th.checkbox-column,
-#measurement-list-table td:first-child {
+#measurement-list-table th[data-col-id="plot"] {
     width: 40px;
     text-align: center;
 }
 
-#measurement-list-table th[data-sort="id"],
-#measurement-list-table td:nth-child(2) {
+#measurement-list-table th[data-col-id="id"] {
     width: 35px;
 }
 
-#measurement-list-table th[data-sort="liquid_name"],
-#measurement-list-table td:nth-child(3) {
+#measurement-list-table th[data-col-id="liquid_name"] {
     width: 100px;
 }
 
-#measurement-list-table th[data-sort="date"],
-#measurement-list-table td:nth-child(4) {
+#measurement-list-table th[data-col-id="date"] {
     width: 80px;
 }
 
-#measurement-list-table th[data-sort="serial_id"],
-#measurement-list-table td:nth-child(5) {
+#measurement-list-table th[data-col-id="serial_id"] {
     width: 70px;
 }
 
@@ -428,16 +423,36 @@ ul {
     padding: 4px 6px;
     text-align: left;
     position: relative; /* Anchor for resizer */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #measurement-list-table th {
     background-color: #f9f9f9;
     font-weight: bold;
-    cursor: pointer; /* Indicate clickable */
+    cursor: grab; /* Indicate draggable */
     user-select: none; /* Prevent text selection */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+#measurement-list-table th:active {
+    cursor: grabbing;
+}
+
+.dragging-header {
+    opacity: 0.5;
+    background-color: #e9ecef !important;
+}
+
+.drop-before {
+    border-left: 2px solid #007bff !important;
+}
+
+.drop-after {
+    border-right: 2px solid #007bff !important;
 }
 
 #measurement-list-table th:hover {
@@ -509,12 +524,12 @@ ul {
     border-collapse: collapse;
 }
 
-#points-table th:nth-child(1) { width: 40px; }
-#points-table th:nth-child(2) { width: 100px; }
-#points-table th:nth-child(3) { width: 120px; }
-#points-table th:nth-child(4) { width: 100px; }
-#points-table th:nth-child(5) { width: 100px; }
-#points-table th:nth-child(6) { width: 100px; }
+#points-table th[data-field="action"] { width: 40px; }
+#points-table th[data-field="N"] { width: 100px; }
+#points-table th[data-field="eta"] { width: 120px; }
+#points-table th[data-field="torque"] { width: 100px; }
+#points-table th[data-field="shear_rate"] { width: 100px; }
+#points-table th[data-field="shear_stress"] { width: 100px; }
 
 #points-table th, #points-table td {
     border: 1px solid #ddd;

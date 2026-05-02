@@ -26,60 +26,70 @@ export function getProcessedMeasurements() {
 
 export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
     const measurements = getProcessedMeasurements();
-    elements.measurementListBody.innerHTML = '';
+    const table = elements.measurementListTable;
+    const thead = table.querySelector('thead');
+    const tbody = elements.measurementListBody;
+
+    // 1. Determine Column Order
+    const defaultOrder = ['plot', 'id', 'liquid_name', 'date', 'serial_id'];
+    const savedOrder = localStorage.getItem('table-column-order-measurements');
+    const columnOrder = savedOrder ? JSON.parse(savedOrder) : defaultOrder;
+
+    // 2. Render Headers (if not already rendered with resizers/drag handles)
+    // Note: We only re-render headers if the order has changed or it's the first run.
+    // For simplicity and to maintain resizer handles, we'll assume ColumnReorderer handles header DOM moves.
+    // Here we focus on rendering the BODY rows according to the current header order.
+    const currentHeaders = Array.from(thead.querySelectorAll('th'));
+    const currentOrder = currentHeaders.map(th => th.dataset.colId || (th.classList.contains('checkbox-column') ? 'plot' : ''));
+
+    tbody.innerHTML = '';
 
     measurements.forEach(measurement => {
         const tr = document.createElement('tr');
-        // Click on row selects active measurement (middle column)
         tr.addEventListener('click', (e) => {
-            // Prevent if clicking on checkbox
             if (e.target.type === 'checkbox') return;
             onSelect(measurement.id);
         });
 
-        // Checkbox for comparison
-        const tdCheck = document.createElement('td');
-        tdCheck.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (e.target !== checkbox) {
-                checkbox.click();
+        currentOrder.forEach(colId => {
+            const td = document.createElement('td');
+            switch (colId) {
+                case 'plot':
+                    td.classList.add('checkbox-column');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = state.comparisonSelected.has(measurement.id);
+                    checkbox.addEventListener('change', () => {
+                        toggleComparisonSelection(measurement.id);
+                        if (onComparisonToggle) onComparisonToggle();
+                        updateMasterCheckbox(measurements);
+                    });
+                    td.appendChild(checkbox);
+                    td.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (e.target !== checkbox) checkbox.click();
+                    });
+                    break;
+                case 'id':
+                    td.textContent = measurement.original_id || measurement.id;
+                    break;
+                case 'liquid_name':
+                    td.textContent = measurement.is_draft ? `${measurement.liquid_name} (Draft)` : measurement.liquid_name;
+                    break;
+                case 'date':
+                    td.textContent = measurement.date || '';
+                    break;
+                case 'serial_id':
+                    td.textContent = measurement.serial_id || '';
+                    break;
             }
+            tr.appendChild(td);
         });
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = state.comparisonSelected.has(measurement.id);
-        checkbox.addEventListener('change', () => {
-            toggleComparisonSelection(measurement.id);
-            if (onComparisonToggle) onComparisonToggle();
-            updateMasterCheckbox(measurements);
-        });
-        tdCheck.appendChild(checkbox);
-        tr.appendChild(tdCheck);
 
-        const tdId = document.createElement('td');
-        tdId.textContent = measurement.original_id || measurement.id;
-        tr.appendChild(tdId);
+        if (measurement.id === state.activeMeasurement) tr.classList.add('active');
+        if (measurement.is_draft) tr.classList.add('measurement-draft');
 
-        const tdName = document.createElement('td');
-        tdName.textContent = measurement.is_draft ? `${measurement.liquid_name} (Draft)` : measurement.liquid_name;
-        tr.appendChild(tdName);
-
-        const tdDate = document.createElement('td');
-        tdDate.textContent = measurement.date || '';
-        tr.appendChild(tdDate);
-
-        const tdSerial = document.createElement('td');
-        tdSerial.textContent = measurement.serial_id || '';
-        tr.appendChild(tdSerial);
-
-        if (measurement.id === state.activeMeasurement) {
-            tr.classList.add('active');
-        }
-        if (measurement.is_draft) {
-            tr.classList.add('measurement-draft');
-        }
-
-        elements.measurementListBody.appendChild(tr);
+        tbody.appendChild(tr);
     });
 
     updateMasterCheckbox(measurements);

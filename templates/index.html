@@ -34,16 +34,16 @@
                     <table id="measurement-list-table">
                         <thead>
                             <tr>
-                                <th class="checkbox-column">
+                                <th class="checkbox-column" data-col-id="plot">
                                     <div class="header-content">
                                         <input type="checkbox" id="master-plot-checkbox" title="Toggle all visible">
                                         <span>Plot</span>
                                     </div>
                                 </th>
-                                <th data-sort="id">ID <span class="sort-icon"></span></th>
-                                <th data-sort="liquid_name">Liquid Name <span class="sort-icon"></span></th>
-                                <th data-sort="date">Date <span class="sort-icon"></span></th>
-                                <th data-sort="serial_id">Serial ID <span class="sort-icon"></span></th>
+                                <th data-sort="id" data-col-id="id">ID <span class="sort-icon"></span></th>
+                                <th data-sort="liquid_name" data-col-id="liquid_name">Liquid Name <span class="sort-icon"></span></th>
+                                <th data-sort="date" data-col-id="date">Date <span class="sort-icon"></span></th>
+                                <th data-sort="serial_id" data-col-id="serial_id">Serial ID <span class="sort-icon"></span></th>
                             </tr>
                         </thead>
                         <tbody id="measurement-list-body">
@@ -102,12 +102,12 @@
                     <table id="points-table">
                         <thead>
                             <tr>
-                                <th class="action-column"></th>
-                                <th>$N$ (RPM)</th>
-                                <th>$\eta$ (mPa$\cdot$s)</th>
-                                <th>Torque (%)</th>
-                                <th>$\dot{\gamma}$ (1/s)</th> <!-- Shear Rate -->
-                                <th>$\sigma$ (Pa)</th>       <!-- Shear Stress -->
+                                <th class="action-column" data-field="action"></th>
+                                <th data-field="N">$N$ (RPM)</th>
+                                <th data-field="eta">$\eta$ (mPa$\cdot$s)</th>
+                                <th data-field="torque">Torque (%)</th>
+                                <th data-field="shear_rate">$\dot{\gamma}$ (1/s)</th> <!-- Shear Rate -->
+                                <th data-field="shear_stress">$\sigma$ (Pa)</th>       <!-- Shear Stress -->
                             </tr>
                         </thead>
                         <tbody>
