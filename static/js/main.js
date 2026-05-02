@@ -6,11 +6,13 @@ import * as layout from './ui/layout.js';
 import * as measurementUI from './ui/measurement_ui.js';
 import * as workspaceUI from './ui/workspace_ui.js';
 import { createFloatingLegend, makeDraggable } from './ui/legend_ui.js';
+import { TableResizer } from './ui/table_resizer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const elements = {
         // Left Column
+        measurementListTable: document.getElementById('measurement-list-table'),
         measurementListBody: document.getElementById('measurement-list-body'),
         measurementSearchInput: document.getElementById('measurement-search'),
         measurementListHeaders: document.querySelectorAll('#measurement-list-table th[data-sort]'),
@@ -32,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         measurementDateInput: document.getElementById('measurement-date'),
         measurementSerialIdInput: document.getElementById('measurement-serial-id'),
         measurementSpindleSelect: document.getElementById('measurement-spindle'),
+        pointsTable: document.getElementById('points-table'),
         pointsTableBody: document.querySelector('#points-table tbody'),
         openAnalysisBtn: document.getElementById('open-analysis-btn'),
 
@@ -83,6 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeChart) activeChart.resize();
         if (comparisonChart) comparisonChart.resize();
     }]);
+
+    // --- Table Resizing ---
+    new TableResizer(elements.measurementListTable, 'table-widths-measurements');
+    new TableResizer(elements.pointsTable, 'table-widths-points');
 
     // Extra observer for the right column (which isn't a ResizableColumn itself)
     let rightColumnResizeTimer;
