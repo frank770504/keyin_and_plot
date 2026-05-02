@@ -1,12 +1,92 @@
 // static/js/ui/legend_ui.js
 
+function createLegendIcon(dataset, strokeColor, fillColor) {
+    const pointStyle = dataset.pointStyle || 'circle';
+    const isLine = dataset.type === 'line';
+    const borderDash = dataset.borderDash || [];
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '14');
+    svg.setAttribute('height', '14');
+    svg.style.marginRight = '8px';
+    svg.style.flexShrink = '0';
+
+    const centerX = 7;
+    const centerY = 7;
+    const size = 5; // Half-size for shapes
+
+    if (isLine && dataset.pointRadius === 0) {
+        // Line-only dataset (Regression)
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', '0');
+        line.setAttribute('y1', '7');
+        line.setAttribute('x2', '14');
+        line.setAttribute('y2', '7');
+        line.setAttribute('stroke', strokeColor);
+        line.setAttribute('stroke-width', '2');
+        if (borderDash.length > 0) {
+            line.setAttribute('stroke-dasharray', borderDash.join(','));
+        }
+        svg.appendChild(line);
+    } else {
+        // Scatter dataset or line with points
+        let shape;
+        switch (pointStyle) {
+            case 'rect':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                shape.setAttribute('x', '2');
+                shape.setAttribute('y', '2');
+                shape.setAttribute('width', '10');
+                shape.setAttribute('height', '10');
+                break;
+            case 'triangle':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                shape.setAttribute('d', `M ${centerX} 2 L 12 12 L 2 12 Z`);
+                break;
+            case 'rectRot':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                shape.setAttribute('d', `M ${centerX} 2 L 12 ${centerY} L ${centerX} 12 L 2 ${centerY} Z`);
+                break;
+            case 'cross':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                shape.setAttribute('d', `M 2 ${centerY} L 12 ${centerY} M ${centerX} 2 L ${centerX} 12`);
+                shape.setAttribute('fill', 'none');
+                shape.setAttribute('stroke-width', '2');
+                break;
+            case 'crossRot':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                shape.setAttribute('d', `M 3 3 L 11 11 M 11 3 L 3 11`);
+                shape.setAttribute('fill', 'none');
+                shape.setAttribute('stroke-width', '2');
+                break;
+            case 'star':
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                shape.setAttribute('d', `M 2 ${centerY} L 12 ${centerY} M ${centerX} 2 L ${centerX} 12 M 3 3 L 11 11 M 11 3 L 3 11`);
+                shape.setAttribute('fill', 'none');
+                shape.setAttribute('stroke-width', '1.5');
+                break;
+            case 'circle':
+            default:
+                shape = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                shape.setAttribute('cx', centerX);
+                shape.setAttribute('cy', centerY);
+                shape.setAttribute('r', '5');
+                break;
+        }
+        shape.setAttribute('stroke', strokeColor);
+        if (!shape.hasAttribute('fill')) {
+            shape.setAttribute('fill', fillColor || 'transparent');
+        }
+        svg.appendChild(shape);
+    }
+    return svg;
+}
+
 export function createFloatingLegend(chartInstance, legendElement) {
     if (!chartInstance || !legendElement) return;
 
-    // Reset content but keep layout structure if possible?
-    // Actually, simpler to rebuild since it's cheap.
     legendElement.innerHTML = '';
-    legendElement.style.display = 'flex'; // Ensure flex display
+    legendElement.style.display = 'flex';
 
     // 1. Create Header
     const header = document.createElement('div');
@@ -31,28 +111,16 @@ export function createFloatingLegend(chartInstance, legendElement) {
         checkbox.type = 'checkbox';
         checkbox.checked = !item.hidden;
         checkbox.className = 'legend-checkbox';
-        checkbox.style.marginRight = '8px';
-        checkbox.style.cursor = 'pointer';
 
-        const colorBox = document.createElement('span');
-        colorBox.className = 'legend-color-box';
-        colorBox.style.backgroundColor = item.fillStyle;
-        colorBox.style.border = `1px solid ${item.strokeStyle}`;
-
-        // Show dash if the dataset is a dashed line
         const ds = chartInstance.data.datasets[item.datasetIndex];
-        if (ds && ds.borderDash && ds.borderDash.length > 0) {
-            colorBox.style.height = '0';
-            colorBox.style.borderTop = `3px dashed ${item.strokeStyle}`;
-            colorBox.style.backgroundColor = 'transparent';
-        }
+        const icon = createLegendIcon(ds, item.strokeStyle, item.fillStyle);
 
         const text = document.createElement('span');
         text.textContent = item.text;
         text.style.cursor = 'pointer';
 
         itemDiv.appendChild(checkbox);
-        itemDiv.appendChild(colorBox);
+        itemDiv.appendChild(icon);
         itemDiv.appendChild(text);
 
         const handleToggle = (e) => {
@@ -64,7 +132,6 @@ export function createFloatingLegend(chartInstance, legendElement) {
             chartInstance.setDatasetVisibility(datasetIndex, checkbox.checked);
             chartInstance.update();
 
-            // Update strike-through style
             if (!checkbox.checked) {
                 itemDiv.classList.add('hidden');
             } else {
@@ -74,7 +141,7 @@ export function createFloatingLegend(chartInstance, legendElement) {
 
         checkbox.addEventListener('change', handleToggle);
         text.addEventListener('click', handleToggle);
-        colorBox.addEventListener('click', handleToggle);
+        icon.addEventListener('click', handleToggle);
 
         content.appendChild(itemDiv);
     });

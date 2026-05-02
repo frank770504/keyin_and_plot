@@ -5,7 +5,7 @@ import { fetchMeasurementData, fetchRegression } from './api.js';
 const GOLDEN_RATIO_CONJUGATE = 0.618033988749895;
 let HUE_START = 0.35; // Starting hue
 
-const POINT_STYLES = ['circle', 'rect', 'triangle', 'rectRot', 'cross', 'crossRot', 'star', 'line', 'dash'];
+const POINT_STYLES = ['circle', 'rect', 'triangle', 'rectRot', 'cross', 'crossRot', 'star'];
 
 /**
  * Converts HSV color to RGBA string.
