@@ -116,21 +116,37 @@ body.resizing .column-content-wrapper {
     gap: 20px;
     align-items: center;
     background: #f8f9fa;
-    padding: 8px 15px;
+    padding: 4px 10px; /* Reduced padding */
     border-radius: 8px;
     border: 1px solid #e9ecef;
+}
+
+.chart-controls.unified-controls {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 4px 15px; /* Reduced gap */
+    align-items: center;
 }
 
 .control-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px; /* Slightly tighter gap */
 }
 
 .control-group label {
-    font-size: 0.85rem;
+    font-size: 0.8rem; /* Slightly smaller font */
     font-weight: bold;
     color: #495057;
+    min-width: 75px; /* Tighter label alignment */
+}
+
+.limit-input {
+    width: 60px; /* Slimmer input */
+    padding: 1px 4px;
+    font-size: 0.8rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
 }
 
 .checkbox-label {

@@ -135,11 +135,28 @@
             <div class="column-content-wrapper">
                 <div class="right-header">
                     <h1>Compare Measurements</h1>
-                    <div class="chart-controls">
+                    <div class="chart-controls unified-controls">
+                        <!-- Row 1: X-Axis | Scale -->
+                        <div class="control-group">
+                            <label>X-Axis:</label>
+                            <input type="number" id="comp-x-min" placeholder="Min" step="any" class="limit-input">
+                            <input type="number" id="comp-x-max" placeholder="Max" step="any" class="limit-input">
+                            <button id="apply-x-limits" class="toggle-btn small">Apply</button>
+                            <button id="clear-x-limits" class="toggle-btn small" style="background-color: #6c757d; color: white; border-color: #6c757d;">Clear</button>
+                        </div>
                         <div class="control-group">
                             <label>Scale:</label>
                             <button id="toggle-comp-log-x" class="toggle-btn" title="Toggle X-axis Log/Linear">X-Log</button>
                             <button id="toggle-comp-log-y" class="toggle-btn" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                        </div>
+
+                        <!-- Row 2: Y-Axis | Regression -->
+                        <div class="control-group">
+                            <label>Y-Axis:</label>
+                            <input type="number" id="comp-y-min" placeholder="Min" step="any" class="limit-input">
+                            <input type="number" id="comp-y-max" placeholder="Max" step="any" class="limit-input">
+                            <button id="apply-y-limits" class="toggle-btn small">Apply</button>
+                            <button id="clear-y-limits" class="toggle-btn small" style="background-color: #6c757d; color: white; border-color: #6c757d;">Clear</button>
                         </div>
                         <div class="control-group">
                             <label>Regression:</label>

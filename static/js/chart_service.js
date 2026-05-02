@@ -187,68 +187,79 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
         xAxisType = 'linear',
         yAxisType = 'linear',
         xAxisTitle = '$\\dot{\\gamma}$ (1/s)',
-        yAxisTitle = '$\\sigma$ (Pa)'
+        yAxisTitle = '$\\sigma$ (Pa)',
+        xMin = null,
+        xMax = null,
+        yMin = null,
+        yMax = null
     } = options;
+
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                bottom: 40,
+                left: 60,
+                right: 20,
+                top: 10
+            }
+        },
+        scales: {
+            x: {
+                type: xAxisType,
+                position: 'bottom',
+                title: { display: false, text: xAxisTitle },
+                grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                ticks: {
+                    callback: function(value) {
+                        return xAxisType === 'logarithmic' ? value.toExponential(0) : value;
+                    }
+                }
+            },
+            y: {
+                type: yAxisType,
+                title: { display: false, text: yAxisTitle },
+                grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                ticks: {
+                    callback: function(value) {
+                        return yAxisType === 'logarithmic' ? value.toExponential(0) : value;
+                    }
+                }
+            }
+        },
+        interaction: {
+            mode: 'nearest',
+            intersect: false,
+            axis: 'xy'
+        },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                enabled: false,
+                external: externalTooltipHandler
+            },
+            zoom: {
+                pan: { enabled: true, mode: 'xy' },
+                zoom: {
+                    wheel: { enabled: true },
+                    pinch: { enabled: true },
+                    mode: 'xy',
+                }
+            }
+        }
+    };
+
+    if (xMin !== null) chartOptions.scales.x.min = xMin;
+    if (xMax !== null) chartOptions.scales.x.max = xMax;
+    if (yMin !== null) chartOptions.scales.y.min = yMin;
+    if (yMax !== null) chartOptions.scales.y.max = yMax;
 
     return new Chart(ctx, {
         type: 'scatter',
         data: { datasets: chartDatasets },
         plugins: [katexChartPlugin],
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    bottom: 40,
-                    left: 60,
-                    right: 20,
-                    top: 10
-                }
-            },
-            scales: {
-                x: {
-                    type: xAxisType,
-                    position: 'bottom',
-                    title: { display: false, text: xAxisTitle },
-                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                    ticks: {
-                        callback: function(value) {
-                            return xAxisType === 'logarithmic' ? value.toExponential(0) : value;
-                        }
-                    }
-                },
-                y: {
-                    type: yAxisType,
-                    title: { display: false, text: yAxisTitle },
-                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                    ticks: {
-                        callback: function(value) {
-                            return yAxisType === 'logarithmic' ? value.toExponential(0) : value;
-                        }
-                    }
-                }
-            },
-            interaction: {
-                mode: 'nearest',
-                intersect: false,
-                axis: 'xy'
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    enabled: false,
-                    external: externalTooltipHandler
-                },
-                zoom: {
-                    pan: { enabled: true, mode: 'xy' },
-                    zoom: {
-                        wheel: { enabled: true },
-                        pinch: { enabled: true },
-                        mode: 'xy',
-                    }
-                }
-            }
-        }
+        options: chartOptions
     });
 }
 

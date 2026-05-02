@@ -65,6 +65,16 @@ document.addEventListener('DOMContentLoaded', () => {
         activeIncludePower: document.getElementById('active-include-power'),
         resetActiveZoomBtn: document.getElementById('reset-active-zoom-btn'),
 
+        // Comparison Chart Limits
+        compXMin: document.getElementById('comp-x-min'),
+        compXMax: document.getElementById('comp-x-max'),
+        applyXLimits: document.getElementById('apply-x-limits'),
+        clearXLimits: document.getElementById('clear-x-limits'),
+        compYMin: document.getElementById('comp-y-min'),
+        compYMax: document.getElementById('comp-y-max'),
+        applyYLimits: document.getElementById('apply-y-limits'),
+        clearYLimits: document.getElementById('clear-y-limits'),
+
         // Layout
         leftColumn: document.getElementById('left-column'),
         centerColumn: document.getElementById('center-column'),
@@ -811,7 +821,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const chartOptions = {
                 xAxisType: state.chartConfig.comparison.xLog ? 'logarithmic' : 'linear',
-                yAxisType: state.chartConfig.comparison.yLog ? 'logarithmic' : 'linear'
+                yAxisType: state.chartConfig.comparison.yLog ? 'logarithmic' : 'linear',
+                xMin: state.chartConfig.comparison.xMin,
+                xMax: state.chartConfig.comparison.xMax,
+                yMin: state.chartConfig.comparison.yMin,
+                yMax: state.chartConfig.comparison.yMax
             };
 
             if (comparisonChart) chartService.destroyChart(comparisonChart);
@@ -1000,6 +1014,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     elements.compIncludePower.addEventListener('change', () => {
         state.chartConfig.comparison.includePower = elements.compIncludePower.checked;
+        updateCompChart();
+    });
+
+    elements.applyXLimits.addEventListener('click', () => {
+        const minVal = parseFloat(elements.compXMin.value);
+        const maxVal = parseFloat(elements.compXMax.value);
+        state.chartConfig.comparison.xMin = isNaN(minVal) ? null : minVal;
+        state.chartConfig.comparison.xMax = isNaN(maxVal) ? null : maxVal;
+        updateCompChart();
+    });
+
+    elements.clearXLimits.addEventListener('click', () => {
+        elements.compXMin.value = '';
+        elements.compXMax.value = '';
+        state.chartConfig.comparison.xMin = null;
+        state.chartConfig.comparison.xMax = null;
+        updateCompChart();
+    });
+
+    elements.applyYLimits.addEventListener('click', () => {
+        const minVal = parseFloat(elements.compYMin.value);
+        const maxVal = parseFloat(elements.compYMax.value);
+        state.chartConfig.comparison.yMin = isNaN(minVal) ? null : minVal;
+        state.chartConfig.comparison.yMax = isNaN(maxVal) ? null : maxVal;
+        updateCompChart();
+    });
+
+    elements.clearYLimits.addEventListener('click', () => {
+        elements.compYMin.value = '';
+        elements.compYMax.value = '';
+        state.chartConfig.comparison.yMin = null;
+        state.chartConfig.comparison.yMax = null;
         updateCompChart();
     });
 

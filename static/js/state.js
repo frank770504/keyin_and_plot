@@ -27,7 +27,11 @@ const state = {
             xLog: false,
             yLog: false,
             includeLinear: false,
-            includePower: true
+            includePower: true,
+            xMin: null,
+            xMax: null,
+            yMin: null,
+            yMax: null
         },
         active: {
             xLog: false,
