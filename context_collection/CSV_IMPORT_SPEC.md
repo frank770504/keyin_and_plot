@@ -12,9 +12,9 @@ This specification outlines the logic for a one-time or utility script to import
 - **CSV Internal Structure**:
     - **Metadata (Fixed Rows)**:
         - Row 0, Col 1: `Formula ID` $\rightarrow$ `liquid_name`
-        - Row 1, Col 1: `Datae` or `Date` $\rightarrow$ `date` (Target format: YYYY-MM-DD)
+        - Row 1, Col 1: `Datae` or `Date` $\rightarrow$ `date` (UI: Test Date)
         - Row 2, Col 1: `Serial ID` $\rightarrow$ `serial_id`
-        - Row 3, Col 1: `Note` (Optional) $\rightarrow$ `experiment_note`
+        - Row 3, Col 1: `Note` (Optional) $\rightarrow$ `experiment_note` (UI: Note)
         - Row 4, Col 1: `Spindle` $\rightarrow$ `spindle_id`
     - **Experimental Data (Starting Row 10)**:
         - Col 1: `RPM` $\rightarrow$ `Point.N` (Float)

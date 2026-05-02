@@ -1,7 +1,7 @@
-# Technical Specification: Reactive Comparison Plotting System
+# Technical Specification: Reactive Measurement Plotting System
 
 ## 1. Overview
-The comparison plotting system allows users to visualize multiple rheology measurements simultaneously on a single chart. The system is designed to be reactive, eliminating the need for manual "Draw" triggers and ensuring the chart always reflects the current selection state.
+The measurement plotting system allows users to visualize multiple rheology measurements simultaneously on a single chart. The system is designed to be reactive, eliminating the need for manual "Draw" triggers and ensuring the chart always reflects the current selection state.
 
 ## 2. Selection Interface (Measurement List)
 
@@ -9,7 +9,7 @@ The comparison plotting system allows users to visualize multiple rheology measu
 - **Plot Column**: The selection column is labeled "Plot" to clearly indicate its function.
 - **Enhanced Click Target**: The entire `td` cell containing the plot checkbox is clickable. Clicking anywhere in the cell toggles the checkbox state.
 - **Isolation**: Clicks within the "Plot" column stop event propagation (`stopPropagation()`) to prevent accidentally switching the active measurement in the workspace (middle column).
-- **Auto-Sync**: Toggling a checkbox immediately triggers a re-render of the Comparison Chart.
+- **Auto-Sync**: Toggling a checkbox immediately triggers a re-render of the Measurement Plots.
 
 ### B. Master Control (Batch Toggling)
 - **Master Checkbox**: A checkbox in the "Plot" table header allows for batch actions.

@@ -71,11 +71,11 @@
                 <fieldset class="metadata-area">
                     <legend>Metadata</legend>
                     <div class="metadata-row">
-                        <label for="active-measurement-id">Measurement ID:</label>
+                        <label for="active-measurement-id">ID:</label>
                         <input type="text" id="active-measurement-id" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                     </div>
                     <div class="metadata-row">
-                        <label for="measurement-date">Experiment Date:</label>
+                        <label for="measurement-date">Test Date:</label>
                         <input type="date" id="measurement-date">
                     </div>
                     <div class="metadata-row">
@@ -83,9 +83,10 @@
                         <input type="text" id="measurement-serial-id" placeholder="Enter Serial ID">
                     </div>
                     <div class="metadata-row align-top">
-                        <label for="measurement-note">Experiment Note:</label>
+                        <label for="measurement-note">Note:</label>
                         <textarea id="measurement-note" placeholder="Enter notes about the experiment..."></textarea>
                     </div>
+
                     <div class="metadata-row">
                         <label for="measurement-spindle">Spindle:</label>
                         <select id="measurement-spindle">
@@ -98,10 +99,10 @@
                 </fieldset>
 
                 <div id="analysis-controls" style="margin: 10px 0;">
-                    <button id="open-analysis-btn">Open Analysis Window</button>
+                    <button id="open-analysis-btn">Analyze</button>
                 </div>
 
-                <h2>Editable Table</h2>
+                <h2>Data points</h2>
                 <div class="table-scroll-container">
                     <table id="points-table">
                         <thead>
@@ -134,7 +135,7 @@
         <div class="column" id="right-column">
             <div class="column-content-wrapper">
                 <div class="right-header">
-                    <h1>Compare Measurements</h1>
+                    <h1>Measurement Plots</h1>
                     <div class="chart-controls unified-controls">
                         <!-- Row 1: X-Axis | Scale -->
                         <div class="control-group">

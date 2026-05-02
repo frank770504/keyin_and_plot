@@ -47,21 +47,21 @@ Used to prevent direct modification of production records and streamline creatio
 4.  **Rollback**: Deletes the draft.
 
 ### C. Real-time Data Entry & Sync
-- **Editable Table**: Syncs data to the backend as the user types (on `change` events).
+- **Data points**: Syncs data to the backend as the user types (on `change` events).
 - **Batch Sync**: On "Save", the frontend ensures all rows are synced before the final commit.
 - **Auto-Calculation**: Backend calculates Shear Rate and Shear Stress in real-time based on `N` (RPM), `eta` (mPa·s), and the selected `SpindleFactor`.
 
 ### D. Analysis & Regression (Unified Reactive Engine)
-- **Unified Controls**: Both the Comparison Chart and the Analysis Window feature identical reactive controls for scale and analysis.
+- **Unified Controls**: Both the Measurement Plots and the Analysis Window feature identical reactive controls for scale and analysis.
 - **Logarithmic Scaling**: Independent X-axis and Y-axis toggles between linear and logarithmic scales.
 - **Reactive Regressions**: Support for overlaying Linear ($\sigma = m \dot{\gamma} + c$) and Power Law ($\sigma = a \dot{\gamma}^b$) regressions via persistent checkboxes.
-- **Comparison View**: Reactive overlay of multiple measurements based on the "Plot" column.
+- **Measurement Plots View**: Reactive overlay of multiple measurements based on the "Plot" column.
 - **Performance**: Integrated client-side caching ensures near-instant re-renders when toggling visibility or regression modes.
 - **Enhanced Interaction**: Optimized hover detection with expanded hit zones ensures reliable tooltips for regression lines regardless of zoom level or aspect ratio.
 - **Visual Polish**: Dynamic color generation using the **Golden Ratio in HSV space** ensures an unlimited number of visually distinct colors; unique point styles per measurement; persistent "Reset View" (⟲) button for auto-scaling.
 
 ### E. Unified Multi-Pane Layout
-The UI features a consistent three-column layout (Measurement List, Workspace, Comparison Chart):
+The UI features a consistent three-column layout (Measurement List, Workspace, Measurement Plots):
 1.  **Measurement List**: Houses the "Add Measurement" button and an **Advanced Search (RQL)** bar. Supports user-adjustable column widths and drag-and-drop reordering.
 2.  **Independent Gutters**: Vertical gutters separate the columns, acting as drag handles for resizing and housing toggle buttons for collapsing.
 3.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging.
@@ -78,9 +78,9 @@ The UI features a consistent three-column layout (Measurement List, Workspace, C
 
 ### Measurement
 - `liquid_name`: Unique identifier (string).
-- `date`: Experiment date.
+- `date`: Test Date.
 - `serial_id`: Serial ID.
-- `experiment_note`: Descriptive notes (text).
+- `experiment_note`: Note (text).
 - `spindle_id`: Selected spindle.
 - `is_draft`: Boolean flag.
 - `original_id`: Reference to original measurement if this is a draft.

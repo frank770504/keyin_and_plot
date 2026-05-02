@@ -1,7 +1,7 @@
 # Technical Specification: Unified Reactive Chart Engine
 
 ## 1. Overview
-The Unified Reactive Chart Engine provides a high-performance, consistent visualization layer for both the Comparison Chart (multiple measurements) and the Analysis Chart (single measurement). It replaces imperative drawing commands with a reactive, state-driven model.
+The Unified Reactive Chart Engine provides a high-performance, consistent visualization layer for both the Measurement Plots (multiple measurements) and the Analyze Chart (single measurement). It replaces imperative drawing commands with a reactive, state-driven model.
 
 ## 2. Core Visualization Features
 
@@ -37,7 +37,7 @@ The Unified Reactive Chart Engine provides a high-performance, consistent visual
 - **State-Driven**: UI controls (checkboxes, toggle buttons) update a central `state.chartConfig` object.
 - **Auto-Update**: Any state change or data modification triggers an immediate re-render of the relevant chart instance.
 
-## 4. Unified GUI (Analysis vs. Comparison)
+## 4. Unified GUI (Analyze vs. Measurement Plots)
 Both chart interfaces implement an identical control bar:
 - **Scale Toggles**: `X-Log` and `Y-Log` buttons.
 - **Regression Toggles**: `Linear` and `Power` law checkboxes.
