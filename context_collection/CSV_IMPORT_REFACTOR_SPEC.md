@@ -13,18 +13,18 @@ MAPPING_CONFIG = {
     "measurement": {
         "metadata": [
             {"field": "liquid_name", "row": 0, "col": 1, "transform": str.strip},
-            {"field": "date", "row": 1, "col": 1, "transform": parse_date},
+            {"field": "date", "row": 1, "col": 1, "transform": parse_date}, # returns datetime.date
             {"field": "serial_id", "row": 2, "col": 1, "transform": str.strip},
             {"field": "spindle_id", "row": 4, "col": 1, "transform": str.strip},
         ],
         "points_start_row": 10
     },
     "points": [
-        {"field": "N", "col": 1, "transform": float},
-        {"field": "eta", "col": 2, "transform": lambda x: float(x.replace(',', ''))},
-        {"field": "torque", "col": 3, "transform": lambda x: float(x.replace('%', '')) if x else None},
-        {"field": "shear_rate", "col": 5, "transform": float},
-        {"field": "shear_stress", "col": 6, "transform": float},
+        {"field": "N", "col": 1, "transform": safe_float},
+        {"field": "eta", "col": 2, "transform": safe_float},
+        {"field": "torque", "col": 3, "transform": safe_percent},
+        {"field": "shear_rate", "col": 5, "transform": safe_float},
+        {"field": "shear_stress", "col": 6, "transform": safe_float},
     ]
 }
 ```

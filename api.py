@@ -425,7 +425,8 @@ def get_measurements():
         results.append(active_draft)
 
     return jsonify([{
-        "id": d.id, "liquid_name": d.liquid_name, "date": d.date,
+        "id": d.id, "liquid_name": d.liquid_name,
+        "date": d.date.isoformat() if d.date else None,
         "serial_id": d.serial_id, "spindle_id": d.spindle_id,
         "is_draft": d.is_draft, "original_id": d.original_id
     } for d in results])
@@ -465,7 +466,7 @@ def get_measurement(measurement_id):
             "id": p.id, "N": p.N, "eta": p.eta, "torque": p.torque,
             "shear_rate": p.shear_rate, "shear_stress": p.shear_stress
         } for p in measurement.points],
-        "date": measurement.date,
+        "date": measurement.date.isoformat() if measurement.date else None,
         "serial_id": measurement.serial_id,
         "spindle_id": measurement.spindle_id,
         "is_draft": measurement.is_draft,
@@ -485,8 +486,15 @@ def update_measurement(measurement_id):
         return jsonify({"error": "Measurement not found"}), 404
 
     data = request.get_json()
-    if 'date' in data:
-        measurement.date = data['date']
+    if 'date' in data and data['date']:
+        try:
+            measurement.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            # Fallback or silent ignore if format is wrong, 
+            # though frontend should send YYYY-MM-DD
+            pass
+    elif 'date' in data:
+        measurement.date = None
     if 'serial_id' in data:
         measurement.serial_id = data['serial_id']
     if 'spindle_id' in data:

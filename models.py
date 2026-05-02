@@ -19,7 +19,7 @@ class Measurement(db.Model):
     __tablename__ = 'measurements'
     id = db.Column(db.Integer, primary_key=True)
     liquid_name = db.Column(db.String(100), unique=False, nullable=False)
-    date = db.Column(db.String(20), nullable=True)
+    date = db.Column(db.Date, nullable=True)
     serial_id = db.Column(db.String(100), nullable=True)
     spindle_id = db.Column(db.String(50), nullable=True)
     is_draft = db.Column(db.Boolean, default=False)

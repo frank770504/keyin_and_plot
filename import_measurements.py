@@ -11,14 +11,14 @@ from models import db, Measurement, Point
 # Update this object if the CSV layout or Database field names change.
 
 def parse_date(date_str):
-    """Standardize dates to MM/DD/YYYY."""
-    formats = ["%m/%d/%Y", "%d.%m.%Y"]
+    """Convert date string to a date object."""
+    formats = ["%m/%d/%Y", "%d.%m.%Y", "%Y-%m-%d"]
     for fmt in formats:
         try:
-            return datetime.strptime(date_str, fmt).strftime("%Y-%m-%d")
+            return datetime.strptime(date_str, fmt).date()
         except ValueError:
             continue
-    return date_str
+    return None
 
 def safe_float(val):
     """Safely convert string to float, handling commas."""
