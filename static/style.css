@@ -638,6 +638,10 @@ ul {
     align-items: center;
 }
 
+.metadata-row.align-top {
+    align-items: flex-start;
+}
+
 .metadata-row:last-child {
     margin-bottom: 0;
 }
@@ -649,13 +653,26 @@ ul {
     flex-shrink: 0;
 }
 
+.metadata-row.align-top label {
+    padding-top: 5px; /* Aligns label text with the top of the text inside padded inputs/textareas */
+}
+
 .metadata-row input[type="date"],
-.metadata-row input[type="text"] {
+.metadata-row input[type="text"],
+.metadata-row textarea,
+.metadata-row select {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
     width: 250px; /* Consistent fixed width for all input boxes */
     box-sizing: border-box;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.metadata-row textarea {
+    height: 80px;
+    resize: vertical;
 }
 
 .input-area {
