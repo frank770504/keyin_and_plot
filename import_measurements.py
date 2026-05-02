@@ -41,6 +41,7 @@ MAPPING_CONFIG = {
             {"field": "liquid_name", "row": 0, "col": 1, "transform": str.strip},
             {"field": "date", "row": 1, "col": 1, "transform": parse_date},
             {"field": "serial_id", "row": 2, "col": 1, "transform": str.strip},
+            {"field": "experiment_note", "row": 0, "col": 3, "transform": str.strip},
             {"field": "spindle_id", "row": 4, "col": 1, "transform": str.strip},
         ],
         "points_start_row": 10
@@ -80,7 +81,14 @@ def import_csv(file_path):
         meas_data = {"id": meas_id, "is_draft": False}
         for item in MAPPING_CONFIG["measurement"]["metadata"]:
             try:
-                raw_val = reader[item["row"]][item["col"]]
+                if item["field"] == "experiment_note":
+                    raw_val = ""
+                    for c in range(0, 3):
+                        for r in range(0, 2):
+                            raw_val += reader[item["row"] + r][item["col"] + c]
+                            raw_val += " "
+                else:
+                    raw_val = reader[item["row"]][item["col"]]
                 meas_data[item["field"]] = item["transform"](raw_val)
             except IndexError:
                 meas_data[item["field"]] = None

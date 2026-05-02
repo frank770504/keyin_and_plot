@@ -172,6 +172,7 @@ def start_edit_mode(measurement_id):
         date=measurement.date,
         serial_id=measurement.serial_id,
         spindle_id=measurement.spindle_id,
+        experiment_note=measurement.experiment_note,
         is_draft=True,
         original_id=measurement.id
     )
@@ -215,6 +216,7 @@ def duplicate_measurement(measurement_id):
         date=original.date,
         serial_id=original.serial_id,
         spindle_id=original.spindle_id,
+        experiment_note=original.experiment_note,
         is_draft=False
     )
     db.session.add(new_measurement)
@@ -272,6 +274,7 @@ def commit_edit_mode(measurement_id):
     original.date = draft.date
     original.serial_id = draft.serial_id
     original.spindle_id = draft.spindle_id
+    original.experiment_note = draft.experiment_note
 
     # --- Sync points ---
     original_points_map = {p.id: p for p in original.points}
@@ -428,6 +431,7 @@ def get_measurements():
         "id": d.id, "liquid_name": d.liquid_name,
         "date": d.date.isoformat() if d.date else None,
         "serial_id": d.serial_id, "spindle_id": d.spindle_id,
+        "experiment_note": d.experiment_note,
         "is_draft": d.is_draft, "original_id": d.original_id
     } for d in results])
 
@@ -469,6 +473,7 @@ def get_measurement(measurement_id):
         "date": measurement.date.isoformat() if measurement.date else None,
         "serial_id": measurement.serial_id,
         "spindle_id": measurement.spindle_id,
+        "experiment_note": measurement.experiment_note,
         "is_draft": measurement.is_draft,
         "original_id": measurement.original_id
     })
@@ -497,6 +502,8 @@ def update_measurement(measurement_id):
         measurement.date = None
     if 'serial_id' in data:
         measurement.serial_id = data['serial_id']
+    if 'experiment_note' in data:
+        measurement.experiment_note = data['experiment_note']
     if 'spindle_id' in data:
         measurement.spindle_id = data['spindle_id']
         factor = SPINDLE_ID2FACTOR.get(measurement.spindle_id)

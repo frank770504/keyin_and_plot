@@ -187,6 +187,7 @@ export function updateEditModeUI(elements) {
 
     elements.measurementDateInput.disabled = !isEditing;
     elements.measurementSerialIdInput.disabled = !isEditing;
+    elements.measurementNoteInput.disabled = !isEditing;
     elements.measurementSpindleSelect.disabled = !isEditing;
 
     const tableInputs = elements.pointsTableBody.querySelectorAll('input');

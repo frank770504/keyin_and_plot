@@ -22,6 +22,7 @@ class Measurement(db.Model):
     date = db.Column(db.Date, nullable=True)
     serial_id = db.Column(db.String(100), nullable=True)
     spindle_id = db.Column(db.String(50), nullable=True)
+    experiment_note = db.Column(db.Text, nullable=True)
     is_draft = db.Column(db.Boolean, default=False)
     original_id = db.Column(db.Integer, nullable=True)
     # Draft-related session columns removed

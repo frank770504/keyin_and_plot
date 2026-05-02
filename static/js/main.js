@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteMeasurementBtn: document.getElementById('delete-measurement-btn'),
         measurementDateInput: document.getElementById('measurement-date'),
         measurementSerialIdInput: document.getElementById('measurement-serial-id'),
+        measurementNoteInput: document.getElementById('measurement-note'),
         measurementSpindleSelect: document.getElementById('measurement-spindle'),
         pointsTable: document.getElementById('points-table'),
         pointsTableBody: document.querySelector('#points-table tbody'),
@@ -335,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.activeMeasurementNameInput.value = data.liquid_name;
             elements.measurementDateInput.value = data.date || '';
             elements.measurementSerialIdInput.value = data.serial_id || '';
+            elements.measurementNoteInput.value = data.experiment_note || '';
             elements.measurementSpindleSelect.value = data.spindle_id || '';
 
             workspaceUI.renderPointsTable(elements, points, handleDeletePoint);
@@ -465,6 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.activeMeasurementNameInput.value = "";
             elements.measurementDateInput.value = "";
             elements.measurementSerialIdInput.value = "";
+            elements.measurementNoteInput.value = "";
             elements.measurementSpindleSelect.value = "";
 
             // Show the center column if it was hidden
@@ -631,11 +634,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.activeMeasurement || !state.isEditing) return;
         const date = elements.measurementDateInput.value;
         const serialId = elements.measurementSerialIdInput.value;
+        const experimentNote = elements.measurementNoteInput.value;
         const spindleId = elements.measurementSpindleSelect.value;
         try {
             await api.updateMeasurementMetadata(state.activeMeasurement, {
                 date: date,
                 serial_id: serialId,
+                experiment_note: experimentNote,
                 spindle_id: spindleId
             });
             // Clear cache as points might be recalculated
@@ -954,6 +959,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.measurementSerialIdInput.addEventListener('change', handleMetadataChange);
     elements.measurementSerialIdInput.addEventListener('input', updateSaveButtonState);
+
+    elements.measurementNoteInput.addEventListener('change', handleMetadataChange);
+    elements.measurementNoteInput.addEventListener('input', updateSaveButtonState);
 
     elements.measurementSpindleSelect.addEventListener('change', handleMetadataChange);
     elements.measurementSpindleSelect.addEventListener('change', updateSaveButtonState);
