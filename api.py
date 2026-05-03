@@ -157,6 +157,13 @@ def start_edit_mode(measurement_id):
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
+    # Clean up any orphaned drafts for other measurements
+    other_drafts = Measurement.query.filter_by(is_draft=True).all()
+    for d in other_drafts:
+        if d.original_id != measurement_id:
+            db.session.delete(d)
+    db.session.flush()
+
     measurement = Measurement.query.filter_by(id=measurement_id, is_draft=False).first()
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
@@ -442,6 +449,12 @@ def add_measurement():
     success, error = check_lock()
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
+
+    # Clean up any orphaned drafts to maintain the single-editor model
+    orphaned_drafts = Measurement.query.filter_by(is_draft=True).all()
+    for d in orphaned_drafts:
+        db.session.delete(d)
+    db.session.flush()
 
     data = request.get_json() or {}
     liquid_name = data.get('liquid_name', '').strip() or "New Measurement"

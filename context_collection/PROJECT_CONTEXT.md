@@ -41,8 +41,8 @@ The application enforces a single-editor workflow to ensure data integrity:
 
 ### B. Draft System
 Used to prevent direct modification of production records and streamline creation:
-1.  **Edit Start**: Clones an existing `Measurement` into a new record with `is_draft=True`.
-2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). The workspace inputs (Name, Date, Serial ID, Note, Spindle) are cleared, and the "Save" button is disabled until all mandatory fields (Name, Date, Serial ID, Spindle) are filled.
+1.  **Edit Start**: Clones an existing `Measurement` into a new record with `is_draft=True`. To maintain the single-editor model, any pre-existing orphaned drafts for other measurements are deleted first.
+2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). To prevent ID inflation and enforce the single-editor model, all existing orphaned drafts are explicitly purged from the database before the new draft is created. The workspace inputs (Name, Date, Serial ID, Note, Spindle) are cleared, the UI ID is explicitly set to the new database ID, and the "Save" button is disabled until all mandatory fields (Name, Date, Serial ID, Spindle) are filled.
 3.  **Commit**: Merges draft changes back to the original or "promotes" a new draft to production by flipping the `is_draft` flag.
 4.  **Rollback**: Deletes the draft.
 

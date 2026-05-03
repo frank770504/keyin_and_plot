@@ -6,6 +6,7 @@ The "Draft-First" workflow streamlines measurement creation by initializing a te
 ## 2. Backend Logic (`api.py`)
 
 ### A. Initialization (`POST /api/measurements`)
+- **Cleanup**: Before creating a new measurement, the system explicitly queries and deletes any existing orphaned drafts (`is_draft=True`) to maintain the single-editor model and prevent database ID inflation.
 - **Behavior**: Creates a new `Measurement` record with `is_draft=True` and `original_id=None`.
 - **Naming**: Defaults to "New Measurement". If a production measurement with that name exists, it appends a numeric suffix (e.g., "New Measurement (1)").
 - **Locking**: Requires the `GlobalLock`.
@@ -23,9 +24,11 @@ The "Draft-First" workflow streamlines measurement creation by initializing a te
 ## 3. Frontend Implementation
 
 ### A. Creation Trigger (`main.js`)
-- **Action**: Clicking "Create Measurement" (now located at the top of the Measurement column) calls the initialization API.
+- **Action**: Clicking "Create Measurement" calls the initialization API.
+- **Race Condition Prevention**: The "Create Measurement" button is immediately disabled upon click and re-enabled in a `finally` block to prevent multiple concurrent draft creation requests.
+- **State Validation**: If `state.isEditing` is already true, creation is blocked and an alert is shown.
 - **State Transition**: Immediately sets `state.isEditing = true` and `state.editingOriginalName = null` (signaling a new record).
-- **UI Reset**: Clears all workspace inputs (Name, Test Date, Serial ID, Note, and Spindle) to ensure a blank slate for the user.
+- **UI Reset & Update**: Clears all workspace inputs (Name, Test Date, Serial ID, Note, and Spindle) to ensure a blank slate. Critically, the `active-measurement-id` field is explicitly set to the `newId` returned by the API.
 - **Validation**: Disables the "Save" button (grey/unclickable) until all four mandatory fields (Name, Test Date, Serial ID, Spindle) are populated.
 
 ### B. Persistence & Sync

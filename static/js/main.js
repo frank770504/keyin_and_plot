@@ -460,8 +460,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleAddMeasurement() {
+        if (state.isEditing) {
+            alert("Please save or cancel your current edit before adding a new measurement.");
+            return;
+        }
+
+        if (elements.addMeasurementBtn.disabled) return;
+        elements.addMeasurementBtn.disabled = true;
+
         const lockAcquired = await ensureLock();
-        if (!lockAcquired) return;
+        if (!lockAcquired) {
+            elements.addMeasurementBtn.disabled = false;
+            return;
+        }
 
         try {
             // Create a draft with a default name on the backend
@@ -474,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.activeMeasurementName.textContent = liquidName;
 
             // CLEAR INPUTS as per request
+            elements.activeMeasurementId.value = newId; // Show the new ID
             elements.activeMeasurementNameInput.value = "";
             elements.measurementDateInput.value = "";
             elements.measurementSerialIdInput.value = "";
@@ -504,6 +516,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             alert(error.message);
             await releaseLockIfPossible();
+        } finally {
+            elements.addMeasurementBtn.disabled = false;
         }
     }
 
