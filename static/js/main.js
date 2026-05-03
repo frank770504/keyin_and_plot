@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Workspace & Active Measurement
     async function setActiveMeasurement(id) {
         // --- Handle Unsaved Changes ---
-        if (state.isEditing && state.activeMeasurement) {
+        if (state.isEditing && state.activeMeasurement && state.isDirty) {
             // If clicking a different measurement OR clicking the same one to deselect
             const action = await showUnsavedChangesDialog();
 
@@ -313,6 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 refreshMeasurementList();
                 return;
             }
+        } else if (state.isEditing && state.activeMeasurement && !state.isDirty) {
+            // Automatically cancel if not dirty AND we are switching to another measurement
+            if (id !== null) {
+                await cancelEditMode();
+            }
         }
 
         if (state.activeMeasurement === id) {
@@ -324,6 +329,13 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.cancelEditBtn.style.display = 'none';
         } else {
             // Select
+            // Check if the measurement still exists (it might have been a cancelled draft)
+            const m = state.allMeasurements.find(m => m.id === id);
+            if (!m) {
+                if (id !== null) console.warn(`Measurement ID ${id} not found in state.`);
+                return;
+            }
+
             stateManager.setActiveMeasurement(id);
             stateManager.setEditing(false); // Reset edit mode
             elements.editBtn.style.display = 'inline-block';
@@ -335,9 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
             workspaceUI.updateEditModeUI(elements);
 
             // Temporary name display until data is loaded
-            const m = state.allMeasurements.find(m => m.id === id);
-            const logicalId = (m && m.original_id) ? m.original_id : id;
-            elements.activeMeasurementName.textContent = m ? m.liquid_name : `ID: ${logicalId}`;
+            const logicalId = m.original_id || m.id;
+            elements.activeMeasurementName.textContent = m.liquid_name || `ID: ${logicalId}`;
 
             await loadActiveMeasurementData();
         }
@@ -470,6 +481,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.editBtn.disabled = !isValid;
     }
 
+    function markDirty() {
+        if (!state.isEditing) return;
+        stateManager.setDirty(true);
+    }
+
     async function handleAddMeasurement() {
         if (state.isEditing) {
             alert("Please save or cancel your current edit before adding a new measurement.");
@@ -509,6 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // We are already in draft mode on the backend, so we just update the frontend state
             stateManager.setEditingOriginalId(null); // Marker for a NEW measurement
             stateManager.setEditing(true);
+            stateManager.setDirty(false); // New measurement starts clean
             elements.editBtn.style.display = 'inline-block'; // Ensure it's visible
             elements.editBtn.textContent = 'Save';
             elements.cancelEditBtn.style.display = 'inline-block';
@@ -603,6 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateManager.setEditingOriginalId(state.activeMeasurement); // Store for potential rollback
             stateManager.setActiveMeasurement(draftId); // Backend returned the draft ID
             stateManager.setEditing(true);
+            stateManager.setDirty(false); // Start clean
             elements.editBtn.textContent = 'Save';
             elements.cancelEditBtn.style.display = 'inline-block';
             workspaceUI.updateEditModeUI(elements);
@@ -629,6 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             stateManager.setEditing(false);
             stateManager.setEditingOriginalId(null);
+            stateManager.setDirty(false);
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
@@ -658,6 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             stateManager.setEditing(false);
             stateManager.setEditingOriginalId(null);
+            stateManager.setDirty(false);
             elements.editBtn.textContent = 'Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
@@ -675,6 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleMeasurementRename() {
         if (!state.activeMeasurement || !state.isEditing) return;
+        markDirty();
         const newName = elements.activeMeasurementNameInput.value.trim();
 
         updateSaveButtonState(); // Update UI state immediately
@@ -694,6 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleMetadataChange() {
         if (!state.activeMeasurement || !state.isEditing) return;
+        markDirty();
         const date = elements.measurementDateInput.value;
         const serialId = elements.measurementSerialIdInput.value;
         const experimentNote = elements.measurementNoteInput.value;
@@ -826,6 +848,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.tagName !== 'INPUT') return;
         const input = e.target;
         const rawVal = input.value;
+
+        markDirty();
 
         // Strict numeric filter
         const isValid = /^-?\d*\.?\d*$/.test(rawVal);

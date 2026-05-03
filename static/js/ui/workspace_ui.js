@@ -181,6 +181,7 @@ export function updateEditModeUI(elements) {
         elements.activeMeasurementName.style.display = 'block';
         elements.activeMeasurementNameInput.style.display = 'none';
 
+        elements.editBtn.disabled = false;
         elements.deleteMeasurementBtn.style.display = 'none';
         elements.cancelEditBtn.style.display = 'none';
     }

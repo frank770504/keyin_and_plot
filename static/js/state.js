@@ -20,6 +20,7 @@ const state = {
     comparisonSelected: new Set(), // Now stores IDs
     centerColumnAutoHidden: false,
     editingOriginalId: null, // Renamed from editingOriginalName, now stores ID
+    isDirty: false,
     heartbeatInterval: null,
     lastValidValues: new WeakMap(), // Track numeric input history
     chartConfig: {
@@ -112,4 +113,8 @@ export function clearComparisonSelection() {
 
 export function setCenterColumnAutoHidden(isHidden) {
     state.centerColumnAutoHidden = isHidden;
+}
+
+export function setDirty(isDirty) {
+    state.isDirty = isDirty;
 }
