@@ -264,7 +264,7 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
 }
 
 export function destroyChart(chartInstance) {
-    if (chartInstance) {
+    if (chartInstance && chartInstance.canvas) {
         const container = chartInstance.canvas.parentElement;
         if (container) {
             ['x', 'y'].forEach(axis => {

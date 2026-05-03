@@ -508,7 +508,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear any old data and prepare for entry
             workspaceUI.renderPointsTable(elements, [], handleDeletePoint);
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
-            if (activeChart) chartService.destroyChart(activeChart);
+            if (activeChart) {
+                chartService.destroyChart(activeChart);
+                activeChart = null;
+            }
 
             // Refresh the measurement list so the new draft shows up
             await loadAndRenderMeasurements();
