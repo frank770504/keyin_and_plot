@@ -536,28 +536,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleDeleteMeasurement(id) {
-        const targetId = id || state.activeMeasurement;
+        // If no specific ID passed, prioritize original ID if editing, otherwise use active ID
+        const targetId = id || state.editingOriginalId || state.activeMeasurement;
         if (!targetId) return;
 
-        if (confirm(`Are you sure you want to delete this measurement (ID: ${targetId})?`)) {
+        // Use the logical ID (original if available) for the confirmation message
+        const m = state.allMeasurements.find(item => item.id === targetId);
+        const displayName = m ? m.liquid_name : `ID: ${targetId}`;
+
+        if (confirm(`Are you sure you want to delete "${displayName}"?`)) {
             const lockAcquired = await ensureLock();
             if (!lockAcquired) return;
 
             try {
+                // Store draft ID to clean up comparison selection
+                const draftIdToDelete = (state.isEditing && state.activeMeasurement !== targetId) ? state.activeMeasurement : null;
+
                 await api.deleteMeasurement(targetId);
+
+                // Cleanup comparison selection for both original and draft IDs
                 state.comparisonSelected.delete(targetId);
+                if (draftIdToDelete) {
+                    state.comparisonSelected.delete(draftIdToDelete);
+                }
                 handleDrawSelected();
 
-                if (state.activeMeasurement === targetId) {
+                // If deleting the currently viewed/edited measurement, reset the workspace
+                const isCurrentActive = (state.activeMeasurement === targetId) ||
+                                        (state.isEditing && state.editingOriginalId === targetId);
+
+                if (isCurrentActive) {
                     stateManager.setActiveMeasurement(null);
+                    stateManager.setEditing(false);
+                    stateManager.setEditingOriginalId(null);
+
                     workspaceUI.toggleCenterColumn(elements, false);
                     elements.activeMeasurementName.textContent = 'No Measurement Selected';
+                    elements.editBtn.textContent = 'Edit';
+                    elements.cancelEditBtn.style.display = 'none';
+                    workspaceUI.updateEditModeUI(elements);
+
                     if (activeChart) {
                         chartService.destroyChart(activeChart);
                         activeChart = null;
                     }
                 }
-                loadAndRenderMeasurements();
+                await loadAndRenderMeasurements();
             } catch (error) {
                 alert(error.message);
             } finally {
@@ -993,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     elements.cancelEditBtn.addEventListener('click', cancelEditMode);
 
-    elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement(state.activeMeasurement));
+    elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement());
     elements.activeMeasurementNameInput.addEventListener('change', handleMeasurementRename);
     elements.activeMeasurementNameInput.addEventListener('input', updateSaveButtonState);
 
