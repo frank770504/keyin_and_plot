@@ -164,6 +164,21 @@
                             <label class="checkbox-label"><input type="checkbox" id="comp-include-linear"> Linear</label>
                             <label class="checkbox-label"><input type="checkbox" id="comp-include-power" checked> Power</label>
                         </div>
+
+                        <!-- Row 3: Custom Curve -->
+                        <div class="control-group" style="grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
+                            <label style="margin-right: 5px;">Custom Curve:</label>
+                            <input type="text" id="custom-curve-name" placeholder="Curve Name" style="padding: 4px; border-radius: 4px; border: 1px solid #ced4da; width: 120px;">
+                            <select id="custom-curve-type" style="padding: 4px; border-radius: 4px; border: 1px solid #ced4da;">
+                                <option value="linear">Linear (σ = mγ̇ + c)</option>
+                                <option value="power">Power (σ = aγ̇^b)</option>
+                            </select>
+                            <input type="number" id="custom-curve-param1" placeholder="m or a" step="any" class="limit-input" style="width: 80px;">
+                            <input type="number" id="custom-curve-param2" placeholder="c or b" step="any" class="limit-input" style="width: 80px;">
+                            <input type="color" id="custom-curve-color" value="#000000" style="padding: 0; border: none; width: 30px; height: 30px; cursor: pointer; background: none;">
+                            <button id="add-custom-curve-btn" class="toggle-btn small" style="background-color: #28a745; color: white; border-color: #28a745;">Add</button>
+                            <button id="clear-custom-curves-btn" class="toggle-btn small" style="background-color: #dc3545; color: white; border-color: #dc3545;">Clear All</button>
+                        </div>
                     </div>
                 </div>
                 <div id="comparison-chart-container" style="position: relative; width: 100%;">

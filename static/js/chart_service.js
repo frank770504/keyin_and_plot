@@ -277,7 +277,7 @@ export function destroyChart(chartInstance) {
 }
 
 export async function getSelectedMeasurementsForChart(measurementIds, options = {}) {
-    const { includeLinear = false, includePower = true } = options;
+    const { includeLinear = false, includePower = true, customCurves = [] } = options;
     const chartData = { datasets: [] };
 
     for (let i = 0; i < measurementIds.length; i++) {
@@ -325,6 +325,67 @@ export async function getSelectedMeasurementsForChart(measurementIds, options = 
             } catch (e) { console.warn(`Linear reg failed for ${displayName}`, e); }
         }
     }
+
+    if (customCurves && customCurves.length > 0 && chartData.datasets.length > 0) {
+        let minX = Infinity;
+        let maxX = -Infinity;
+
+        chartData.datasets.forEach(ds => {
+            if (ds.type === 'scatter') {
+                ds.data.forEach(p => {
+                    if (p.x < minX) minX = p.x;
+                    if (p.x > maxX) maxX = p.x;
+                });
+            }
+        });
+
+        if (minX === Infinity) minX = 0.1;
+        if (maxX === -Infinity) maxX = 100;
+
+        if (minX <= 0) minX = 0.001;
+
+        customCurves.forEach(curve => {
+            const points = [];
+            const steps = 100;
+            const logMin = Math.log(minX);
+            const logMax = Math.log(maxX);
+
+            for (let i = 0; i <= steps; i++) {
+                const x = Math.exp(logMin + (logMax - logMin) * (i / steps));
+                let y;
+                if (curve.type === 'linear') {
+                    y = curve.param1 * x + curve.param2;
+                } else {
+                    y = curve.param1 * Math.pow(x, curve.param2);
+                }
+                points.push({ x, y });
+            }
+
+            let label;
+            if (curve.type === 'linear') {
+                label = `${curve.name}: $\\sigma = ${curve.param1.toFixed(3)}\\dot{\\gamma} ${curve.param2 >= 0 ? '+' : '-'}${Math.abs(curve.param2).toFixed(3)}$`;
+            } else {
+                label = `${curve.name}: $\\sigma = ${curve.param1.toFixed(3)}\\dot{\\gamma}^{${curve.param2.toFixed(3)}}$`;
+            }
+
+            chartData.datasets.push({
+                label: label,
+                data: points,
+                borderColor: curve.color,
+                borderWidth: 2,
+                borderDash: curve.type === 'linear' ? [10, 5] : [5, 5],
+                backgroundColor: 'rgba(0,0,0,0)',
+                type: 'line',
+                showLine: true,
+                fill: false,
+                pointRadius: 0,
+                hitRadius: 15,
+                pointHitRadius: 15,
+                tension: 0.1
+            });
+        });
+    }
+
     return chartData;
 }
 

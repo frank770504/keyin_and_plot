@@ -31,7 +31,8 @@ const state = {
             xMin: null,
             xMax: null,
             yMin: null,
-            yMax: null
+            yMax: null,
+            customCurves: [] // Array of { id, type, param1, param2, color }
         },
         active: {
             xLog: false,

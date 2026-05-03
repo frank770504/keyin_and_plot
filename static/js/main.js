@@ -65,6 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
         activeIncludePower: document.getElementById('active-include-power'),
         resetActiveZoomBtn: document.getElementById('reset-active-zoom-btn'),
 
+        // Custom Curve Controls
+        customCurveName: document.getElementById('custom-curve-name'),
+        customCurveType: document.getElementById('custom-curve-type'),
+        customCurveParam1: document.getElementById('custom-curve-param1'),
+        customCurveParam2: document.getElementById('custom-curve-param2'),
+        customCurveColor: document.getElementById('custom-curve-color'),
+        addCustomCurveBtn: document.getElementById('add-custom-curve-btn'),
+        clearCustomCurvesBtn: document.getElementById('clear-custom-curves-btn'),
+
         // Comparison Chart Limits
         compXMin: document.getElementById('comp-x-min'),
         compXMax: document.getElementById('comp-x-max'),
@@ -833,7 +842,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const chartData = await chartService.getSelectedMeasurementsForChart(selectedIds, {
                 includeLinear: state.chartConfig.comparison.includeLinear,
-                includePower: state.chartConfig.comparison.includePower
+                includePower: state.chartConfig.comparison.includePower,
+                customCurves: state.chartConfig.comparison.customCurves
             });
 
             const chartOptions = {
@@ -1063,6 +1073,42 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.compYMax.value = '';
         state.chartConfig.comparison.yMin = null;
         state.chartConfig.comparison.yMax = null;
+        updateCompChart();
+    });
+
+    elements.addCustomCurveBtn.addEventListener('click', () => {
+        const name = elements.customCurveName.value.trim();
+        const type = elements.customCurveType.value;
+        const param1 = parseFloat(elements.customCurveParam1.value);
+        const param2 = parseFloat(elements.customCurveParam2.value);
+        const color = elements.customCurveColor.value;
+
+        if (isNaN(param1) || isNaN(param2)) {
+            alert('Please enter valid numbers for both parameters.');
+            return;
+        }
+
+        const newCurve = {
+            id: 'custom-' + Date.now(),
+            name: name || (type === 'linear' ? 'Custom Linear' : 'Custom Power'),
+            type: type,
+            param1: param1,
+            param2: param2,
+            color: color
+        };
+
+        state.chartConfig.comparison.customCurves.push(newCurve);
+
+        // Reset inputs
+        elements.customCurveName.value = '';
+        elements.customCurveParam1.value = '';
+        elements.customCurveParam2.value = '';
+
+        updateCompChart();
+    });
+
+    elements.clearCustomCurvesBtn.addEventListener('click', () => {
+        state.chartConfig.comparison.customCurves = [];
         updateCompChart();
     });
 
