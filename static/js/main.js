@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resetZoomBtn: document.getElementById('reset-zoom-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
+        toggleChartControlsBtn: document.getElementById('toggle-chart-controls'),
+        compChartControls: document.getElementById('comp-chart-controls'),
 
         // Chart Controls
         toggleCompLogX: document.getElementById('toggle-comp-log-x'),
@@ -1024,6 +1026,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateActiveChart = () => {
         if (state.activeMeasurement) loadActiveMeasurementData();
     };
+
+    elements.toggleChartControlsBtn.addEventListener('click', () => {
+        const isCurrentlyVisible = elements.compChartControls.style.display !== 'none';
+
+        if (isCurrentlyVisible) {
+            elements.compChartControls.style.display = 'none';
+            elements.toggleChartControlsBtn.classList.add('active'); // "Active" means controls are minimized/hidden
+            elements.toggleChartControlsBtn.textContent = '⚙ Show Controls';
+        } else {
+            elements.compChartControls.style.display = 'grid';
+            elements.toggleChartControlsBtn.classList.remove('active');
+            elements.toggleChartControlsBtn.textContent = '⚙ Hide Controls';
+        }
+
+        // Force chart resize to fill space
+        if (comparisonChart) {
+            setTimeout(() => {
+                comparisonChart.resize();
+            }, 50); // Slight delay for DOM layout
+        }
+    });
 
     elements.toggleCompLogX.addEventListener('click', () => {
         state.chartConfig.comparison.xLog = !state.chartConfig.comparison.xLog;

@@ -135,8 +135,11 @@
         <div class="column" id="right-column">
             <div class="column-content-wrapper">
                 <div class="right-header">
-                    <h1>Measurement Plots</h1>
-                    <div class="chart-controls unified-controls">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h1>Measurement Plots</h1>
+                        <button id="toggle-chart-controls" class="toggle-btn" title="Toggle Controls">⚙ Hide Controls</button>
+                    </div>
+                    <div class="chart-controls unified-controls" id="comp-chart-controls">
                         <!-- Row 1: X-Axis | Scale -->
                         <div class="control-group">
                             <label>X-Axis:</label>
