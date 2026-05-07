@@ -1042,6 +1042,32 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.cancelEditBtn.addEventListener('click', cancelEditMode);
 
     elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement());
+    const preventWhitespace = (e) => {
+        if (e.key === ' ' || e.key === 'Tab') {
+            e.preventDefault();
+        }
+    };
+
+    const sanitizeWhitespace = (e) => {
+        const input = e.target;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const originalValue = input.value;
+        const sanitizedValue = originalValue.replace(/\s/g, '');
+
+        if (originalValue !== sanitizedValue) {
+            input.value = sanitizedValue;
+            // Try to maintain cursor position
+            const diff = originalValue.length - sanitizedValue.length;
+            input.setSelectionRange(start - diff, end - diff);
+        }
+    };
+
+    elements.activeMeasurementNameInput.addEventListener('keydown', preventWhitespace);
+    elements.activeMeasurementNameInput.addEventListener('input', sanitizeWhitespace);
+    elements.measurementSerialIdInput.addEventListener('keydown', preventWhitespace);
+    elements.measurementSerialIdInput.addEventListener('input', sanitizeWhitespace);
+
     elements.activeMeasurementNameInput.addEventListener('change', handleMeasurementRename);
     elements.activeMeasurementNameInput.addEventListener('input', () => {
         updateSaveButtonState();
