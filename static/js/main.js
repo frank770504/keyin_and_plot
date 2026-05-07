@@ -465,17 +465,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.isEditing) return;
 
         const liquidName = elements.activeMeasurementNameInput.value.trim();
-        const date = elements.measurementDateInput.value;
+        const date = elements.measurementDateInput.value.trim();
         const serialId = elements.measurementSerialIdInput.value.trim();
         const spindleId = elements.measurementSpindleSelect.value;
 
+        // Simple date format check: YYYY-MM-DD or YYYY/MM/DD
+        const dateRegex = /^\d{4}[-/]\d{2}[-/]\d{2}$/;
+        const isDateValid = dateRegex.test(date);
+
         // Toggle validation error class for visual feedback
         elements.activeMeasurementNameInput.classList.toggle('validation-error', !liquidName);
-        elements.measurementDateInput.classList.toggle('validation-error', !date);
+        elements.measurementDateInput.classList.toggle('validation-error', !isDateValid);
         elements.measurementSerialIdInput.classList.toggle('validation-error', !serialId);
         elements.measurementSpindleSelect.classList.toggle('validation-error', !spindleId);
 
-        const isValid = liquidName && date && serialId && spindleId;
+        const isValid = liquidName && isDateValid && serialId && spindleId;
         elements.editBtn.disabled = !isValid;
         elements.unsavedSaveBtn.disabled = !isValid;
     }

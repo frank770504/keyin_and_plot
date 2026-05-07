@@ -470,7 +470,7 @@ def add_measurement():
     db.session.flush()
 
     data = request.get_json() or {}
-    formula_id = data.get('formula_id', '').strip() or "New Measurement"
+    formula_id = "".join((data.get('formula_id') or "NewMeasurement").split())
 
     new_measurement = Measurement(
         formula_id=formula_id,
@@ -526,16 +526,16 @@ def update_measurement(measurement_id):
 
     data = request.get_json()
     if 'date' in data and data['date']:
+        date_str = data['date'].replace('/', '-')
         try:
-            measurement.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            measurement.date = datetime.strptime(date_str, '%Y-%m-%d').date()
         except (ValueError, TypeError):
             # Fallback or silent ignore if format is wrong, 
-            # though frontend should send YYYY-MM-DD
             pass
     elif 'date' in data:
         measurement.date = None
     if 'serial_id' in data:
-        measurement.serial_id = data['serial_id']
+        measurement.serial_id = "".join(str(data['serial_id']).split()) if data['serial_id'] else ""
     if 'experiment_note' in data:
         measurement.experiment_note = data['experiment_note']
     if 'spindle_id' in data:
@@ -549,7 +549,7 @@ def update_measurement(measurement_id):
                 p.shear_rate = p.shear_stress = None
 
     if 'formula_id' in data:
-        new_name = data['formula_id'].strip()
+        new_name = "".join(str(data['formula_id']).split())
         if new_name:
             measurement.formula_id = new_name
 
