@@ -185,7 +185,9 @@ def start_edit_mode(measurement_id):
         spindle_id=measurement.spindle_id,
         experiment_note=measurement.experiment_note,
         is_draft=True,
-        original_id=measurement.pkey
+        original_id=measurement.pkey,
+        edit_ip=request.remote_addr,
+        edit_date=datetime.now(UTC).isoformat()
     )
     db.session.add(draft_measurement)
     db.session.flush()
@@ -470,7 +472,13 @@ def add_measurement():
     data = request.get_json() or {}
     formula_id = data.get('formula_id', '').strip() or "New Measurement"
 
-    new_measurement = Measurement(formula_id=formula_id, is_draft=True, original_id=None)
+    new_measurement = Measurement(
+        formula_id=formula_id,
+        is_draft=True,
+        original_id=None,
+        edit_ip=request.remote_addr,
+        edit_date=datetime.now(UTC).isoformat()
+    )
     db.session.add(new_measurement)
     db.session.commit()
     return jsonify({
@@ -545,6 +553,9 @@ def update_measurement(measurement_id):
         if new_name:
             measurement.formula_id = new_name
 
+    measurement.edit_ip = request.remote_addr
+    measurement.edit_date = datetime.now(UTC).isoformat()
+
     db.session.commit()
     return jsonify({"message": "Updated successfully"}), 200
 
@@ -601,6 +612,10 @@ def add_point(measurement_id):
     new_p = Point(N=N, eta=eta, torque=torque, shear_rate=sr, shear_stress=ss,
                   is_draft=measurement.is_draft, measurement=measurement)
     db.session.add(new_p)
+
+    measurement.edit_ip = request.remote_addr
+    measurement.edit_date = datetime.now(UTC).isoformat()
+
     db.session.commit()
     return jsonify({"id": new_p.id, "shear_rate": sr, "shear_stress": ss}), 201
 
@@ -621,6 +636,10 @@ def delete_point(measurement_id, point_id):
         return jsonify({"error": "Point not found"}), 404
 
     db.session.delete(point)
+
+    measurement.edit_ip = request.remote_addr
+    measurement.edit_date = datetime.now(UTC).isoformat()
+
     db.session.commit()
     return jsonify({"message": "Point deleted"}), 200
 
@@ -654,6 +673,9 @@ def update_point(measurement_id, point_id):
         point.shear_stress = point.eta * point.shear_rate * 0.001
     else:
         point.shear_rate = point.shear_stress = None
+
+    measurement.edit_ip = request.remote_addr
+    measurement.edit_date = datetime.now(UTC).isoformat()
 
     db.session.commit()
     return jsonify({
