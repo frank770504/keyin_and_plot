@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Dialogs
         unsavedChangesDialog: document.getElementById('unsaved-changes-dialog'),
+        unsavedSaveBtn: document.getElementById('unsaved-save-btn'),
     };
 
     let activeChart = null;
@@ -300,23 +301,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Workspace & Active Measurement
     async function setActiveMeasurement(id) {
         // --- Handle Unsaved Changes ---
-        if (state.isEditing && state.activeMeasurement && state.isDirty) {
+        if (state.isEditing && state.activeMeasurement) {
+            const wasSame = (id === state.activeMeasurement);
             // If clicking a different measurement OR clicking the same one to deselect
             const action = await showUnsavedChangesDialog();
 
             if (action === 'save') {
                 await commitEditMode();
+                if (wasSame) return; // Already handled active measurement transition
             } else if (action === 'discard') {
                 await cancelEditMode();
+                if (wasSame) return; // Already handled active measurement transition
             } else {
                 // "stay" or dialog closed without action
                 refreshMeasurementList();
                 return;
-            }
-        } else if (state.isEditing && state.activeMeasurement && !state.isDirty) {
-            // Automatically cancel if not dirty AND we are switching to another measurement
-            if (id !== null) {
-                await cancelEditMode();
             }
         }
 
@@ -479,6 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isValid = liquidName && date && serialId && spindleId;
         elements.editBtn.disabled = !isValid;
+        elements.unsavedSaveBtn.disabled = !isValid;
     }
 
     function markDirty() {
@@ -488,8 +488,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleAddMeasurement() {
         if (state.isEditing) {
-            alert("Please save or cancel your current edit before adding a new measurement.");
-            return;
+            const action = await showUnsavedChangesDialog();
+            if (action === 'save') {
+                await commitEditMode();
+            } else if (action === 'discard') {
+                await cancelEditMode();
+            } else {
+                return;
+            }
         }
 
         if (elements.addMeasurementBtn.disabled) return;
