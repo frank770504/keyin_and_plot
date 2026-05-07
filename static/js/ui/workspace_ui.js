@@ -184,6 +184,12 @@ export function updateEditModeUI(elements) {
         elements.editBtn.disabled = false;
         elements.deleteMeasurementBtn.style.display = 'none';
         elements.cancelEditBtn.style.display = 'none';
+
+        // Clear validation errors
+        elements.activeMeasurementNameInput.classList.remove('validation-error');
+        elements.measurementDateInput.classList.remove('validation-error');
+        elements.measurementSerialIdInput.classList.remove('validation-error');
+        elements.measurementSpindleSelect.classList.remove('validation-error');
     }
 
     elements.measurementDateInput.disabled = !isEditing;

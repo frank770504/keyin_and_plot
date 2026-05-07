@@ -675,6 +675,24 @@ ul {
     resize: vertical;
 }
 
+.required-label::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.validation-error {
+    border-color: #dc3545 !important;
+    background-color: #fff8f8;
+}
+
+.validation-note {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 10px;
+    font-style: italic;
+}
+
 .input-area {
     margin: 20px 0;
 }

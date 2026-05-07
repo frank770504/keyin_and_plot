@@ -476,6 +476,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const serialId = elements.measurementSerialIdInput.value.trim();
         const spindleId = elements.measurementSpindleSelect.value;
 
+        // Toggle validation error class for visual feedback
+        elements.activeMeasurementNameInput.classList.toggle('validation-error', !liquidName);
+        elements.measurementDateInput.classList.toggle('validation-error', !date);
+        elements.measurementSerialIdInput.classList.toggle('validation-error', !serialId);
+        elements.measurementSpindleSelect.classList.toggle('validation-error', !spindleId);
+
         const isValid = liquidName && date && serialId && spindleId;
         elements.editBtn.disabled = !isValid;
         elements.unsavedSaveBtn.disabled = !isValid;
