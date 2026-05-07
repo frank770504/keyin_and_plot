@@ -54,10 +54,10 @@ export async function fetchMeasurements() {
     return fetchWithLock('/api/measurements');
 }
 
-export async function createMeasurement(liquidName) {
+export async function createMeasurement(formulaId) {
     return fetchWithLock('/api/measurements', {
         method: 'POST',
-        body: JSON.stringify({ liquid_name: liquidName })
+        body: JSON.stringify({ formula_id: formulaId })
     });
 }
 

@@ -12,7 +12,7 @@ Introduce a `MAPPING_CONFIG` object that defines exactly where data resides in t
 MAPPING_CONFIG = {
     "measurement": {
         "metadata": [
-            {"field": "liquid_name", "row": 0, "col": 1, "transform": str.strip},
+            {"field": "formula_id", "row": 0, "col": 1, "transform": str.strip},
             {"field": "date", "row": 1, "col": 1, "transform": parse_date}, # UI: Test Date
             {"field": "serial_id", "row": 2, "col": 1, "transform": str.strip},
             {"field": "experiment_note", "row": 0, "col": 3, "transform": str.strip}, # UI: Note
@@ -35,7 +35,7 @@ MAPPING_CONFIG = {
 - The core loop will iterate through `MAPPING_CONFIG["points"]` and dynamically build a dictionary for the `Point` model.
 
 ### C. Benefits
-1.  **Field Renaming**: If `liquid_name` becomes `sample_name` in the DB, only the `field` string in the config needs to change.
+1.  **Field Renaming**: If `formula_id` becomes `sample_name` in the DB, only the `field` string in the config needs to change.
 2.  **CSV Layout Shift**: If the lab adds a new header row and the data now starts at row 11, only `points_start_row` needs an update.
 3.  **New Data Columns**: Adding a new column (e.g., Temperature) is as simple as adding one line to the `points` mapping list.
 

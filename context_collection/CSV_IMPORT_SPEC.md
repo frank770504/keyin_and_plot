@@ -6,12 +6,12 @@ This specification outlines the logic for a one-time or utility script to import
 ## 2. Source Data Details
 - **Directory**: `measurement_csv_test/`
 - **Filename Pattern**: `${id}_${date} ${name}.csv`
-    - `id`: Integer (to be used as `Measurement.id`).
+    - `id`: Integer (to be used as `Measurement.pkey`).
     - `date`: Date string (e.g., `1028`).
     - `name`: Descriptive name.
 - **CSV Internal Structure**:
     - **Metadata (Fixed Rows)**:
-        - Row 0, Col 1: `Formula ID` $\rightarrow$ `liquid_name`
+        - Row 0, Col 1: `Formula ID` $\rightarrow$ `formula_id`
         - Row 1, Col 1: `Datae` or `Date` $\rightarrow$ `date` (UI: Test Date)
         - Row 2, Col 1: `Serial ID` $\rightarrow$ `serial_id`
         - Row 3, Col 1: `Note` (Optional) $\rightarrow$ `experiment_note` (UI: Note)
@@ -32,7 +32,7 @@ This specification outlines the logic for a one-time or utility script to import
 ### B. Parsing Workflow
 1.  **Identify Files**: Use `glob` to find all `.csv` files while ignoring temporary/lock files (e.g., `.~lock.*`).
 2.  **Metadata Extraction**:
-    - Parse the filename to extract the `id`.
+    - Parse the filename to extract the `pkey`.
     - Read rows 0–4 for measurement metadata.
     - Ensure the `date` string is correctly formatted (standardize to YYYY-MM-DD if the CSV value differs).
 3.  **Point Extraction**:
@@ -42,10 +42,10 @@ This specification outlines the logic for a one-time or utility script to import
         - Handle empty strings by converting to `None` or skipping rows if mandatory fields (RPM/Viscosity) are missing.
         - Ensure numerical values are cast to `float`.
 4.  **Database Integration**:
-    - Instantiate a `Measurement` object with the extracted `id`.
+    - Instantiate a `Measurement` object with the extracted `pkey`.
     - Create associated `Point` objects.
     - Use `db.session.add()` and `db.session.commit()`.
-    - **Safety**: Check for existing records with the same `id` before insertion to prevent `IntegrityError`.
+    - **Safety**: Check for existing records with the same `pkey` before insertion to prevent `IntegrityError`.
 
 ## 4. Execution Plan
 1.  **Alignment**: Review this specification.

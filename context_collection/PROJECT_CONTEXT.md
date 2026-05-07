@@ -78,17 +78,20 @@ The UI features a consistent three-column layout (Measurement List, Workspace, M
 - `last_heartbeat`: Timestamp for expiry tracking.
 
 ### Measurement
-- `liquid_name`: Unique identifier (string).
+- `pkey`: Unique identifier (Integer, primary key).
+- `formula_id`: Liquid identifier (string).
 - `date`: Test Date.
 - `serial_id`: Serial ID.
 - `experiment_note`: Note (text).
 - `spindle_id`: Selected spindle.
 - `is_draft`: Boolean flag.
-- `original_id`: Reference to original measurement if this is a draft.
+- `original_id`: Reference to original measurement pkey if this is a draft.
+- `edit_ip`: IP address of the last editor.
+- `edit_date`: Timestamp of the last edit.
 
 ### Point
 - `N`, `eta`, `torque`, `shear_rate`, `shear_stress`: Physical data.
-- `measurement_id`: Foreign key.
+- `measurement_pkey`: Foreign key to `measurements.pkey`.
 
 ## 6. API Endpoints (Summary)
 - **Locking**:

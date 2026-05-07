@@ -31,7 +31,7 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
     const tbody = elements.measurementListBody;
 
     // 1. Determine Column Order
-    const defaultOrder = ['plot', 'id', 'liquid_name', 'date', 'serial_id'];
+    const defaultOrder = ['plot', 'pkey', 'formula_id', 'date', 'serial_id'];
     const savedOrder = localStorage.getItem('table-column-order-measurements');
     const columnOrder = savedOrder ? JSON.parse(savedOrder) : defaultOrder;
 
@@ -48,7 +48,7 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
         const tr = document.createElement('tr');
         tr.addEventListener('click', (e) => {
             if (e.target.type === 'checkbox') return;
-            onSelect(measurement.id);
+            onSelect(measurement.pkey);
         });
 
         currentOrder.forEach(colId => {
@@ -58,9 +58,9 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
                     td.classList.add('checkbox-column');
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.checked = state.comparisonSelected.has(measurement.id);
+                    checkbox.checked = state.comparisonSelected.has(measurement.pkey);
                     checkbox.addEventListener('change', () => {
-                        toggleComparisonSelection(measurement.id);
+                        toggleComparisonSelection(measurement.pkey);
                         if (onComparisonToggle) onComparisonToggle();
                         updateMasterCheckbox(measurements);
                     });
@@ -70,11 +70,13 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
                         if (e.target !== checkbox) checkbox.click();
                     });
                     break;
+                case 'pkey':
                 case 'id':
-                    td.textContent = measurement.original_id || measurement.id;
+                    td.textContent = measurement.original_id || measurement.pkey;
                     break;
+                case 'formula_id':
                 case 'liquid_name':
-                    td.textContent = measurement.is_draft ? `${measurement.liquid_name} (Draft)` : measurement.liquid_name;
+                    td.textContent = measurement.is_draft ? `${measurement.formula_id} (Draft)` : measurement.formula_id;
                     break;
                 case 'date':
                     td.textContent = measurement.date || '';
@@ -86,7 +88,7 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
             tr.appendChild(td);
         });
 
-        if (measurement.id === state.activeMeasurement) tr.classList.add('active');
+        if (measurement.pkey === state.activeMeasurement) tr.classList.add('active');
         if (measurement.is_draft) tr.classList.add('measurement-draft');
 
         tbody.appendChild(tr);
@@ -105,7 +107,7 @@ export function updateMasterCheckbox(visibleMeasurements) {
         return;
     }
 
-    const selectedVisible = visibleMeasurements.filter(m => state.comparisonSelected.has(m.id));
+    const selectedVisible = visibleMeasurements.filter(m => state.comparisonSelected.has(m.pkey));
 
     if (selectedVisible.length === 0) {
         masterCheckbox.checked = false;

@@ -8,7 +8,8 @@ class GlobalLock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(100), nullable=False)
     session_id = db.Column(db.String(100), nullable=False, unique=True)
-    last_heartbeat = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC).replace(tzinfo=None))
+    last_heartbeat = db.Column(db.DateTime, nullable=False,
+                               default=lambda: datetime.now(UTC).replace(tzinfo=None))
 
     def is_stale(self, timeout_seconds=120):
         now = datetime.now(UTC).replace(tzinfo=None)
@@ -17,19 +18,22 @@ class GlobalLock(db.Model):
 
 class Measurement(db.Model):
     __tablename__ = 'measurements'
-    id = db.Column(db.Integer, primary_key=True)
-    liquid_name = db.Column(db.String(100), unique=False, nullable=False)
+    pkey = db.Column(db.Integer, primary_key=True)
+    formula_id = db.Column(db.String(100), unique=False, nullable=False)
     date = db.Column(db.Date, nullable=True)
     serial_id = db.Column(db.String(100), nullable=True)
     spindle_id = db.Column(db.String(50), nullable=True)
     experiment_note = db.Column(db.Text, nullable=True)
     is_draft = db.Column(db.Boolean, default=False)
     original_id = db.Column(db.Integer, nullable=True)
-    # Draft-related session columns removed
-    points = db.relationship('Point', backref='measurement', cascade="all, delete-orphan", lazy=True)
+    edit_ip = db.Column(db.String(45), nullable=True, default=None)
+    edit_date = db.Column(db.String(100), nullable=True)
+
+    points = db.relationship('Point', backref='measurement',
+                             cascade="all, delete-orphan", lazy=True)
 
     def __repr__(self):
-        return f'<Measurement {self.liquid_name} (Draft: {self.is_draft})>'
+        return f'<Measurement {self.formula_id} (Draft: {self.is_draft})>'
 
 
 class Point(db.Model):
@@ -42,7 +46,8 @@ class Point(db.Model):
     shear_stress = db.Column(db.Float, nullable=True)
     is_draft = db.Column(db.Boolean, default=False)
     original_id = db.Column(db.Integer, nullable=True)
-    measurement_id = db.Column(db.Integer, db.ForeignKey('measurements.id'), nullable=False)
+    measurement_pkey = db.Column(
+        db.Integer, db.ForeignKey('measurements.pkey'), nullable=False)
 
     def __repr__(self):
         return f'<Point(N={self.N}, eta={self.eta})>'

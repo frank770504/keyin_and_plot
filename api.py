@@ -18,19 +18,19 @@ SPINDLE_ID2FACTOR = {
 }
 
 
-def get_best_measurement(measurement_id):
+def get_best_measurement(measurement_pkey):
     """Helper to return the draft if it exists, otherwise the original."""
     # If we are looking for a specific ID, it might be a draft or a production record.
     # In the single-editor model, there is only one draft.
     # If the requested ID is for an original, we should check if a draft exists for it.
 
-    m = Measurement.query.get(measurement_id)
+    m = db.session.get(Measurement, measurement_pkey)
     if not m:
         return None
 
     if not m.is_draft:
         # Check if there is a draft referencing this original
-        draft = Measurement.query.filter_by(original_id=m.id, is_draft=True).first()
+        draft = Measurement.query.filter_by(original_id=m.pkey, is_draft=True).first()
         if draft:
             return draft
     return m
@@ -164,24 +164,28 @@ def start_edit_mode(measurement_id):
             db.session.delete(d)
     db.session.flush()
 
-    measurement = Measurement.query.filter_by(id=measurement_id, is_draft=False).first()
+    measurement = Measurement.query.filter_by(pkey=measurement_id, is_draft=False).first()
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
     # Check if a draft already exists for THIS measurement
     existing_draft = Measurement.query.filter_by(original_id=measurement_id, is_draft=True).first()
     if existing_draft:
-        return jsonify({"message": "Draft already exists", "is_draft": True}), 200
+        return jsonify({
+            "message": "Draft already exists",
+            "is_draft": True,
+            "pkey": existing_draft.pkey
+        }), 200
 
     # Create the draft measurement
     draft_measurement = Measurement(
-        liquid_name=measurement.liquid_name,
+        formula_id=measurement.formula_id,
         date=measurement.date,
         serial_id=measurement.serial_id,
         spindle_id=measurement.spindle_id,
         experiment_note=measurement.experiment_note,
         is_draft=True,
-        original_id=measurement.id
+        original_id=measurement.pkey
     )
     db.session.add(draft_measurement)
     db.session.flush()
@@ -203,7 +207,7 @@ def start_edit_mode(measurement_id):
     return jsonify({
         "message": "Draft created successfully",
         "is_draft": True,
-        "id": draft_measurement.id
+        "pkey": draft_measurement.pkey
     }), 201
 
 
@@ -214,17 +218,19 @@ def duplicate_measurement(measurement_id):
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    original = Measurement.query.filter_by(id=measurement_id, is_draft=False).first()
+    original = Measurement.query.filter_by(pkey=measurement_id, is_draft=False).first()
     if not original:
         return jsonify({"error": "Measurement not found"}), 404
 
     new_measurement = Measurement(
-        liquid_name=f"{original.liquid_name} (Copy)",
+        formula_id=f"{original.formula_id} (Copy)",
         date=original.date,
         serial_id=original.serial_id,
         spindle_id=original.spindle_id,
         experiment_note=original.experiment_note,
-        is_draft=False
+        is_draft=False,
+        edit_ip=request.remote_addr,
+        edit_date=datetime.now(UTC).isoformat()
     )
     db.session.add(new_measurement)
     db.session.flush()
@@ -244,7 +250,7 @@ def duplicate_measurement(measurement_id):
     db.session.commit()
     return jsonify({
         "message": "Measurement duplicated successfully",
-        "new_id": new_measurement.id
+        "new_pkey": new_measurement.pkey
     }), 201
 
 
@@ -255,7 +261,7 @@ def commit_edit_mode(measurement_id):
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    draft = Measurement.query.filter_by(id=measurement_id, is_draft=True).first()
+    draft = Measurement.query.filter_by(pkey=measurement_id, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to commit"}), 404
 
@@ -263,25 +269,29 @@ def commit_edit_mode(measurement_id):
         # Case: New Measurement Creation
         # Promote draft to production
         draft.is_draft = False
+        draft.edit_ip = request.remote_addr
+        draft.edit_date = datetime.now(UTC).isoformat()
         for p in draft.points:
             p.is_draft = False
         db.session.commit()
         return jsonify({
             "message": "New measurement created successfully",
-            "id": draft.id
+            "pkey": draft.pkey
         }), 201
 
     # Case: Editing existing measurement
-    original = Measurement.query.get(draft.original_id)
+    original = db.session.get(Measurement, draft.original_id)
     if not original:
         return jsonify({"error": "Original measurement not found"}), 404
 
     # Update original metadata
-    original.liquid_name = draft.liquid_name
+    original.formula_id = draft.formula_id
     original.date = draft.date
     original.serial_id = draft.serial_id
     original.spindle_id = draft.spindle_id
     original.experiment_note = draft.experiment_note
+    original.edit_ip = request.remote_addr
+    original.edit_date = datetime.now(UTC).isoformat()
 
     # --- Sync points ---
     original_points_map = {p.id: p for p in original.points}
@@ -314,7 +324,7 @@ def commit_edit_mode(measurement_id):
 
     db.session.delete(draft)
     db.session.commit()
-    return jsonify({"message": "Changes committed successfully", "id": original.id}), 200
+    return jsonify({"message": "Changes committed successfully", "pkey": original.pkey}), 200
 
 
 @api_bp.route('/measurements/<int:measurement_id>/edit/rollback', methods=['POST'])
@@ -324,7 +334,7 @@ def rollback_edit_mode(measurement_id):
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    draft = Measurement.query.filter_by(id=measurement_id, is_draft=True).first()
+    draft = Measurement.query.filter_by(pkey=measurement_id, is_draft=True).first()
     if not draft:
         return jsonify({"error": "No draft found to rollback"}), 404
 
@@ -426,7 +436,7 @@ def get_measurements():
     draft_original_id = active_draft.original_id if active_draft else None
 
     for m in production_measurements:
-        if m.id == draft_original_id:
+        if m.pkey == draft_original_id:
             # Skip the original because we will add the draft instead
             continue
         results.append(m)
@@ -435,11 +445,12 @@ def get_measurements():
         results.append(active_draft)
 
     return jsonify([{
-        "id": d.id, "liquid_name": d.liquid_name,
+        "pkey": d.pkey, "formula_id": d.formula_id,
         "date": d.date.isoformat() if d.date else None,
         "serial_id": d.serial_id, "spindle_id": d.spindle_id,
         "experiment_note": d.experiment_note,
-        "is_draft": d.is_draft, "original_id": d.original_id
+        "is_draft": d.is_draft, "original_id": d.original_id,
+        "edit_ip": d.edit_ip, "edit_date": d.edit_date
     } for d in results])
 
 
@@ -457,15 +468,15 @@ def add_measurement():
     db.session.flush()
 
     data = request.get_json() or {}
-    liquid_name = data.get('liquid_name', '').strip() or "New Measurement"
+    formula_id = data.get('formula_id', '').strip() or "New Measurement"
 
-    new_measurement = Measurement(liquid_name=liquid_name, is_draft=True, original_id=None)
+    new_measurement = Measurement(formula_id=formula_id, is_draft=True, original_id=None)
     db.session.add(new_measurement)
     db.session.commit()
     return jsonify({
-        "message": f"Measurement '{liquid_name}' initialized as draft",
-        "id": new_measurement.id,
-        "liquid_name": liquid_name
+        "message": f"Measurement '{formula_id}' initialized as draft",
+        "pkey": new_measurement.pkey,
+        "formula_id": formula_id
     }), 201
 
 
@@ -477,8 +488,8 @@ def get_measurement(measurement_id):
         return jsonify({"error": "Measurement not found"}), 404
 
     return jsonify({
-        "id": measurement.id,
-        "liquid_name": measurement.liquid_name,
+        "pkey": measurement.pkey,
+        "formula_id": measurement.formula_id,
         "points": [{
             "id": p.id, "N": p.N, "eta": p.eta, "torque": p.torque,
             "shear_rate": p.shear_rate, "shear_stress": p.shear_stress
@@ -488,7 +499,9 @@ def get_measurement(measurement_id):
         "spindle_id": measurement.spindle_id,
         "experiment_note": measurement.experiment_note,
         "is_draft": measurement.is_draft,
-        "original_id": measurement.original_id
+        "original_id": measurement.original_id,
+        "edit_ip": measurement.edit_ip,
+        "edit_date": measurement.edit_date
     })
 
 
@@ -527,10 +540,10 @@ def update_measurement(measurement_id):
             else:
                 p.shear_rate = p.shear_stress = None
 
-    if 'liquid_name' in data:
-        new_name = data['liquid_name'].strip()
+    if 'formula_id' in data:
+        new_name = data['formula_id'].strip()
         if new_name:
-            measurement.liquid_name = new_name
+            measurement.formula_id = new_name
 
     db.session.commit()
     return jsonify({"message": "Updated successfully"}), 200
@@ -543,13 +556,13 @@ def delete_measurement(measurement_id):
     if not success:
         return jsonify({"error": f"Permission denied: {error}"}), 403
 
-    m = Measurement.query.get(measurement_id)
+    m = db.session.get(Measurement, measurement_id)
     if not m:
         return jsonify({"error": "Measurement not found"}), 404
 
     if not m.is_draft:
         # Also delete any associated draft
-        draft = Measurement.query.filter_by(original_id=m.id, is_draft=True).first()
+        draft = Measurement.query.filter_by(original_id=m.pkey, is_draft=True).first()
         if draft:
             db.session.delete(draft)
         db.session.delete(m)
@@ -603,7 +616,7 @@ def delete_point(measurement_id, point_id):
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
-    point = Point.query.filter_by(id=point_id, measurement_id=measurement.id).first()
+    point = Point.query.filter_by(id=point_id, measurement_pkey=measurement.pkey).first()
     if not point:
         return jsonify({"error": "Point not found"}), 404
 
@@ -623,7 +636,7 @@ def update_point(measurement_id, point_id):
     if not measurement:
         return jsonify({"error": "Measurement not found"}), 404
 
-    point = Point.query.filter_by(id=point_id, measurement_id=measurement.id).first()
+    point = Point.query.filter_by(id=point_id, measurement_pkey=measurement.pkey).first()
     if not point:
         return jsonify({"error": "Point not found"}), 404
 

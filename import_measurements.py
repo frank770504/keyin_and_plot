@@ -10,6 +10,7 @@ from models import db, Measurement, Point
 # Configuration-driven mapping for easy maintenance
 # Update this object if the CSV layout or Database field names change.
 
+
 def parse_date(date_str):
     """Convert date string to a date object."""
     formats = ["%m/%d/%Y", "%d.%m.%Y", "%Y-%m-%d"]
@@ -20,6 +21,7 @@ def parse_date(date_str):
             continue
     return None
 
+
 def safe_float(val):
     """Safely convert string to float, handling commas."""
     if not val or not val.strip():
@@ -29,16 +31,18 @@ def safe_float(val):
     except ValueError:
         return None
 
+
 def safe_percent(val):
     """Safely convert percentage string to float."""
     if not val or not val.strip():
         return None
     return safe_float(val.replace('%', ''))
 
+
 MAPPING_CONFIG = {
     "measurement": {
         "metadata": [
-            {"field": "liquid_name", "row": 0, "col": 1, "transform": str.strip},
+            {"field": "formula_id", "row": 0, "col": 1, "transform": str.strip},
             {"field": "date", "row": 1, "col": 1, "transform": parse_date},
             {"field": "serial_id", "row": 2, "col": 1, "transform": str.strip},
             {"field": "experiment_note", "row": 0, "col": 3, "transform": str.strip},
@@ -54,6 +58,7 @@ MAPPING_CONFIG = {
         {"field": "shear_stress", "col": 6, "transform": safe_float},
     ]
 }
+
 
 def import_csv(file_path):
     filename = os.path.basename(file_path)
@@ -78,7 +83,12 @@ def import_csv(file_path):
             return
 
         # Extract Measurement Metadata
-        meas_data = {"id": meas_id, "is_draft": False}
+        meas_data = {
+            "pkey": meas_id,
+            "is_draft": False,
+            "edit_ip": None,
+            "edit_date": datetime.now().isoformat()
+        }
         for item in MAPPING_CONFIG["measurement"]["metadata"]:
             try:
                 if item["field"] == "experiment_note":
@@ -127,7 +137,8 @@ def import_csv(file_path):
                 continue
 
         db.session.commit()
-        print(f"Imported ID {meas_id} | {meas_data['liquid_name']} | {points_added} points")
+        print(f"Imported PKEY {meas_id} | {meas_data['formula_id']} | {points_added} points")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Import Rheology CSV files into project.db")
@@ -156,6 +167,7 @@ def main():
         for f in sorted(csv_files):
             import_csv(f)
         print("Done.")
+
 
 if __name__ == '__main__':
     main()

@@ -329,9 +329,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Select
             // Check if the measurement still exists (it might have been a cancelled draft)
-            const m = state.allMeasurements.find(m => m.id === id);
+            const m = state.allMeasurements.find(m => m.pkey === id);
             if (!m) {
-                if (id !== null) console.warn(`Measurement ID ${id} not found in state.`);
+                if (id !== null) console.warn(`Measurement PKEY ${id} not found in state.`);
                 return;
             }
 
@@ -346,8 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
             workspaceUI.updateEditModeUI(elements);
 
             // Temporary name display until data is loaded
-            const logicalId = m.original_id || m.id;
-            elements.activeMeasurementName.textContent = m.liquid_name || `ID: ${logicalId}`;
+            const logicalId = m.original_id || m.pkey;
+            elements.activeMeasurementName.textContent = m.formula_id || `ID: ${logicalId}`;
 
             await loadActiveMeasurementData();
         }
@@ -360,11 +360,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data = await api.fetchMeasurementData(state.activeMeasurement);
             const points = data.points;
-            const logicalId = data.original_id || data.id;
+            const logicalId = data.original_id || data.pkey;
 
             elements.activeMeasurementId.value = logicalId;
-            elements.activeMeasurementName.textContent = data.liquid_name;
-            elements.activeMeasurementNameInput.value = data.liquid_name;
+            elements.activeMeasurementName.textContent = data.formula_id;
+            elements.activeMeasurementNameInput.value = data.formula_id;
             elements.measurementDateInput.value = data.date || '';
             elements.measurementSerialIdInput.value = data.serial_id || '';
             elements.measurementNoteInput.value = data.experiment_note || '';
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.activeMeasurement) return;
 
         const points = measurementData.points;
-        const displayName = `${measurementData.liquid_name} - ${measurementData.id}`;
+        const displayName = `${measurementData.formula_id} - ${measurementData.pkey}`;
 
         const datasets = [{
             label: displayName,
@@ -516,12 +516,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Create a draft with a default name on the backend
             const result = await api.createMeasurement("New Measurement");
-            const newId = result.id;
-            const liquidName = result.liquid_name;
+            const newId = result.pkey;
+            const formulaId = result.formula_id;
 
             // Update local state and UI to point to this new measurement
             stateManager.setActiveMeasurement(newId);
-            elements.activeMeasurementName.textContent = liquidName;
+            elements.activeMeasurementName.textContent = formulaId;
 
             // CLEAR INPUTS as per request
             elements.activeMeasurementId.value = newId; // Show the new ID
@@ -570,8 +570,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!targetId) return;
 
         // Use the logical ID (original if available) for the confirmation message
-        const m = state.allMeasurements.find(item => item.id === targetId);
-        const displayName = m ? m.liquid_name : `ID: ${targetId}`;
+        const m = state.allMeasurements.find(item => item.pkey === targetId);
+        const displayName = m ? m.formula_id : `ID: ${targetId}`;
 
         if (confirm(`Are you sure you want to delete "${displayName}"?`)) {
             const lockAcquired = await ensureLock();
@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const result = await api.startEditMode(state.activeMeasurement);
-            const draftId = result.id;
+            const draftId = result.pkey;
 
             stateManager.setEditingOriginalId(state.activeMeasurement); // Store for potential rollback
             stateManager.setActiveMeasurement(draftId); // Backend returned the draft ID
@@ -655,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await Promise.all(syncPromises);
 
             const response = await api.commitEditMode(state.activeMeasurement);
-            const finalId = response.id || state.activeMeasurement;
+            const finalId = response.pkey || state.activeMeasurement;
 
             stateManager.setEditing(false);
             stateManager.setEditingOriginalId(null);
@@ -715,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!newName) return;
 
         try {
-            await api.updateMeasurementMetadata(state.activeMeasurement, { liquid_name: newName });
+            await api.updateMeasurementMetadata(state.activeMeasurement, { formula_id: newName });
             elements.activeMeasurementName.textContent = newName;
             loadAndRenderMeasurements(); // Refresh list
         } catch (error) {
@@ -936,9 +936,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         visibleMeasurements.forEach(m => {
             if (shouldSelect) {
-                state.comparisonSelected.add(m.id);
+                state.comparisonSelected.add(m.pkey);
             } else {
-                state.comparisonSelected.delete(m.id);
+                state.comparisonSelected.delete(m.pkey);
             }
         });
 

@@ -293,8 +293,8 @@ export async function getSelectedMeasurementsForChart(measurementIds, options = 
         }
 
         const pointsArray = measurementData.points;
-        const logicalId = measurementData.original_id || measurementData.id;
-        const displayName = `${measurementData.liquid_name} - ${logicalId}`;
+        const logicalId = measurementData.original_id || measurementData.pkey;
+        const displayName = `${measurementData.formula_id} - ${logicalId}`;
         const color = getDynamicColor(i);
         const pointStyle = POINT_STYLES[i % POINT_STYLES.length];
 

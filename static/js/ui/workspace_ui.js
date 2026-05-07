@@ -169,8 +169,8 @@ export function updateEditModeUI(elements) {
         elements.activeMeasurementNameInput.style.display = 'block';
         // The value will be set by loadActiveMeasurementData, but as a fallback:
         if (state.activeMeasurement && !elements.activeMeasurementNameInput.value) {
-             const m = state.allMeasurements.find(m => m.id === state.activeMeasurement);
-             if (m) elements.activeMeasurementNameInput.value = m.liquid_name;
+             const m = state.allMeasurements.find(m => m.pkey === state.activeMeasurement);
+             if (m) elements.activeMeasurementNameInput.value = m.formula_id;
         }
 
         elements.deleteMeasurementBtn.style.display = 'inline-block';

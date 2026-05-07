@@ -11,7 +11,7 @@ const state = {
     allMeasurements: [],
     activeMeasurement: null, // Now stores ID
     isEditing: false,
-    sortState: { column: 'liquid_name', direction: 'asc' },
+    sortState: { column: 'formula_id', direction: 'asc' },
     measurementFilter: '',
     userName: localStorage.getItem('userName') || null,
     sessionID: sessionStorage.getItem('sessionID') || generateSessionId(),

@@ -417,11 +417,11 @@ ul {
     text-align: center;
 }
 
-#measurement-list-table th[data-col-id="id"] {
+#measurement-list-table th[data-col-id="pkey"] {
     width: 35px;
 }
 
-#measurement-list-table th[data-col-id="liquid_name"] {
+#measurement-list-table th[data-col-id="formula_id"] {
     width: 100px;
 }
 

@@ -53,3 +53,50 @@ Follow these steps to set up and run the project locally.
 2.  **Access the application:**
     Open your web browser and navigate to:
     [http://127.0.0.1:5001](http://127.0.0.1:5001)
+
+## API Testing Examples
+
+You can test the backend API using `curl`. Most write operations require an `X-Session-ID` header and the Global Editor Lock.
+
+### 1. Measurements
+*   **List Measurements**:
+    ```bash
+    curl http://127.0.0.1:5001/api/measurements
+    ```
+*   **Get Single Measurement (Metadata + Points)**:
+    ```bash
+    curl http://127.0.0.1:5001/api/measurements/1
+    ```
+
+### 2. Lock Management
+*   **Check Lock Status**:
+    ```bash
+    curl -H "X-Session-ID: test-session" http://127.0.0.1:5001/api/lock
+    ```
+*   **Acquire Lock**:
+    ```bash
+    curl -X POST -H "Content-Type: application/json" \
+         -H "X-Session-ID: test-session" \
+         -d '{"user_name": "Tester", "session_id": "test-session"}' \
+         http://127.0.0.1:5001/api/lock/acquire
+    ```
+
+### 3. Editing Workflow (Draft-First)
+*   **Start Edit Mode (Create Draft)**:
+    ```bash
+    curl -X POST -H "X-Session-ID: test-session" \
+         http://127.0.0.1:5001/api/measurements/1/edit/start
+    ```
+*   **Update Draft Metadata**:
+    ```bash
+    curl -X PUT -H "Content-Type: application/json" \
+         -H "X-Session-ID: test-session" \
+         -d '{"formula_id": "New Formula Name"}' \
+         http://127.0.0.1:5001/api/measurements/1
+    ```
+*   **Commit Changes**:
+    ```bash
+    curl -X POST -H "X-Session-ID: test-session" \
+         http://127.0.0.1:5001/api/measurements/1/edit/commit
+    ```
+
