@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Right Column
         resetZoomBtn: document.getElementById('reset-zoom-btn'),
         comparisonChartTitle: document.getElementById('comparison-chart-title'),
+        comparisonChartContainer: document.getElementById('comparison-chart-container'),
+        saveChartBtn: document.getElementById('save-chart-btn'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
         toggleChartControlsBtn: document.getElementById('toggle-chart-controls'),
@@ -910,6 +912,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    async function handleSaveChart() {
+        if (!elements.comparisonChartContainer) return;
+
+        const originalBtnText = elements.saveChartBtn.textContent;
+        elements.saveChartBtn.textContent = '⌛ Exporting...';
+        elements.saveChartBtn.disabled = true;
+
+        try {
+            // Options for dom-to-image-more
+            const options = {
+                bgcolor: '#ffffff',
+                filter: (node) => {
+                    // Skip the reset zoom button
+                    if (node.id === 'reset-zoom-btn') return false;
+                    return true;
+                }
+            };
+
+            // Use the global domtoimage provided by the script tag
+            const dataUrl = await domtoimage.toPng(elements.comparisonChartContainer, options);
+            
+            const link = document.createElement('a');
+            const title = elements.comparisonChartTitle.value.trim() || 'Rheology_Compare';
+            const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            link.download = `${filename}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to save chart image.');
+        } finally {
+            elements.saveChartBtn.textContent = originalBtnText;
+            elements.saveChartBtn.disabled = false;
+        }
+    }
+
     async function handleDrawSelected() {
         renderCustomCurvesList(); // Always refresh the management list
         const selectedIds = Array.from(state.comparisonSelected);
@@ -1076,6 +1114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.cancelEditBtn.addEventListener('click', cancelEditMode);
 
     elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement());
+    elements.saveChartBtn.addEventListener('click', handleSaveChart);
     const preventWhitespace = (e) => {
         if (e.key === ' ' || e.key === 'Tab') {
             e.preventDefault();

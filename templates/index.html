@@ -169,6 +169,7 @@
                             <label>Regression:</label>
                             <label class="checkbox-label"><input type="checkbox" id="comp-include-linear"> Linear</label>
                             <label class="checkbox-label"><input type="checkbox" id="comp-include-power" checked> Power</label>
+                            <button id="save-chart-btn" class="toggle-btn small" style="margin-left: 10px; background-color: #17a2b8; color: white; border-color: #17a2b8;">💾 Save PNG</button>
                         </div>
 
                         <!-- Row 3: Custom Curve -->
@@ -257,6 +258,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@2.9.5/dist/dom-to-image-more.min.js"></script>
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
