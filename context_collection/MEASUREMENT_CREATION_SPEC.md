@@ -28,11 +28,14 @@ The "Draft-First" workflow streamlines measurement creation by initializing a te
 - **Race Condition Prevention**: The "Create Measurement" button is immediately disabled upon click and re-enabled in a `finally` block to prevent multiple concurrent draft creation requests.
 - **State Validation**: If `state.isEditing` is already true, creation is blocked and an alert is shown.
 - **State Transition**: Immediately sets `state.isEditing = true` and `state.editingOriginalName = null` (signaling a new record).
-- **UI Reset & Update**: Clears all workspace inputs (Name, Test Date, Serial ID, Note, and Spindle) to ensure a blank slate. Critically, the `active-measurement-id` field is explicitly set to the `newId` returned by the API.
-- **Validation**: Disables the "Save" button (grey/unclickable) until all four mandatory fields (Name, Test Date, Serial ID, Spindle) are populated.
+- **UI Reset & Update**: Clears all workspace inputs (Liquid Name, Test Date, Serial ID, Note, and Spindle) to ensure a blank slate. Critically, the `active-measurement-id` field is explicitly set to the `newId` returned by the API.
+- **Validation Indicators**: 
+    - Mandatory fields (Liquid Name, Test Date, Serial ID, Spindle) are marked with an asterisk (`*`) on their labels or placeholders.
+    - During editing, empty mandatory fields are dynamically highlighted with a red border and light red background (`.validation-error`).
+- **Validation**: Disables the "Save" button (grey/unclickable) until all four mandatory fields are populated.
 
 ### B. Persistence & Sync
-- **Mandatory Fields**: The "Save" button is dynamically enabled/disabled based on the presence of a Name, Test Date, Serial ID, and Spindle ID.
+- **Mandatory Fields**: The "Save" button is dynamically enabled/disabled based on the presence of a Liquid Name, Test Date, Serial ID, and Spindle ID.
 - **Pre-Commit Sync**: When "Save" is clicked, the system iterates through all table rows and ensures `syncTableRow()` is completed for each before calling the `commit` API.
 - **Real-time Feedback**: Shear Rate and Shear Stress are calculated on the backend as points are added to the draft and updated in the UI via the `sync` response.
 

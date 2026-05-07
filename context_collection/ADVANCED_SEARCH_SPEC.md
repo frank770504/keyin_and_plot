@@ -7,7 +7,7 @@ The Advanced Search system replaces the standard text filter with a robust query
 
 ### A. Field Prefixes
 Specific metadata fields can be targeted using a colon (`:`) separator:
-- `name:<string>`: Matches the measurement name.
+- `name:<string>`: Matches the liquid name.
 - `date:<string>`: Matches the test date string.
 - `serial:<string>`: Matches the Serial ID.
 - `note:<string>`: Matches the notes.

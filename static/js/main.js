@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     stateManager.setEditingOriginalId(null);
 
                     workspaceUI.toggleCenterColumn(elements, false);
-                    elements.activeMeasurementName.textContent = 'No Measurement Selected';
+                    elements.activeMeasurementName.textContent = 'No Liquid Selected';
                     elements.editBtn.textContent = 'Edit';
                     elements.cancelEditBtn.style.display = 'none';
                     workspaceUI.updateEditModeUI(elements);
@@ -681,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isNewMeasurement) {
                 stateManager.setActiveMeasurement(null);
-                elements.activeMeasurementName.textContent = 'No Measurement Selected';
+                elements.activeMeasurementName.textContent = 'No Liquid Selected';
                 workspaceUI.toggleCenterColumn(elements, false);
             } else {
                 stateManager.setActiveMeasurement(state.editingOriginalId);
