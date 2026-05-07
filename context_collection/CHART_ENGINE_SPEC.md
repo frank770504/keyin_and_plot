@@ -41,6 +41,7 @@ The Unified Reactive Chart Engine provides a high-performance, consistent visual
 Both chart interfaces implement an identical control bar:
 - **Scale Toggles**: `X-Log` and `Y-Log` buttons.
 - **Regression Toggles**: `Linear` and `Power` law checkboxes.
+- **Custom Curve Management**: A dynamic list of badges for active custom curves, each providing a delete button (×) for individual removal.
 - **Viewport Control**: A `Reset Zoom` button (⟲) that appears on hover/interaction to restore auto-fitted scales.
 
 ## 5. Implementation Details

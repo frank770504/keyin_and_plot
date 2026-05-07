@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         compYMax: document.getElementById('comp-y-max'),
         applyYLimits: document.getElementById('apply-y-limits'),
         clearYLimits: document.getElementById('clear-y-limits'),
+        customCurvesList: document.getElementById('custom-curves-list'),
 
         // Layout
         leftColumn: document.getElementById('left-column'),
@@ -881,7 +882,35 @@ document.addEventListener('DOMContentLoaded', () => {
         await syncTableRow(tr);
     }
 
+    function renderCustomCurvesList() {
+        if (!elements.customCurvesList) return;
+        elements.customCurvesList.innerHTML = '';
+
+        state.chartConfig.comparison.customCurves.forEach(curve => {
+            const badge = document.createElement('div');
+            badge.className = 'custom-curve-badge';
+            badge.style.borderLeft = `4px solid ${curve.color}`;
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = curve.name;
+            badge.appendChild(nameSpan);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.className = 'delete-curve-btn';
+            deleteBtn.addEventListener('click', () => {
+                state.chartConfig.comparison.customCurves = state.chartConfig.comparison.customCurves.filter(c => c.id !== curve.id);
+                renderCustomCurvesList();
+                handleDrawSelected();
+            });
+            badge.appendChild(deleteBtn);
+
+            elements.customCurvesList.appendChild(badge);
+        });
+    }
+
     async function handleDrawSelected() {
+        renderCustomCurvesList(); // Always refresh the management list
         const selectedIds = Array.from(state.comparisonSelected);
         if (selectedIds.length === 0) {
             if (comparisonChart) {
@@ -1212,6 +1241,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.clearCustomCurvesBtn.addEventListener('click', () => {
         state.chartConfig.comparison.customCurves = [];
+        renderCustomCurvesList();
         updateCompChart();
     });
 
