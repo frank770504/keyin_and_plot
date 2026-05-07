@@ -41,14 +41,18 @@ The application enforces a single-editor workflow to ensure data integrity:
 
 ### B. Draft System
 Used to prevent direct modification of production records and streamline creation:
-1.  **Edit Start**: Clones an existing `Measurement` into a new record with `is_draft=True`. To maintain the single-editor model, any pre-existing orphaned drafts for other measurements are deleted first.
-2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). To prevent ID inflation and enforce the single-editor model, all existing orphaned drafts are explicitly purged from the database before the new draft is created. The workspace inputs (Formula ID, Test Date, SID, Note, Spindle) are cleared, the UI ID is explicitly set to the new database Pkey, and the "Save" button is disabled until all mandatory fields are filled.
+1.  **Edit Start**: Clones an existing `Measurement` into a new record with `is_draft=True`. To maintain the single-editor model, any pre-existing orphaned drafts for other measurements are deleted first. The draft is initialized with the current editor's IP and UTC timestamp.
+2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). To prevent ID inflation and enforce the single-editor model, all existing orphaned drafts are explicitly purged from the database before the new draft is created. The workspace inputs (Formula ID, Test Date, SID, Note, Spindle) are cleared, the UI ID is explicitly set to the new database Pkey, and the "Save" button is disabled until all mandatory fields are filled. The default Formula ID is "NewMeasurement" to ensure a whitespace-free start.
 3.  **Visual Validation**: Mandatory fields are marked with an asterisk (`*`). During edit mode, empty mandatory fields are highlighted with a red border (`.validation-error`) to provide immediate feedback.
-4.  **Commit**: Merges draft changes back to the original or "promotes" a new draft to production by flipping the `is_draft` flag.
-5.  **Rollback**: Deletes the draft.
+4.  **Field Constraints**:
+    *   **Formula ID (FID)** and **Serial ID (SID)**: Spaces and tabs are strictly forbidden. The UI blocks these keys and sanitizes pasted content; the backend strips all whitespace before saving.
+    *   **Test Date**: Uses a text input supporting both `YYYY-MM-DD` and `YYYY/MM/DD` formats.
+5.  **Commit**: Merges draft changes back to the original or "promotes" a new draft to production by flipping the `is_draft` flag. This also records the final commit IP and timestamp.
+6.  **Rollback**: Deletes the draft.
 
 ### C. Real-time Data Entry & Sync
 - **Data points**: Syncs data to the backend as the user types (on `change` events).
+- **Edit Tracking**: Any modification to data points or metadata immediately updates the measurement's `edit_ip` and `edit_date` (UTC).
 - **Batch Sync**: On "Save", the frontend ensures all rows are synced before the final commit.
 - **Auto-Calculation**: Backend calculates Shear Rate and Shear Stress in real-time based on `N` (RPM), `eta` (mPa·s), and the selected `SpindleFactor`.
 
