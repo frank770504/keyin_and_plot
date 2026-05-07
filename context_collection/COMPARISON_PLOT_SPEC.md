@@ -28,6 +28,7 @@ The measurement plotting system allows users to visualize multiple rheology meas
 - **LaTeX Cleanup**: The system explicitly removes KaTeX-rendered axis title elements (`.katex-axis-title-x`, `.katex-axis-title-y`) during chart destruction to prevent "ghost" labels from remaining in the UI.
 
 ### B. Viewport Control
+- **Editable Title**: An input field at the top of the chart container allows users to set a custom title for the comparison plot (Default: "Rheology Compare").
 - **General Reset View**: A "Reset Zoom" button (⟲) appears as an overlay in the top-right corner of the chart container.
 - **Visibility**: The button is only visible when a plot exists.
 - **Behavior**: Clicking the button calls `resetZoom()` to restore the chart to its original auto-fit scales, undoing all pan and zoom actions.

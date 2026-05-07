@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Right Column
         resetZoomBtn: document.getElementById('reset-zoom-btn'),
+        comparisonChartTitle: document.getElementById('comparison-chart-title'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
         toggleChartControlsBtn: document.getElementById('toggle-chart-controls'),
