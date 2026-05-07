@@ -11,9 +11,9 @@ This specification outlines the logic for a one-time or utility script to import
     - `name`: Descriptive name.
 - **CSV Internal Structure**:
     - **Metadata (Fixed Rows)**:
-        - Row 0, Col 1: `Formula ID` $\rightarrow$ `formula_id`
+        - Row 0, Col 1: `Formula ID` $\rightarrow$ `formula_id` (UI: FID)
         - Row 1, Col 1: `Datae` or `Date` $\rightarrow$ `date` (UI: Test Date)
-        - Row 2, Col 1: `Serial ID` $\rightarrow$ `serial_id`
+        - Row 2, Col 1: `Serial ID` $\rightarrow$ `serial_id` (UI: SID)
         - Row 3, Col 1: `Note` (Optional) $\rightarrow$ `experiment_note` (UI: Note)
         - Row 4, Col 1: `Spindle` $\rightarrow$ `spindle_id`
     - **Experimental Data (Starting Row 10)**:

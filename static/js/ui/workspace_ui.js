@@ -164,22 +164,10 @@ export function updateEditModeUI(elements) {
     if (isEditing) {
         centerColumn.classList.remove('read-only-mode');
         elements.editBtn.classList.add('editing');
-
-        elements.activeMeasurementName.style.display = 'none';
-        elements.activeMeasurementNameInput.style.display = 'block';
-        // The value will be set by loadActiveMeasurementData, but as a fallback:
-        if (state.activeMeasurement && !elements.activeMeasurementNameInput.value) {
-             const m = state.allMeasurements.find(m => m.pkey === state.activeMeasurement);
-             if (m) elements.activeMeasurementNameInput.value = m.formula_id;
-        }
-
         elements.deleteMeasurementBtn.style.display = 'inline-block';
     } else {
         centerColumn.classList.add('read-only-mode');
         elements.editBtn.classList.remove('editing');
-
-        elements.activeMeasurementName.style.display = 'block';
-        elements.activeMeasurementNameInput.style.display = 'none';
 
         elements.editBtn.disabled = false;
         elements.deleteMeasurementBtn.style.display = 'none';
@@ -192,6 +180,8 @@ export function updateEditModeUI(elements) {
         elements.measurementSpindleSelect.classList.remove('validation-error');
     }
 
+    // Metadata inputs enablement
+    elements.activeMeasurementNameInput.disabled = !isEditing;
     elements.measurementDateInput.disabled = !isEditing;
     elements.measurementSerialIdInput.disabled = !isEditing;
     elements.measurementNoteInput.disabled = !isEditing;

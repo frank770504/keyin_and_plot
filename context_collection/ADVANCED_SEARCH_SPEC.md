@@ -10,7 +10,7 @@ Specific metadata fields can be targeted using a colon (`:`) separator:
 - `name:<string>`: Matches the formula ID.
 - `id:<string>`: Matches the PKEY.
 - `date:<string>`: Matches the test date string.
-- `serial:<string>`: Matches the Serial ID.
+- `serial:<string>`: Matches the Serial ID (UI: SID).
 - `note:<string>`: Matches the notes.
 - `is:<flag>`: Matches boolean or state flags:
     - `is:plot` or `is:selected`: Shows only measurements selected for comparison.

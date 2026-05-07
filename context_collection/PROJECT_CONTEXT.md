@@ -42,7 +42,7 @@ The application enforces a single-editor workflow to ensure data integrity:
 ### B. Draft System
 Used to prevent direct modification of production records and streamline creation:
 1.  **Edit Start**: Clones an existing `Measurement` into a new record with `is_draft=True`. To maintain the single-editor model, any pre-existing orphaned drafts for other measurements are deleted first.
-2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). To prevent ID inflation and enforce the single-editor model, all existing orphaned drafts are explicitly purged from the database before the new draft is created. The workspace inputs (Liquid Name, Test Date, Serial ID, Note, Spindle) are cleared, the UI ID is explicitly set to the new database ID, and the "Save" button is disabled until all mandatory fields are filled.
+2.  **Creation**: Clicking "Add Measurement" initializes a brand new draft (`is_draft=True`, `original_id=None`). To prevent ID inflation and enforce the single-editor model, all existing orphaned drafts are explicitly purged from the database before the new draft is created. The workspace inputs (Formula ID, Test Date, SID, Note, Spindle) are cleared, the UI ID is explicitly set to the new database Pkey, and the "Save" button is disabled until all mandatory fields are filled.
 3.  **Visual Validation**: Mandatory fields are marked with an asterisk (`*`). During edit mode, empty mandatory fields are highlighted with a red border (`.validation-error`) to provide immediate feedback.
 4.  **Commit**: Merges draft changes back to the original or "promotes" a new draft to production by flipping the `is_draft` flag.
 5.  **Rollback**: Deletes the draft.
@@ -63,7 +63,7 @@ Used to prevent direct modification of production records and streamline creatio
 
 ### E. Unified Multi-Pane Layout
 The UI features a consistent three-column layout (Measurement List, Workspace, Measurement Plots):
-1.  **Measurement List**: Houses the "Add Measurement" button and an **Advanced Search (RQL)** bar. Supports user-adjustable column widths and drag-and-drop reordering.
+1.  **Measurement List**: Houses the "Add Measurement" button and an **Advanced Search (RQL)** bar. Supports user-adjustable column widths and drag-and-drop reordering. Terminology aligns with database fields: **Pkey**, **FID** (Formula ID), **SID** (Serial ID).
 2.  **Independent Gutters**: Vertical gutters separate the columns, acting as drag handles for resizing and housing toggle buttons for collapsing.
 3.  **Snap-to-Collapse**: A 50px threshold automatically snaps panes to a fully collapsed (0px) state during dragging.
 4.  **Width Memory**: Panes remember their last valid width when un-collapsing.
@@ -79,9 +79,9 @@ The UI features a consistent three-column layout (Measurement List, Workspace, M
 
 ### Measurement
 - `pkey`: Unique identifier (Integer, primary key).
-- `formula_id`: Liquid identifier (string).
+- `formula_id`: Formula ID / FID (string).
 - `date`: Test Date.
-- `serial_id`: Serial ID.
+- `serial_id`: SID (string).
 - `experiment_note`: Note (text).
 - `spindle_id`: Selected spindle.
 - `is_draft`: Boolean flag.

@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Center Column
         centerColumn: document.getElementById('center-column'),
         activeMeasurementId: document.getElementById('active-measurement-id'),
-        activeMeasurementName: document.getElementById('active-measurement-name'),
         activeMeasurementNameInput: document.getElementById('active-measurement-name-input'),
         editBtn: document.getElementById('edit-btn'),
         cancelEditBtn: document.getElementById('cancel-edit-btn'),
@@ -323,7 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Deselect
             stateManager.setActiveMeasurement(null);
             workspaceUI.toggleCenterColumn(elements, false);
-            elements.activeMeasurementName.textContent = 'No Measurement Selected';
             elements.editBtn.style.display = 'none';
             elements.cancelEditBtn.style.display = 'none';
         } else {
@@ -345,10 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             workspaceUI.updateEditModeUI(elements);
 
-            // Temporary name display until data is loaded
-            const logicalId = m.original_id || m.pkey;
-            elements.activeMeasurementName.textContent = m.formula_id || `ID: ${logicalId}`;
-
             await loadActiveMeasurementData();
         }
         refreshMeasurementList();
@@ -363,7 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const logicalId = data.original_id || data.pkey;
 
             elements.activeMeasurementId.value = logicalId;
-            elements.activeMeasurementName.textContent = data.formula_id;
             elements.activeMeasurementNameInput.value = data.formula_id;
             elements.measurementDateInput.value = data.date || '';
             elements.measurementSerialIdInput.value = data.serial_id || '';
@@ -517,11 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create a draft with a default name on the backend
             const result = await api.createMeasurement("New Measurement");
             const newId = result.pkey;
-            const formulaId = result.formula_id;
 
             // Update local state and UI to point to this new measurement
             stateManager.setActiveMeasurement(newId);
-            elements.activeMeasurementName.textContent = formulaId;
 
             // CLEAR INPUTS as per request
             elements.activeMeasurementId.value = newId; // Show the new ID
@@ -600,7 +591,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     stateManager.setEditingOriginalId(null);
 
                     workspaceUI.toggleCenterColumn(elements, false);
-                    elements.activeMeasurementName.textContent = 'No Liquid Selected';
                     elements.editBtn.textContent = 'Edit';
                     elements.cancelEditBtn.style.display = 'none';
                     workspaceUI.updateEditModeUI(elements);
@@ -681,7 +671,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isNewMeasurement) {
                 stateManager.setActiveMeasurement(null);
-                elements.activeMeasurementName.textContent = 'No Liquid Selected';
                 workspaceUI.toggleCenterColumn(elements, false);
             } else {
                 stateManager.setActiveMeasurement(state.editingOriginalId);
@@ -716,7 +705,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             await api.updateMeasurementMetadata(state.activeMeasurement, { formula_id: newName });
-            elements.activeMeasurementName.textContent = newName;
             loadAndRenderMeasurements(); // Refresh list
         } catch (error) {
             console.error('Failed to rename:', error);
@@ -1055,7 +1043,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement());
     elements.activeMeasurementNameInput.addEventListener('change', handleMeasurementRename);
-    elements.activeMeasurementNameInput.addEventListener('input', updateSaveButtonState);
+    elements.activeMeasurementNameInput.addEventListener('input', () => {
+        updateSaveButtonState();
+    });
 
     elements.measurementDateInput.addEventListener('change', handleMetadataChange);
     elements.measurementDateInput.addEventListener('input', updateSaveButtonState);

@@ -40,10 +40,10 @@
                                         <span>Plot</span>
                                     </div>
                                 </th>
-                                <th data-sort="pkey" data-col-id="pkey">ID <span class="sort-icon"></span></th>
-                                <th data-sort="formula_id" data-col-id="formula_id">Liquid Name <span class="sort-icon"></span></th>
+                                <th data-sort="pkey" data-col-id="pkey">Pkey <span class="sort-icon"></span></th>
+                                <th data-sort="formula_id" data-col-id="formula_id">FID <span class="sort-icon"></span></th>
                                 <th data-sort="date" data-col-id="date">Date <span class="sort-icon"></span></th>
-                                <th data-sort="serial_id" data-col-id="serial_id">Serial ID <span class="sort-icon"></span></th>
+                                <th data-sort="serial_id" data-col-id="serial_id">SID <span class="sort-icon"></span></th>
                             </tr>
                         </thead>
                         <tbody id="measurement-list-body">
@@ -61,26 +61,28 @@
         <!-- Center Column: Workspace -->
         <div class="column" id="center-column">
             <div class="column-content-wrapper">
-                <div class="center-header">
-                    <h1 id="active-measurement-name">No Liquid Selected</h1>
-                    <input type="text" id="active-measurement-name-input" placeholder="Liquid Name (*)">
+                <div class="workspace-controls">
                     <button id="edit-btn" class="edit-btn" style="display: none;">Edit</button>
                     <button id="cancel-edit-btn" class="cancel-btn" style="display: none; background-color: #6c757d;">Cancel</button>
                 </div>
 
-                <fieldset class="metadata-area">
-                    <legend>Metadata</legend>
+                <h2>Metadata</h2>
+                <div class="metadata-box">
                     <div class="metadata-row">
-                        <label for="active-measurement-id">ID:</label>
-                        <input type="text" id="active-measurement-id" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                        <label for="active-measurement-id">Pkey:</label>
+                        <input type="text" id="active-measurement-id" readonly class="readonly-input">
+                    </div>
+                    <div class="metadata-row">
+                        <label for="active-measurement-name-input" class="required-label">Formula ID:</label>
+                        <input type="text" id="active-measurement-name-input" placeholder="Enter Formula ID">
                     </div>
                     <div class="metadata-row">
                         <label for="measurement-date" class="required-label">Test Date:</label>
                         <input type="date" id="measurement-date">
                     </div>
                     <div class="metadata-row">
-                        <label for="measurement-serial-id" class="required-label">Serial ID:</label>
-                        <input type="text" id="measurement-serial-id" placeholder="Enter Serial ID">
+                        <label for="measurement-serial-id" class="required-label">SID:</label>
+                        <input type="text" id="measurement-serial-id" placeholder="Enter SID">
                     </div>
                     <div class="metadata-row align-top">
                         <label for="measurement-note">Note:</label>
@@ -97,7 +99,7 @@
                         </select>
                     </div>
                     <div class="validation-note">* Required fields</div>
-                </fieldset>
+                </div>
 
                 <div id="analysis-controls" style="margin: 10px 0;">
                     <button id="open-analysis-btn">Analyze</button>

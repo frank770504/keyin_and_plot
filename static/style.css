@@ -1,7 +1,35 @@
+:root {
+    --header-font-size: 1.2rem;
+    --button-font-size: 0.85rem;
+    --body-font-size: 0.85rem;
+}
+
 body {
     font-family: sans-serif;
     margin: 0;
     background-color: #f4f4f4;
+    font-size: var(--body-font-size);
+}
+
+h1, h2, .section-title {
+    font-size: var(--header-font-size);
+    font-weight: bold;
+    color: #333;
+    margin: 15px 0 10px 0;
+}
+
+button, input, select, textarea, td, label {
+    font-size: inherit;
+    font-family: inherit;
+}
+
+button, .toggle-btn, .collapse-btn, .edit-btn, .cancel-btn, .btn-small {
+    font-size: var(--button-font-size);
+}
+
+#points-table thead th, 
+#measurement-list-table thead th {
+    font-weight: bold;
 }
 
 .container {
@@ -192,18 +220,6 @@ body.resizing .column-content-wrapper {
 
 .analysis-control-bar {
     margin-bottom: 15px;
-}
-
-
-#active-measurement-name-input {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0;
-    width: 60%;
-    display: none;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
 }
 
 .measurement-actions {
@@ -618,22 +634,23 @@ ul {
     font-style: italic;
 }
 
-.metadata-area {
-    margin: 15px 0;
-    padding: 10px;
+.workspace-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    justify-content: flex-end;
+}
+
+.metadata-box {
+    padding: 15px;
     background-color: #eee;
     border: 1px solid #ccc;
     border-radius: 4px;
-}
-
-.metadata-area legend {
-    font-weight: bold;
-    padding: 0 5px; /* Matches h2 padding-left for alignment */
-    font-size: 1.5rem; /* Consistent font size with h2 */
+    margin-bottom: 20px;
 }
 
 .metadata-row {
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* Slightly tighter */
     display: flex;
     align-items: center;
 }
@@ -648,30 +665,35 @@ ul {
 
 .metadata-row label {
     font-weight: bold;
-    margin-right: 10px;
-    width: 150px; /* Fixed width for labels ensures left-edge alignment of inputs */
+    margin-right: 5px;
+    width: 90px; /* Reduced to minimize blank space */
     flex-shrink: 0;
 }
 
 .metadata-row.align-top label {
-    padding-top: 5px; /* Aligns label text with the top of the text inside padded inputs/textareas */
+    padding-top: 5px; 
 }
 
 .metadata-row input[type="date"],
 .metadata-row input[type="text"],
 .metadata-row textarea,
 .metadata-row select {
-    padding: 5px;
+    padding: 4px 6px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: 250px; /* Consistent fixed width for all input boxes */
+    width: 250px;
     box-sizing: border-box;
-    font-family: inherit;
-    font-size: 0.9rem;
+}
+
+.readonly-input {
+    background-color: #e9ecef !important;
+    cursor: default;
+    border-color: #ced4da !important;
+    color: #495057;
 }
 
 .metadata-row textarea {
-    height: 80px;
+    height: 60px;
     resize: vertical;
 }
 
