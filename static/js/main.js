@@ -1051,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let dataUrl;
             if (format === 'svg') {
-                dataUrl = await domtoimage.toSvg(elements.comparisonChartWrapper, options);
+                dataUrl = await domtoimage.toSvg(elements.comparisonChartContainer, options);
 
                 // Use fetch to reliably decode the data URL (handles base64/URI encoding automatically)
                 const response = await fetch(dataUrl);
@@ -1103,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
                 dataUrl = URL.createObjectURL(blob);
             } else {
-                dataUrl = await domtoimage.toPng(elements.comparisonChartWrapper, options);
+                dataUrl = await domtoimage.toPng(elements.comparisonChartContainer, options);
             }
 
             const link = document.createElement('a');

@@ -146,7 +146,8 @@ To prevent windows from becoming unreachable or obscuring critical UI, all float
 
 #### 2. Parent Containment (Legend)
 - **Scope**: Used for pane-specific elements that must not cross layout boundaries (gutters).
-- **Constraint**: The element is strictly clamped to the boundaries of its **Right Pane** (`offsetParent`).
+- **Structure**: Nested within `#comparison-chart-wrapper` to ensure it is included in image exports.
+- **Constraint**: The element is strictly clamped to the boundaries of its **Right Pane Wrapper** (`offsetParent`).
 - **Gutter Protection**: Clamping prevents the legend from crossing the gutter line into the center or left columns.
 
 ### B. Stacking Order (z-index)
