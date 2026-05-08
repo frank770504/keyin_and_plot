@@ -26,7 +26,7 @@
                 </div>
 
                 <div class="measurement-actions">
-                    <button id="add-measurement-btn" class="create-btn">Add Measurement</button>
+                    <button id="add-measurement-btn" class="create-btn btn-primary">Add Measurement</button>
                 </div>
 
                 <input type="text" id="measurement-search" placeholder="Search measurements..." class="search-bar">
@@ -62,8 +62,8 @@
         <div class="column" id="center-column">
             <div class="column-content-wrapper">
                 <div class="workspace-controls">
-                    <button id="edit-btn" class="edit-btn" style="display: none;">Edit</button>
-                    <button id="cancel-edit-btn" class="cancel-btn" style="display: none; background-color: #6c757d;">Cancel</button>
+                    <button id="edit-btn" class="btn-secondary" style="display: none;">✎ Edit</button>
+                    <button id="cancel-edit-btn" class="btn-secondary danger" style="display: none;">Cancel</button>
                 </div>
 
                 <h2>Metadata</h2>
@@ -102,7 +102,7 @@
                 </div>
 
                 <div id="analysis-controls" style="margin: 10px 0;">
-                    <button id="open-analysis-btn">Analyze</button>
+                    <button id="open-analysis-btn" class="btn-primary">Analyze</button>
                 </div>
 
                 <h2>Data points</h2>
@@ -125,7 +125,7 @@
                 </div>
 
                 <div id="measurement-actions" style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; text-align: right;">
-                    <button id="delete-measurement-btn" style="background-color: #dc3545;">Delete Measurement</button>
+                    <button id="delete-measurement-btn" class="btn-danger">Delete Measurement</button>
                 </div>
             </div>
         </div>
@@ -141,20 +141,20 @@
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <h1>Measurement Plots</h1>
-                            <button id="toggle-chart-controls" class="toggle-btn" title="Toggle Controls">⚙ Hide Controls</button>
+                            <button id="toggle-chart-controls" class="btn-ghost" title="Toggle Controls">⚙ Hide Controls</button>
                         </div>
                         <div class="control-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 5px;">
                             <label>Export:</label>
-                            <select id="export-format" class="toggle-btn small" style="width: auto; padding: 2px 5px;">
+                            <select id="export-format" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
                                 <option value="png">PNG</option>
                                 <option value="svg">SVG</option>
                             </select>
-                            <select id="export-dpi" class="toggle-btn small" style="width: auto; padding: 2px 5px;">
+                            <select id="export-dpi" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
                                 <option value="3.125">300 DPI</option>
                                 <option value="1">96 DPI (Web)</option>
                                 <option value="6.25">600 DPI</option>
                             </select>
-                            <button id="save-chart-btn" class="toggle-btn small" style="background-color: #17a2b8; color: white; border-color: #17a2b8;">💾 Save</button>
+                            <button id="save-chart-btn" class="btn-secondary btn-small">💾 Save</button>
                         </div>
                     </div>
                     <div class="chart-controls unified-controls" id="comp-chart-controls">
@@ -163,13 +163,13 @@
                             <label>X-Axis:</label>
                             <input type="number" id="comp-x-min" placeholder="Min" step="any" class="limit-input">
                             <input type="number" id="comp-x-max" placeholder="Max" step="any" class="limit-input">
-                            <button id="apply-x-limits" class="toggle-btn small">Apply</button>
-                            <button id="clear-x-limits" class="toggle-btn small" style="background-color: #6c757d; color: white; border-color: #6c757d;">Clear</button>
+                            <button id="apply-x-limits" class="btn-secondary btn-small">Apply</button>
+                            <button id="clear-x-limits" class="btn-secondary btn-small">Clear</button>
                         </div>
                         <div class="control-group">
                             <label>Scale:</label>
-                            <button id="toggle-comp-log-x" class="toggle-btn" title="Toggle X-axis Log/Linear">X-Log</button>
-                            <button id="toggle-comp-log-y" class="toggle-btn" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                            <button id="toggle-comp-log-x" class="btn-ghost" title="Toggle X-axis Log/Linear">X-Log</button>
+                            <button id="toggle-comp-log-y" class="btn-ghost" title="Toggle Y-axis Log/Linear">Y-Log</button>
                         </div>
 
                         <!-- Row 2: Y-Axis | Regression -->
@@ -177,8 +177,8 @@
                             <label>Y-Axis:</label>
                             <input type="number" id="comp-y-min" placeholder="Min" step="any" class="limit-input">
                             <input type="number" id="comp-y-max" placeholder="Max" step="any" class="limit-input">
-                            <button id="apply-y-limits" class="toggle-btn small">Apply</button>
-                            <button id="clear-y-limits" class="toggle-btn small" style="background-color: #6c757d; color: white; border-color: #6c757d;">Clear</button>
+                            <button id="apply-y-limits" class="btn-secondary btn-small">Apply</button>
+                            <button id="clear-y-limits" class="btn-secondary btn-small">Clear</button>
                         </div>
                         <div class="control-group">
                             <label>Regression:</label>
@@ -196,9 +196,9 @@
                             </select>
                             <input type="number" id="custom-curve-param1" placeholder="m or a" step="any" class="limit-input" style="width: 80px;">
                             <input type="number" id="custom-curve-param2" placeholder="c or b" step="any" class="limit-input" style="width: 80px;">
-                            <input type="color" id="custom-curve-color" value="#000000" style="padding: 0; border: none; width: 30px; height: 30px; cursor: pointer; background: none;">
-                            <button id="add-custom-curve-btn" class="toggle-btn small" style="background-color: #28a745; color: white; border-color: #28a745;">Add</button>
-                            <button id="clear-custom-curves-btn" class="toggle-btn small" style="background-color: #dc3545; color: white; border-color: #dc3545;">Clear All</button>
+                            <input type="color" id="custom-curve-color" value="#000000" style="padding: 0; border: none; width: 26px; height: 26px; cursor: pointer; background: none;">
+                            <button id="add-custom-curve-btn" class="btn-secondary btn-small">Add</button>
+                            <button id="clear-custom-curves-btn" class="btn-danger btn-small">Clear All</button>
                         </div>
                         <div id="custom-curves-list" class="custom-curves-list" style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;"></div>
                     </div>
@@ -220,8 +220,8 @@
         <div class="window-header" id="chart-window-header">
             <span id="window-title">Analysis Chart</span>
             <div class="header-controls">
-                <button id="toggle-active-log-x" class="toggle-btn small" title="Toggle X-axis Log/Linear">X-Log</button>
-                <button id="toggle-active-log-y" class="toggle-btn small" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                <button id="toggle-active-log-x" class="btn-ghost btn-small" title="Toggle X-axis Log/Linear">X-Log</button>
+                <button id="toggle-active-log-y" class="btn-ghost btn-small" title="Toggle Y-axis Log/Linear">Y-Log</button>
                 <button id="close-chart-window" class="close-btn">&times;</button>
             </div>
         </div>
@@ -248,7 +248,7 @@
             <h3>Editing Conflict</h3>
             <p id="conflict-message">Another user is currently editing this measurement.</p>
             <div class="modal-actions">
-                <button type="submit" value="force" class="btn-warning">Take Over (Force)</button>
+                <button type="submit" value="force" class="btn-danger">Take Over (Force)</button>
                 <button type="submit" value="copy" class="btn-secondary">Create Separate Copy</button>
                 <button type="submit" value="abort" class="btn-danger">Abort</button>
             </div>
@@ -276,3 +276,4 @@
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+/html>

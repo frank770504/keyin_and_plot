@@ -1,18 +1,29 @@
 # Technical Specification: Component Standards & Typography
 
-## 1. Typography
+## 1. Typography & Hierarchy
 - **Base Font Size:** 14px (`0.875rem`) for standard text and data tables.
 - **Headers:** H1 is 20px (`1.25rem`, bold), H2 is 18px (`1.125rem`, semibold/bold).
 - **Small Text:** 12px (`0.75rem`) for hints and small buttons.
+- **Conventions:** Standard action buttons use clear text combined with standard icons where appropriate (e.g., `✎ Edit`, `💾 Save`).
 
-## 2. Interactive Elements
-- **Buttons:** 
-    - Standard: `padding: 6px 12px`, `font-size: 14px`, `border-radius: 4px`.
-    - Small/Icon: `padding: 2px 8px`, `font-size: 12px` (used in toolbars and tables).
-- **Input Boxes & Selects:**
-    - Standard: `padding: 6px 8px`, `border: 1px solid #ccc`, `border-radius: 4px`.
-    - Focus state: `outline: none`, `border-color: #007bff`, `box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25)`.
-    - This ensures inputs and buttons are roughly the same height (approx 32px depending on line-height).
+## 2. Interactive Elements & Sizing
+
+### A. Element Height Parity
+To guarantee perfect horizontal alignment in toolbars and rows, all interactive elements (buttons, inputs, selects) are constrained by explicit CSS variables utilizing `box-sizing: border-box`:
+- **Standard Height (`--element-standard-height`):** `34px`. Used globally for main form inputs and primary/secondary buttons.
+- **Small Height (`--element-small-height`):** `26px`. Used in dense control bars (e.g., chart controls, floating windows) for `.btn-small` and `.limit-input`.
+
+### B. Form Alignment (Vertical Centering)
+- **Zero Global Margin:** Global `input`, `select`, and `textarea` elements must have `margin: 0`.
+- **Centering:** Label/Input pairs are placed inside flex containers (e.g., `.metadata-row`, `.control-group`) with `align-items: center`. The removal of global bottom margins ensures perfect baseline centering between text labels and their input fields.
+
+### C. Button Hierarchy (Modern Minimalist)
+The application avoids heavy, distracting blocks of solid color, utilizing an outline-based aesthetic to keep visual noise low while retaining clear hierarchy.
+- **Primary (`.btn-primary`):** Outline aesthetic (White background, Blue text/border). Blends smoothly with secondary buttons but retains brand color. Fills solid Blue on hover.
+- **Secondary (`.btn-secondary`):** White background, light gray border (`#ced4da`), dark text. Used for standard utility actions (e.g., "Cancel", "Apply").
+    - **Functional Modifiers:** Secondary buttons support state context: `.success` (Green text/border) and `.danger` (Red text/border).
+- **Danger (`.btn-danger`):** Standalone destructive class (White background, Red text/border). Turns solid Red on hover. Functionally identical to `.btn-secondary.danger`.
+- **Ghost (`.btn-ghost`):** Subtle button appearance (very light gray `#f1f3f5` background, slight border/shadow). Used for toggles (e.g., scale toggles, "⚙ Hide Controls") where the button should look clickable but not distract from data. Turns blue when `.active`.
 
 ---
 

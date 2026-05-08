@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.isEditing) {
             stateManager.setEditing(false);
             stateManager.setEditingOriginalId(null);
-            elements.editBtn.textContent = 'Edit';
+            elements.editBtn.textContent = '✎ Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
             loadActiveMeasurementData();
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateManager.setActiveMeasurement(id);
             stateManager.setEditing(false); // Reset edit mode
             elements.editBtn.style.display = 'inline-block';
-            elements.editBtn.textContent = 'Edit';
+            elements.editBtn.textContent = '✎ Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.toggleCenterColumn(elements, true, () => {
                  if (activeChart) activeChart.resize();
@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateManager.setEditing(true);
             stateManager.setDirty(false); // New measurement starts clean
             elements.editBtn.style.display = 'inline-block'; // Ensure it's visible
-            elements.editBtn.textContent = 'Save';
+            elements.editBtn.textContent = '💾 Save';
             elements.cancelEditBtn.style.display = 'inline-block';
             workspaceUI.updateEditModeUI(elements);
 
@@ -601,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     stateManager.setEditingOriginalId(null);
 
                     workspaceUI.toggleCenterColumn(elements, false);
-                    elements.editBtn.textContent = 'Edit';
+                    elements.editBtn.textContent = '✎ Edit';
                     elements.cancelEditBtn.style.display = 'none';
                     workspaceUI.updateEditModeUI(elements);
 
@@ -633,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateManager.setActiveMeasurement(draftId); // Backend returned the draft ID
             stateManager.setEditing(true);
             stateManager.setDirty(false); // Start clean
-            elements.editBtn.textContent = 'Save';
+            elements.editBtn.textContent = '📄 Save';
             elements.cancelEditBtn.style.display = 'inline-block';
             workspaceUI.updateEditModeUI(elements);
 
@@ -660,7 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateManager.setEditing(false);
             stateManager.setEditingOriginalId(null);
             stateManager.setDirty(false);
-            elements.editBtn.textContent = 'Edit';
+            elements.editBtn.textContent = '✎ Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
 
@@ -689,7 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateManager.setEditing(false);
             stateManager.setEditingOriginalId(null);
             stateManager.setDirty(false);
-            elements.editBtn.textContent = 'Edit';
+            elements.editBtn.textContent = '✎ Edit';
             elements.cancelEditBtn.style.display = 'none';
             workspaceUI.updateEditModeUI(elements);
 

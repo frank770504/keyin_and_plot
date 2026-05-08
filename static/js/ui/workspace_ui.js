@@ -78,7 +78,7 @@ export function createTableRow(id, N, eta, onDelete, torque, shearRate, shearStr
     // Note: We use Unicode for placeholders because KaTeX cannot render inside attribute values.
     tr.innerHTML = String.raw`
         <td class="action-column">
-            <button class="delete-point-btn">×</button>
+            <button class="btn-danger delete-point-btn">×</button>
         </td>
         <td>
             <input type="text" data-field="N" value="${N !== undefined ? N : ''}"
@@ -163,11 +163,11 @@ export function updateEditModeUI(elements) {
 
     if (isEditing) {
         centerColumn.classList.remove('read-only-mode');
-        elements.editBtn.classList.add('editing');
+        elements.editBtn.classList.add('success');
         elements.deleteMeasurementBtn.style.display = 'inline-block';
     } else {
         centerColumn.classList.add('read-only-mode');
-        elements.editBtn.classList.remove('editing');
+        elements.editBtn.classList.remove('success');
 
         elements.editBtn.disabled = false;
         elements.deleteMeasurementBtn.style.display = 'none';
