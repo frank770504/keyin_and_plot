@@ -34,7 +34,9 @@ const state = {
             yMin: null,
             yMax: null,
             showLegend: true,
-            customCurves: [] // Array of { id, type, param1, param2, color }
+            customCurves: [], // Array of { id, type, param1, param2, color }
+            referenceCurves: [], // Array of { id, name, type, param1, param2, color }
+            selectedReferenceCurves: new Set() // Set of reference curve IDs
         },
         active: {
             xLog: false,

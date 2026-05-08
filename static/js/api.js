@@ -126,3 +126,7 @@ export async function fetchRegression(id, type = 'linear') {
     const url = type === 'linear' ? `/api/measurements/${id}/regression` : `/api/measurements/${id}/power-regression`;
     return fetchWithLock(url);
 }
+
+export async function fetchReferenceCurves() {
+    return fetchWithLock('/api/reference-curves');
+}

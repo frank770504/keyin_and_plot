@@ -148,6 +148,23 @@ def lock_heartbeat():
     return jsonify({"error": error}), 403
 
 
+@api_bp.route('/reference-curves', methods=['GET'])
+def get_reference_curves():
+    """Return a list of predefined reference curves."""
+    # Currently hardcoded as per requirements
+    return jsonify([
+        {
+            "id": "ref-power-law-1",
+            "name": "GM Standard",
+            "type": "power",
+            "param1": 5750,
+            "param2": 0.257,
+            "formula": "$\\sigma = 5750 \\dot{\\gamma}^{0.257}$",
+            "color": "#808080"  # Gray for reference
+        }
+    ])
+
+
 # --- Measurement Endpoints ---
 
 @api_bp.route('/measurements/<int:measurement_id>/edit/start', methods=['POST'])

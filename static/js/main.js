@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyYLimits: document.getElementById('apply-y-limits'),
         clearYLimits: document.getElementById('clear-y-limits'),
         customCurvesList: document.getElementById('custom-curves-list'),
+        referenceCurvesList: document.getElementById('reference-curves-list'),
 
         // Layout
         leftColumn: document.getElementById('left-column'),
@@ -285,9 +286,76 @@ document.addEventListener('DOMContentLoaded', () => {
             const measurements = await api.fetchMeasurements();
             stateManager.setAllMeasurements(measurements);
             refreshMeasurementList();
+
+            // Fetch Reference Curves
+            const refCurves = await api.fetchReferenceCurves();
+            state.chartConfig.comparison.referenceCurves = refCurves;
+            renderReferenceCurvesList();
         } catch (error) {
             console.error('Error loading measurements:', error);
         }
+    }
+
+    function renderReferenceCurvesList() {
+        if (!elements.referenceCurvesList) return;
+        elements.referenceCurvesList.innerHTML = '';
+
+        state.chartConfig.comparison.referenceCurves.forEach(curve => {
+            const row = document.createElement('div');
+            row.className = 'control-group';
+            row.style.justifyContent = 'flex-start';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `ref-curve-${curve.id}`;
+            checkbox.checked = state.chartConfig.comparison.selectedReferenceCurves.has(curve.id);
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    state.chartConfig.comparison.selectedReferenceCurves.add(curve.id);
+                } else {
+                    state.chartConfig.comparison.selectedReferenceCurves.delete(curve.id);
+                }
+                handleDrawSelected();
+            });
+
+            const label = document.createElement('label');
+            label.htmlFor = `ref-curve-${curve.id}`;
+            label.className = 'checkbox-label';
+            label.textContent = curve.name;
+
+            // Add a small color indicator
+            const colorIndicator = document.createElement('span');
+            colorIndicator.style.display = 'inline-block';
+            colorIndicator.style.width = '12px';
+            colorIndicator.style.height = '12px';
+            colorIndicator.style.backgroundColor = curve.color;
+            colorIndicator.style.borderRadius = '2px';
+
+            row.appendChild(checkbox);
+            row.appendChild(label);
+            row.appendChild(colorIndicator);
+
+            if (curve.formula) {
+                const formulaDiv = document.createElement('div');
+                formulaDiv.className = 'formula-display';
+                formulaDiv.style.marginLeft = '5px';
+                formulaDiv.style.fontSize = '0.8rem';
+                formulaDiv.innerHTML = curve.formula;
+                row.appendChild(formulaDiv);
+
+                if (typeof renderMathInElement === 'function') {
+                    renderMathInElement(formulaDiv, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false}
+                        ],
+                        throwOnError: false
+                    });
+                }
+            }
+
+            elements.referenceCurvesList.appendChild(row);
+        });
     }
 
     function refreshMeasurementList() {
@@ -1048,10 +1116,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            const selectedReferenceCurves = state.chartConfig.comparison.referenceCurves.filter(
+                c => state.chartConfig.comparison.selectedReferenceCurves.has(c.id)
+            );
+
             const chartData = await chartService.getSelectedMeasurementsForChart(selectedIds, {
                 includeLinear: state.chartConfig.comparison.includeLinear,
                 includePower: state.chartConfig.comparison.includePower,
-                customCurves: state.chartConfig.comparison.customCurves
+                customCurves: [
+                    ...state.chartConfig.comparison.customCurves,
+                    ...selectedReferenceCurves
+                ]
             });
 
             const chartOptions = {
