@@ -209,28 +209,28 @@
                         </div>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
-                    <!-- Spacer to keep title centered -->
-                    <div style="flex: 1;"></div>
-                    <div class="chart-title-wrapper" style="flex: 1; text-align: center; margin: 0;">
-                        <div id="comparison-chart-title" contenteditable="true" spellcheck="false">Rheology Compare</div>
-                    </div>
-                    <div class="control-group" style="flex: 1; justify-content: flex-end; margin-bottom: 0; display: flex; align-items: center; gap: 10px;">
-                        <label>Export:</label>
-                        <select id="export-format" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
-                            <option value="png">PNG</option>
-                            <option value="svg">SVG</option>
-                        </select>
-                        <select id="export-dpi" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
-                            <option value="3.125">300 DPI</option>
-                            <option value="1">96 DPI (Web)</option>
-                            <option value="6.25">600 DPI</option>
-                        </select>
-                        <button id="save-chart-btn" class="btn-secondary btn-small">💾 Save</button>
-                    </div>
-                </div>
                 <div id="comparison-chart-container" style="position: relative; width: 100%;">
-                    <button id="reset-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
+                        <!-- Spacer to keep title centered -->
+                        <div id="export-spacer" style="flex: 1;"></div>
+                        <div class="chart-title-wrapper" style="flex: 1; text-align: center; margin: 0;">
+                            <div id="comparison-chart-title" contenteditable="true" spellcheck="false">Rheology Compare</div>
+                        </div>
+                        <div id="export-controls-group" class="control-group" style="flex: 1; justify-content: flex-end; margin-bottom: 0; display: flex; align-items: center; gap: 3px;">
+                            <label>Export:</label>
+                            <select id="export-format" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
+                                <option value="png">PNG</option>
+                                <option value="svg">SVG</option>
+                            </select>
+                            <select id="export-dpi" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
+                                <option value="3.125">300 DPI</option>
+                                <option value="1">96 DPI (Web)</option>
+                                <option value="6.25">600 DPI</option>
+                            </select>
+                            <button id="save-chart-btn" class="btn-secondary btn-small" title="Save Image" >💾</button>
+                            <button id="reset-zoom-btn" class="btn-secondary btn-small" title="Reset Zoom" style="display: none;">⟲</button>
+                        </div>
+                    </div>
                     <canvas id="comparison-chart"></canvas>
                     <div id="custom-legend" class="floating-legend" style="display: none;"></div>
                 </div>

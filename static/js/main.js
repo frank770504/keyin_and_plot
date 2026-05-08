@@ -944,9 +944,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 bgcolor: '#ffffff',
                 scale: scale,
                 filter: (node) => {
-                    // Skip the reset zoom button
-                    if (node.id === 'reset-zoom-btn') return false;
-                    return true;
+                    // Skip the reset zoom button, the export control group, and the spacer
+                    return !(node.id === 'reset-zoom-btn' || node.id === 'export-controls-group' || node.id === 'export-spacer');
                 }
             };
 
@@ -1063,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (comparisonChart) chartService.destroyChart(comparisonChart);
             comparisonChart = chartService.initializeOrUpdateChart(elements.comparisonChartCanvas, chartData.datasets, chartOptions);
 
-            elements.resetZoomBtn.style.display = 'flex';
+            elements.resetZoomBtn.style.display = 'inline-flex';
 
             // Generate Custom Legend
             createFloatingLegend(comparisonChart, elements.customLegend);
