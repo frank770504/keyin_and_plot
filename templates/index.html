@@ -191,14 +191,17 @@
                             <button class="accordion-header">Custom Curves</button>
                             <div class="accordion-content" style="display: none;">
                                 <div class="chart-controls unified-controls" style="border: none; padding: 0; background: transparent; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;">
-                                    <div class="control-group" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <div class="control-group" style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                                         <input type="text" id="custom-curve-name" placeholder="Curve Name" style="width: 120px;">
-                                        <select id="custom-curve-type">
-                                            <option value="linear">Linear (σ = mγ̇ + c)</option>
-                                            <option value="power">Power (σ = aγ̇^b)</option>
+                                        <select id="custom-curve-type" style="width: 100px; padding: 2px 4px;">
+                                            <option value="power">Power law</option>
+                                            <option value="linear">Linear</option>
                                         </select>
-                                        <input type="number" id="custom-curve-param1" placeholder="m or a" step="any" class="limit-input" style="width: 80px;">
-                                        <input type="number" id="custom-curve-param2" placeholder="c or b" step="any" class="limit-input" style="width: 80px;">
+                                        <div id="custom-curve-formula-preview" style="padding: 2px 8px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; min-width: 100px; font-size: 0.9rem;"></div>
+                                        <span id="custom-curve-param1-label" style="margin-left: 5px;"></span>
+                                        <input type="number" id="custom-curve-param1" placeholder="Param 1" step="any" class="limit-input" style="width: 100px;">
+                                        <span id="custom-curve-param2-label" style="margin-left: 5px;"></span>
+                                        <input type="number" id="custom-curve-param2" placeholder="Param 2" step="any" class="limit-input" style="width: 100px;">
                                         <input type="color" id="custom-curve-color" value="#000000" style="padding: 0; border: none; width: 26px; height: 26px; cursor: pointer; background: none;">
                                         <button id="add-custom-curve-btn" class="btn-secondary btn-small">Add</button>
                                         <button id="clear-custom-curves-btn" class="btn-danger btn-small">Clear All</button>

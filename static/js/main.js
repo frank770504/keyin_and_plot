@@ -74,6 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Custom Curve Controls
         customCurveName: document.getElementById('custom-curve-name'),
         customCurveType: document.getElementById('custom-curve-type'),
+        customCurveFormulaPreview: document.getElementById('custom-curve-formula-preview'),
+        customCurveParam1Label: document.getElementById('custom-curve-param1-label'),
+        customCurveParam2Label: document.getElementById('custom-curve-param2-label'),
         customCurveParam1: document.getElementById('custom-curve-param1'),
         customCurveParam2: document.getElementById('custom-curve-param2'),
         customCurveColor: document.getElementById('custom-curve-color'),
@@ -1348,6 +1351,32 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCompChart();
     });
 
+    function updateCurveFormulaPreview() {
+        if (!elements.customCurveFormulaPreview || !elements.customCurveType) return;
+        const type = elements.customCurveType.value;
+        const latex = type === 'linear' ? '\\sigma = m\\dot{\\gamma} + c' : '\\sigma = a\\dot{\\gamma}^b';
+        const p1Label = type === 'linear' ? 'm=' : 'a=';
+        const p2Label = type === 'linear' ? 'c=' : 'b=';
+        const p1Placeholder = type === 'linear' ? 'Slope' : 'Factor';
+        const p2Placeholder = type === 'linear' ? 'Intercept' : 'Exponent';
+
+        try {
+            if (window.katex) {
+                katex.render(latex, elements.customCurveFormulaPreview, { throwOnError: false });
+                katex.render(p1Label, elements.customCurveParam1Label, { throwOnError: false });
+                katex.render(p2Label, elements.customCurveParam2Label, { throwOnError: false });
+            }
+        } catch (e) {
+            elements.customCurveFormulaPreview.textContent = latex;
+            elements.customCurveParam1Label.textContent = p1Label;
+            elements.customCurveParam2Label.textContent = p2Label;
+        }
+        elements.customCurveParam1.placeholder = p1Placeholder;
+        elements.customCurveParam2.placeholder = p2Placeholder;
+    }
+
+    elements.customCurveType.addEventListener('change', updateCurveFormulaPreview);
+
     elements.addCustomCurveBtn.addEventListener('click', () => {
         const name = elements.customCurveName.value.trim();
         const type = elements.customCurveType.value;
@@ -1414,6 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initial Load & Polling ---
     initUserConfig();
     loadAndRenderMeasurements();
+    updateCurveFormulaPreview(); // Initialize formula preview
     pollLockStatus();
     setInterval(pollLockStatus, 10000); // Poll lock status every 10s
 });
