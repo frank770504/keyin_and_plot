@@ -929,6 +929,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const format = elements.exportFormat.value;
         const scale = parseFloat(elements.exportDpi.value) || 1;
 
+        // Temporarily boost Chart.js resolution for the export
+        // We use window.devicePixelRatio as base and multiply by our scale factor
+        let originalDPR = window.devicePixelRatio || 1;
+        if (comparisonChart) {
+            originalDPR = comparisonChart.options.devicePixelRatio || window.devicePixelRatio || 1;
+            comparisonChart.options.devicePixelRatio = window.devicePixelRatio * scale;
+            comparisonChart.resize();
+        }
+
         try {
             // Options for dom-to-image-more
             const options = {
@@ -951,7 +960,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Improve SVG compatibility and fix XML Parsing Errors
 
-                // 1. Ensure XHTML compliance: Close self-closing tags (input, img, br, hr)
+                // 1. Ensure XHTML compliance: Close self-closing tags (input, img, br, hr) 
                 // that are valid in HTML5 but required to be closed in XHTML/foreignObject.
                 svgString = svgString.replace(/<(input|img|br|hr)([^>]*?)(\/?)>/gi, (match, tag, attrs, closed) => {
                     return closed ? match : `<${tag}${attrs} />`;
@@ -993,6 +1002,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Export failed:', error);
             alert('Failed to save chart image.');
         } finally {
+            // Restore original Chart.js resolution
+            if (comparisonChart) {
+                comparisonChart.options.devicePixelRatio = originalDPR;
+                comparisonChart.resize();
+            }
             elements.saveChartBtn.textContent = originalBtnText;
             elements.saveChartBtn.disabled = false;
         }
