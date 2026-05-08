@@ -58,6 +58,27 @@ export function clearChartCache(id = null) {
 // --- Custom KaTeX Plugin ---
 const katexChartPlugin = {
     id: 'katexChartPlugin',
+    afterLayout: function(chart) {
+        // Dynamically adjust padding to fit tick labels + title gap
+        const padding = chart.options.layout.padding;
+        const yWidth = chart.scales.y.width;
+        const xHeight = chart.scales.x.height;
+
+        // Target padding: scale size (ticks/labels) + fixed gap for KaTeX title
+        // We ensure a minimum padding even if scales are small
+        const targetLeft = Math.max(60, yWidth + 30);
+        const targetBottom = Math.max(40, xHeight + 30);
+
+        // Only update if change is significant to avoid resize loops
+        if (Math.abs(padding.left - targetLeft) > 5 || Math.abs(padding.bottom - targetBottom) > 5) {
+            padding.left = targetLeft;
+            padding.bottom = targetBottom;
+            // Use setTimeout to avoid 'afterLayout' recursion during the same tick
+            setTimeout(() => {
+                if (chart && chart.canvas) chart.update('none');
+            }, 0);
+        }
+    },
     afterUpdate: function(chart) {
         const xTitle = chart.options.scales.x.title.text;
         const yTitle = chart.options.scales.y.title.text;
@@ -99,7 +120,8 @@ const katexChartPlugin = {
 
         if (xDiv && chart.scales.x) {
             const xPos = chart.scales.x.left + chart.scales.x.width / 2;
-            const yPos = chart.scales.x.bottom + 12; // Tighter gap
+            // Position 15px below the bottom of the scale (labels)
+            const yPos = chart.scales.x.bottom + 15;
             xDiv.style.left = `${xPos}px`;
             xDiv.style.top = `${yPos}px`;
             xDiv.style.transform = 'translateX(-50%)';
@@ -108,12 +130,14 @@ const katexChartPlugin = {
         }
 
         if (yDiv && chart.scales.y) {
-            const xPos = chart.scales.y.left - 50; // Tighter gap
+            // Position 15px to the left of the leftmost edge of the labels
+            // scales.y.left is the axis line; scales.y.width is everything to the left of it
+            const xPos = (chart.scales.y.left - chart.scales.y.width) - 15;
             const yPos = chart.scales.y.top + chart.scales.y.height / 2;
             yDiv.style.left = `${xPos}px`;
             yDiv.style.top = `${yPos}px`;
             yDiv.style.transform = 'translateY(-50%) rotate(-90deg)';
-            yDiv.style.transformOrigin = 'right center'; // Anchor right side to xPos
+            yDiv.style.transformOrigin = 'right center';
             yDiv.style.fontSize = '14px';
             yDiv.style.display = 'inline-block';
             yDiv.style.whiteSpace = 'nowrap';
