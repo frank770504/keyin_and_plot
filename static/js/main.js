@@ -1259,6 +1259,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.activeMeasurement) loadActiveMeasurementData();
     };
 
+    // Accordion Logic
+    const accordions = document.querySelectorAll('.accordion-header');
+    accordions.forEach(acc => {
+        acc.addEventListener('click', function() {
+            this.classList.toggle('active');
+            const content = this.nextElementSibling;
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+            } else {
+                content.style.display = 'block';
+            }
+            // Trigger chart resize if needed because layout changed
+            if (comparisonChart) {
+                setTimeout(() => comparisonChart.resize(), 50);
+            }
+        });
+    });
+
     elements.toggleChartControlsBtn.addEventListener('click', () => {
         const isCurrentlyVisible = elements.compChartControls.style.display !== 'none';
 
@@ -1267,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.toggleChartControlsBtn.classList.add('active'); // "Active" means controls are minimized/hidden
             elements.toggleChartControlsBtn.textContent = '⚙ Show Controls';
         } else {
-            elements.compChartControls.style.display = 'grid';
+            elements.compChartControls.style.display = 'block';
             elements.toggleChartControlsBtn.classList.remove('active');
             elements.toggleChartControlsBtn.textContent = '⚙ Hide Controls';
         }

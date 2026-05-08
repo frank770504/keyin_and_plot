@@ -14,7 +14,7 @@
         <!-- Left Column: Measurement List -->
         <div class="column" id="left-column">
             <div class="column-content-wrapper">
-                <h1>Measurements</h1>
+                <h2>Measurements</h2>
 
                 <div class="user-config-panel">
                     <label for="username-input">Your Name:</label>
@@ -140,73 +140,96 @@
                 <div class="right-header">
                     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
                         <div style="display: flex; align-items: center; gap: 15px;">
-                            <h1>Measurement Plots</h1>
-                            <button id="toggle-chart-controls" class="btn-ghost" title="Toggle Controls">⚙ Hide Controls</button>
-                        </div>
-                        <div class="control-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 5px;">
-                            <label>Export:</label>
-                            <select id="export-format" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
-                                <option value="png">PNG</option>
-                                <option value="svg">SVG</option>
-                            </select>
-                            <select id="export-dpi" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
-                                <option value="3.125">300 DPI</option>
-                                <option value="1">96 DPI (Web)</option>
-                                <option value="6.25">600 DPI</option>
-                            </select>
-                            <button id="save-chart-btn" class="btn-secondary btn-small">💾 Save</button>
+                            <h2>Measurement Plots</h2>
+                            <button id="toggle-chart-controls" class="btn-ghost active" title="Toggle Controls">⚙ Show Controls</button>
                         </div>
                     </div>
-                    <div class="chart-controls unified-controls" id="comp-chart-controls">
-                        <!-- Row 1: X-Axis | Scale -->
-                        <div class="control-group">
-                            <label>X-Axis:</label>
-                            <input type="number" id="comp-x-min" placeholder="Min" step="any" class="limit-input">
-                            <input type="number" id="comp-x-max" placeholder="Max" step="any" class="limit-input">
-                            <button id="apply-x-limits" class="btn-secondary btn-small">Apply</button>
-                            <button id="clear-x-limits" class="btn-secondary btn-small">Clear</button>
-                        </div>
-                        <div class="control-group">
-                            <label>Scale:</label>
-                            <button id="toggle-comp-log-x" class="btn-ghost" title="Toggle X-axis Log/Linear">X-Log</button>
-                            <button id="toggle-comp-log-y" class="btn-ghost" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                    <div class="accordion-container" id="comp-chart-controls" style="display: none;">
+                        <div class="accordion-item">
+                            <button class="accordion-header active">Axes & Scale</button>
+                            <div class="accordion-content" style="display: block;">
+                                <div class="chart-controls unified-controls" style="border: none; padding: 0; background: transparent;">
+                                    <div class="control-group">
+                                        <label>X-Axis:</label>
+                                        <input type="number" id="comp-x-min" placeholder="Min" step="any" class="limit-input">
+                                        <input type="number" id="comp-x-max" placeholder="Max" step="any" class="limit-input">
+                                        <button id="apply-x-limits" class="btn-secondary btn-small">Apply</button>
+                                        <button id="clear-x-limits" class="btn-secondary btn-small">Clear</button>
+                                    </div>
+                                    <div class="control-group">
+                                        <label>X-Scale:</label>
+                                        <button id="toggle-comp-log-x" class="btn-ghost" title="Toggle X-axis Log/Linear">X-Log</button>
+                                    </div>
+                                    <div class="control-group">
+                                        <label>Y-Axis:</label>
+                                        <input type="number" id="comp-y-min" placeholder="Min" step="any" class="limit-input">
+                                        <input type="number" id="comp-y-max" placeholder="Max" step="any" class="limit-input">
+                                        <button id="apply-y-limits" class="btn-secondary btn-small">Apply</button>
+                                        <button id="clear-y-limits" class="btn-secondary btn-small">Clear</button>
+                                    </div>
+                                    <div class="control-group">
+                                        <label>Y-Scale:</label>
+                                        <button id="toggle-comp-log-y" class="btn-ghost" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Row 2: Y-Axis | Regression -->
-                        <div class="control-group">
-                            <label>Y-Axis:</label>
-                            <input type="number" id="comp-y-min" placeholder="Min" step="any" class="limit-input">
-                            <input type="number" id="comp-y-max" placeholder="Max" step="any" class="limit-input">
-                            <button id="apply-y-limits" class="btn-secondary btn-small">Apply</button>
-                            <button id="clear-y-limits" class="btn-secondary btn-small">Clear</button>
-                        </div>
-                        <div class="control-group">
-                            <label>Regression:</label>
-                            <label class="checkbox-label"><input type="checkbox" id="comp-include-linear"> Linear</label>
-                            <label class="checkbox-label"><input type="checkbox" id="comp-include-power" checked> Power</label>
+                        <div class="accordion-item">
+                            <button class="accordion-header">Regression</button>
+                            <div class="accordion-content" style="display: none;">
+                                <div class="chart-controls unified-controls" style="border: none; padding: 0; background: transparent; display: flex;">
+                                    <div class="control-group">
+                                        <label class="checkbox-label"><input type="checkbox" id="comp-include-linear"> Linear</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="comp-include-power" checked> Power</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Row 3: Custom Curve -->
-                        <div class="control-group" style="grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
-                            <label style="margin-right: 5px;">Custom Curve:</label>
-                            <input type="text" id="custom-curve-name" placeholder="Curve Name" style="width: 120px;">
-                            <select id="custom-curve-type">
-                                <option value="linear">Linear (σ = mγ̇ + c)</option>
-                                <option value="power">Power (σ = aγ̇^b)</option>
-                            </select>
-                            <input type="number" id="custom-curve-param1" placeholder="m or a" step="any" class="limit-input" style="width: 80px;">
-                            <input type="number" id="custom-curve-param2" placeholder="c or b" step="any" class="limit-input" style="width: 80px;">
-                            <input type="color" id="custom-curve-color" value="#000000" style="padding: 0; border: none; width: 26px; height: 26px; cursor: pointer; background: none;">
-                            <button id="add-custom-curve-btn" class="btn-secondary btn-small">Add</button>
-                            <button id="clear-custom-curves-btn" class="btn-danger btn-small">Clear All</button>
+                        <div class="accordion-item">
+                            <button class="accordion-header">Custom Curves</button>
+                            <div class="accordion-content" style="display: none;">
+                                <div class="chart-controls unified-controls" style="border: none; padding: 0; background: transparent; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;">
+                                    <div class="control-group" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                        <input type="text" id="custom-curve-name" placeholder="Curve Name" style="width: 120px;">
+                                        <select id="custom-curve-type">
+                                            <option value="linear">Linear (σ = mγ̇ + c)</option>
+                                            <option value="power">Power (σ = aγ̇^b)</option>
+                                        </select>
+                                        <input type="number" id="custom-curve-param1" placeholder="m or a" step="any" class="limit-input" style="width: 80px;">
+                                        <input type="number" id="custom-curve-param2" placeholder="c or b" step="any" class="limit-input" style="width: 80px;">
+                                        <input type="color" id="custom-curve-color" value="#000000" style="padding: 0; border: none; width: 26px; height: 26px; cursor: pointer; background: none;">
+                                        <button id="add-custom-curve-btn" class="btn-secondary btn-small">Add</button>
+                                        <button id="clear-custom-curves-btn" class="btn-danger btn-small">Clear All</button>
+                                    </div>
+                                    <div id="custom-curves-list" class="custom-curves-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div id="custom-curves-list" class="custom-curves-list" style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;"></div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
+                    <!-- Spacer to keep title centered -->
+                    <div style="flex: 1;"></div>
+                    <div class="chart-title-wrapper" style="flex: 1; text-align: center; margin: 0;">
+                        <div id="comparison-chart-title" contenteditable="true" spellcheck="false">Rheology Compare</div>
+                    </div>
+                    <div class="control-group" style="flex: 1; justify-content: flex-end; margin-bottom: 0; display: flex; align-items: center; gap: 5px;">
+                        <label>Export:</label>
+                        <select id="export-format" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
+                            <option value="png">PNG</option>
+                            <option value="svg">SVG</option>
+                        </select>
+                        <select id="export-dpi" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
+                            <option value="3.125">300 DPI</option>
+                            <option value="1">96 DPI (Web)</option>
+                            <option value="6.25">600 DPI</option>
+                        </select>
+                        <button id="save-chart-btn" class="btn-secondary btn-small">💾 Save</button>
                     </div>
                 </div>
                 <div id="comparison-chart-container" style="position: relative; width: 100%;">
-                    <div class="chart-title-wrapper">
-                        <div id="comparison-chart-title" contenteditable="true" spellcheck="false">Rheology Compare</div>
-                    </div>
                     <button id="reset-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
                     <canvas id="comparison-chart"></canvas>
                     <div id="custom-legend" class="floating-legend" style="display: none;"></div>
