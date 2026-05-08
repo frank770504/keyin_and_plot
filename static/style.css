@@ -1,8 +1,8 @@
 :root {
     --base-font-size: 0.875rem;   /* 14px */
-    --h1-font-size: 1.25rem;    /* 20px */
-    --h2-font-size: 1.125rem;   /* 18px */
-    --small-font-size: 0.75rem; /* 12px */
+    --h1-font-size: 1.75rem;    /* 20px */
+    --h2-font-size: 1.5rem;   /* 18px */
+    --small-font-size: 0.875rem; /* 12px */
     --border-radius: 4px;
     --input-padding: 6px 8px;
     --button-padding: 6px 12px;
@@ -178,14 +178,14 @@ body.resizing .column-content-wrapper {
 .control-group {
     display: flex;
     align-items: center;
-    gap: 6px; /* Slightly tighter gap */
+    gap: 6px; /* Reduced gap from 6px */
 }
 
 .control-group label {
     font-size: var(--small-font-size);
     font-weight: bold;
     color: #495057;
-    min-width: 75px; /* Tighter label alignment */
+    min-width: 50px; /* Tighter label alignment */
 }
 
 .limit-input {
@@ -372,7 +372,7 @@ h1, h2 {
 }
 
 h2 {
-    font-size: 1.5rem;
+    font-size: var(--h2-font-size);
     margin-top: 20px;
     margin-bottom: 10px;
     padding-left: 5px; /* Aligns with the legend's padding */
