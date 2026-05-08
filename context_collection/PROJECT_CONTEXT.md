@@ -74,6 +74,12 @@ The UI features a consistent three-column layout (Measurement List, Workspace, M
 5.  **Independent Table Viewports**: Tables use `width: max-content` and are wrapped in scrollable containers. Moving gutters clips or reveals the tables without stretching or shrinking them.
 6.  **Customizable Columns**: Users can resize columns (min 20px) and reorder them by dragging headers. These layout preferences are bound to Column IDs and persist in `localStorage`.
 
+### F. Database Safety & Portability
+1.  **Atomic Backups**: The system performs non-blocking snapshots using SQLite's `VACUUM INTO` command.
+2.  **Automated Snapshots**: Performs daily backups on startup and creates "Undo Points" (pre-save snapshots) whenever a measurement is committed.
+3.  **Restore Safety**: Prevents restoration if another user holds the editor lock. Automatically creates a safety backup of the current state before any overwrite.
+4.  **User Tools**: A collapsible sidebar panel provides one-click manual backups, database downloads, and interactive restoration from historical versions.
+
 ## 5. Database Schema
 
 ### GlobalLock (Singleton)

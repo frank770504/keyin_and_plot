@@ -30,7 +30,8 @@
                 </div>
 
                 <input type="text" id="measurement-search" placeholder="Search measurements..." class="search-bar">
-                <div class="table-scroll-container">
+                
+                <div class="table-scroll-container" style="flex: 1; overflow-y: auto;">
                     <table id="measurement-list-table">
                         <thead>
                             <tr>
@@ -50,6 +51,34 @@
                             <!-- Measurements will be loaded here -->
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Database Management Section -->
+                <div class="database-management" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; flex-shrink: 0;">
+                    <h3 id="db-mgmt-toggle" style="cursor: pointer; display: flex; align-items: center; margin-bottom: 0; gap: 8px; font-size: 0.9rem; color: #666;">
+                        <span id="db-mgmt-arrow">▸</span> Database Management
+                    </h3>
+                    <div id="db-mgmt-content" style="display: none; margin-top: 10px;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <button id="backup-now-btn" class="toggle-btn small" style="background-color: #28a745; color: white; padding: 2px 8px;">Manual Backup</button>
+                            <a id="export-db-link" href="#" class="toggle-btn small" style="background-color: #17a2b8; color: white; text-decoration: none; display: inline-block; padding: 2px 8px;">Download DB</a>
+                        </div>
+                        
+                        <div class="backup-list-container" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px;">
+                            <table style="width: 100%; font-size: 0.8em; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid #ddd; text-align: left;">
+                                        <th>Snapshot</th>
+                                        <th style="text-align: right;">Size</th>
+                                        <th style="text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="backup-list-body">
+                                    <tr><td colspan="3" style="text-align: center; padding: 10px;">Loading backups...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

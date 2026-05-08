@@ -1,2 +1,5 @@
 .venv/*
 uv.lock
+backups/
+*.db.safety_*.bak
+*.db.safety_*.bak

@@ -1052,3 +1052,30 @@ canvas {
     background-color: white;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
+
+/* Database Management UI */
+.database-management h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #444;
+}
+
+.backup-list-container table th {
+    font-size: 0.8em;
+    color: #888;
+    text-transform: uppercase;
+    padding: 5px 0;
+}
+
+.backup-list-container table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.restore-btn:hover {
+    background-color: #e0a800 !important;
+    border-color: #d39e00 !important;
+}
+
+#export-db-link:hover {
+    background-color: #138496 !important;
+}

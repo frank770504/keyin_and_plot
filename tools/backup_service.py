@@ -17,7 +17,10 @@ def get_backup_dir():
     return os.path.join(root_dir, BACKUP_DIR)
 
 def perform_backup():
-    """Performs an atomic backup using SQLite's VACUUM INTO."""
+    return perform_named_backup('project_backup')
+
+def perform_named_backup(prefix):
+    """Performs an atomic backup using SQLite's VACUUM INTO with a custom prefix."""
     db_path = get_db_path()
     backup_dir = get_backup_dir()
     
@@ -25,17 +28,15 @@ def perform_backup():
         os.makedirs(backup_dir)
     
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    backup_path = os.path.join(backup_dir, f'project_backup_{timestamp}.db')
+    backup_path = os.path.join(backup_dir, f'{prefix}_{timestamp}.db')
     
     print(f"Starting atomic backup to {backup_path}...")
     try:
-        # VACUUM INTO creates a new, consistent database file from the current one.
-        # It is safe to run while the database is being accessed.
         conn = sqlite3.connect(db_path)
         conn.execute(f"VACUUM INTO '{backup_path}'")
         conn.close()
         print("Backup completed successfully.")
-        return backup_path
+        return os.path.basename(backup_path)
     except Exception as e:
         print(f"Backup failed: {e}")
         return None
@@ -51,7 +52,8 @@ def rotate_backups():
     
     print(f"Checking for backups older than {RETENTION_DAYS} days...")
     for filename in os.listdir(backup_dir):
-        if filename.startswith('project_backup_') and filename.endswith('.db'):
+        # Match both daily backups and named backups
+        if filename.endswith('.db') and ('_backup_' in filename):
             file_path = os.path.join(backup_dir, filename)
             file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
             

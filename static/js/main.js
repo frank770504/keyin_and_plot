@@ -5,6 +5,7 @@ import state, * as stateManager from './state.js';
 import * as layout from './ui/layout.js';
 import * as measurementUI from './ui/measurement_ui.js';
 import * as workspaceUI from './ui/workspace_ui.js';
+import * as databaseUI from './ui/database_ui.js';
 import { createFloatingLegend, makeDraggable } from './ui/legend_ui.js';
 import { TableResizer } from './ui/table_resizer.js';
 import { ColumnReorderer } from './ui/column_reorderer.js';
@@ -667,6 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateManager.setActiveMeasurement(finalId);
             await loadActiveMeasurementData();
             loadAndRenderMeasurements(); // Refresh list to reflect potential name change
+            databaseUI.refreshBackupList(); // Refresh backups as a pre-save was triggered
 
             await releaseLockIfPossible();
         } catch (error) {
@@ -1396,6 +1398,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Load & Polling ---
     initUserConfig();
+    databaseUI.initDatabaseUI();
     loadAndRenderMeasurements();
     pollLockStatus();
     setInterval(pollLockStatus, 10000); // Poll lock status every 10s

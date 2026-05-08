@@ -3,11 +3,14 @@ APIs
 """
 
 from datetime import datetime, UTC
-from flask import Blueprint, jsonify, request
+import os
+import shutil
+from flask import Blueprint, jsonify, request, send_file
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from models import db, Measurement, Point, GlobalLock
+from tools import backup_service
 
 api_bp = Blueprint('api', __name__)
 
@@ -275,6 +278,9 @@ def commit_edit_mode(measurement_id):
         draft.edit_date = datetime.now(UTC).isoformat()
         for p in draft.points:
             p.is_draft = False
+        # Trigger pre-save backup for user safety
+        backup_service.perform_named_backup("pre_save_backup")
+
         db.session.commit()
         return jsonify({
             "message": "New measurement created successfully",
@@ -323,6 +329,9 @@ def commit_edit_mode(measurement_id):
     for op_id, op in original_points_map.items():
         if op_id not in draft_point_ids_seen:
             db.session.delete(op)
+
+    # Trigger pre-save backup for user safety
+    backup_service.perform_named_backup("pre_save_backup")
 
     db.session.delete(draft)
     db.session.commit()
@@ -425,7 +434,7 @@ def get_measurements():
         return only the draft to avoid duplicates in the UI.
     """
     production_measurements = Measurement.query.filter_by(is_draft=False).all()
-    
+
     # Check if there is an active draft for this session
     session_id = request.headers.get('X-Session-ID')
     active_draft = None
@@ -530,7 +539,7 @@ def update_measurement(measurement_id):
         try:
             measurement.date = datetime.strptime(date_str, '%Y-%m-%d').date()
         except (ValueError, TypeError):
-            # Fallback or silent ignore if format is wrong, 
+            # Fallback or silent ignore if format is wrong,
             pass
     elif 'date' in data:
         measurement.date = None
@@ -681,3 +690,83 @@ def update_point(measurement_id, point_id):
     return jsonify({
         "shear_rate": point.shear_rate,
         "shear_stress": point.shear_stress}), 200
+
+
+# --- Admin & Backup Management APIs ---
+
+@api_bp.route('/admin/backups', methods=['GET'])
+def list_backups():
+    """Returns a list of available database backups."""
+    backup_dir = backup_service.get_backup_dir()
+    if not os.path.exists(backup_dir):
+        return jsonify([]), 200
+
+    backups = []
+    for f in os.listdir(backup_dir):
+        if f.endswith('.db'):
+            path = os.path.join(backup_dir, f)
+            stats = os.stat(path)
+            backups.append({
+                "filename": f,
+                "size": stats.st_size,
+                "date": datetime.fromtimestamp(stats.st_mtime).isoformat()
+            })
+
+    # Sort newest first
+    backups.sort(key=lambda x: x['date'], reverse=True)
+    return jsonify(backups), 200
+
+
+@api_bp.route('/admin/backup/now', methods=['POST'])
+def trigger_manual_backup():
+    """Triggers an immediate manual backup. No lock required as it is non-destructive."""
+    filename = backup_service.perform_named_backup("manual_backup")
+    if filename:
+        return jsonify({"message": "Manual backup created", "filename": filename}), 201
+    return jsonify({"error": "Backup failed"}), 500
+
+
+@api_bp.route('/admin/export', methods=['GET'])
+def export_database():
+    """Download the current project.db file."""
+    db_path = backup_service.get_db_path()
+    if not os.path.exists(db_path):
+        return jsonify({"error": "Database file not found"}), 404
+
+    return send_file(
+        db_path,
+        as_attachment=True,
+        download_name=f"project_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+    )
+
+
+@api_bp.route('/admin/restore/<filename>', methods=['POST'])
+def restore_from_backup(filename):
+    """Restore the database from a specific backup file."""
+    session_id = request.headers.get('X-Session-ID')
+    lock = GlobalLock.query.first()
+
+    # Check if someone ELSE holds the lock
+    if lock and not lock.is_stale() and lock.session_id != session_id:
+        return jsonify({"error": f"Permission denied: Lock held by {lock.user_name}"}), 403
+
+    backup_dir = backup_service.get_backup_dir()
+    backup_path = os.path.join(backup_dir, filename)
+    db_path = backup_service.get_db_path()
+
+    if not os.path.exists(backup_path):
+        return jsonify({"error": "Backup file not found"}), 404
+
+    try:
+        # Create a safety copy before overwriting
+        safety_path = f"{db_path}.safety_{datetime.now().strftime('%Y%m%d_%H%M%S')}.bak"
+        shutil.copy2(db_path, safety_path)
+
+        # Overwrite current DB
+        shutil.copy2(backup_path, db_path)
+
+        # Note: After overwriting the DB file, SQLAlchemy might need a session refresh
+        # but since we're returning 200, the next request will pick it up.
+        return jsonify({"message": f"Successfully restored from {filename}"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Restore failed: {str(e)}"}), 500

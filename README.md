@@ -65,12 +65,15 @@ The application includes an automated backup system and a manual restore utility
 
 ### Manual Restore
 If you need to revert the database to a previous state:
-1.  **Run the restore utility**:
+1.  **Via the UI**: Use the "Database Management" section in the left sidebar to view recent snapshots and click "Restore" on the desired version.
+2.  **Via the CLI**: 
     ```bash
     uv run python tools/restore_db.py
     ```
-2.  **Follow the prompts**: Select a backup from the list. The tool will automatically create a safety copy of your current database before performing the restore.
-3.  **Safety First**: Avoid restoring while another user is actively editing (the tool will warn you if a lock is detected).
+3.  **Safety First**: The tool automatically creates a safety copy of your current database before performing the restore. Avoid restoring while another user is actively editing.
+
+### Data Portability
+You can download a complete copy of the database at any time using the **"Download DB"** button in the UI. This is useful for offline analysis or moving your project to another system.
 
 ## API Testing Examples
 

@@ -126,3 +126,21 @@ export async function fetchRegression(id, type = 'linear') {
     const url = type === 'linear' ? `/api/measurements/${id}/regression` : `/api/measurements/${id}/power-regression`;
     return fetchWithLock(url);
 }
+
+// --- Admin & Backup APIs ---
+
+export async function fetchBackups() {
+    return fetchWithLock('/api/admin/backups');
+}
+
+export async function triggerManualBackup() {
+    return fetchWithLock('/api/admin/backup/now', { method: 'POST' });
+}
+
+export async function restoreBackup(filename) {
+    return fetchWithLock(`/api/admin/restore/${filename}`, { method: 'POST' });
+}
+
+export function getExportUrl() {
+    return '/api/admin/export';
+}
