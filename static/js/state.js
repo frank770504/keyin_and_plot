@@ -33,6 +33,7 @@ const state = {
             xMax: null,
             yMin: null,
             yMax: null,
+            showLegend: true,
             customCurves: [] // Array of { id, type, param1, param2, color }
         },
         active: {

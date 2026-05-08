@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
         toggleChartControlsBtn: document.getElementById('toggle-chart-controls'),
+        toggleLegendBtn: document.getElementById('toggle-legend'),
         compChartControls: document.getElementById('comp-chart-controls'),
 
         // Chart Controls
@@ -1068,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.resetZoomBtn.style.display = 'inline-flex';
 
             // Generate Custom Legend
-            createFloatingLegend(comparisonChart, elements.customLegend);
+            createFloatingLegend(comparisonChart, elements.customLegend, state.chartConfig.comparison.showLegend);
         } catch (error) {
             console.error(error);
         }
@@ -1298,6 +1299,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 comparisonChart.resize();
             }, 50); // Slight delay for DOM layout
         }
+    });
+
+    elements.toggleLegendBtn.addEventListener('click', () => {
+        state.chartConfig.comparison.showLegend = !state.chartConfig.comparison.showLegend;
+        const isVisible = state.chartConfig.comparison.showLegend;
+
+        elements.customLegend.style.display = isVisible ? 'flex' : 'none';
+        elements.toggleLegendBtn.textContent = isVisible ? '🏷️ Hide Legend' : '🏷️ Show Legend';
+        elements.toggleLegendBtn.classList.toggle('active', !isVisible);
     });
 
     elements.toggleCompLogX.addEventListener('click', () => {

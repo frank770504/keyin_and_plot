@@ -82,11 +82,11 @@ function createLegendIcon(dataset, strokeColor, fillColor) {
     return svg;
 }
 
-export function createFloatingLegend(chartInstance, legendElement) {
+export function createFloatingLegend(chartInstance, legendElement, showLegend = true) {
     if (!chartInstance || !legendElement) return;
 
     legendElement.innerHTML = '';
-    legendElement.style.display = 'flex';
+    legendElement.style.display = showLegend ? 'flex' : 'none';
 
     // 1. Create Header
     const header = document.createElement('div');
