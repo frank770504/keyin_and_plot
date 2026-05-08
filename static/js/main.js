@@ -5,7 +5,7 @@ import state, * as stateManager from './state.js';
 import * as layout from './ui/layout.js';
 import * as measurementUI from './ui/measurement_ui.js';
 import * as workspaceUI from './ui/workspace_ui.js';
-import { createFloatingLegend, makeDraggable } from './ui/legend_ui.js';
+import { createFloatingLegend } from './ui/legend_ui.js';
 import { TableResizer } from './ui/table_resizer.js';
 import { ColumnReorderer } from './ui/column_reorderer.js';
 
@@ -149,8 +149,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     );
 
-    // Initialize Draggable Legend
-    makeDraggable(elements.customLegend);
+    // Viewport Boundary Enforcement for floating windows
+    window.addEventListener('resize', () => {
+        [elements.floatingWindow, elements.customLegend].forEach(el => {
+            if (el && el.style.display !== 'none') {
+                // Trigger a dummy drag event or manual clamping logic
+                // For simplicity, we can just ensure they are within bounds
+                const rect = el.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const padding = 30;
+
+                let viewTop = rect.top;
+                let viewLeft = rect.left;
+
+                if (viewTop < 0) viewTop = 0;
+                if (viewTop > viewportHeight - padding) viewTop = viewportHeight - padding;
+                if (viewLeft < padding - rect.width) viewLeft = padding - rect.width;
+                if (viewLeft > viewportWidth - padding) viewLeft = viewportWidth - padding;
+
+                const offsetParentRect = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { top: 0, left: 0 };
+                el.style.top = (viewTop - offsetParentRect.top) + "px";
+                el.style.left = (viewLeft - offsetParentRect.left) + "px";
+            }
+        });
+    });
 
     // 0. Lock & User Management
     function initUserConfig() {

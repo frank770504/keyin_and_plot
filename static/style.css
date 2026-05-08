@@ -764,7 +764,7 @@ canvas {
     background-color: white;
     border: 1px solid #ccc;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 1000;
+    z-index: 2000; /* Increased to stay above gutters/columns */
     resize: both;
     overflow: auto; /* Required for resize handle */
     flex-direction: column;
@@ -879,7 +879,7 @@ canvas {
     border-radius: 4px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     font-size: var(--small-font-size);
-    z-index: 10;
+    z-index: 1500; /* Increased to stay above gutters/columns */
     width: 450px; /* Default width increased */
     height: auto;
     min-width: 150px;

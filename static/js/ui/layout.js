@@ -1,5 +1,7 @@
 // static/js/ui/layout.js
 
+import { enableDragging } from './drag_utils.js';
+
 export class FloatingWindow {
     constructor(windowId, headerId, closeBtnId, onResize = null) {
         this.window = document.getElementById(windowId);
@@ -13,7 +15,7 @@ export class FloatingWindow {
         }
 
         this.initEvents();
-        this.makeDraggable();
+        enableDragging(this.window, this.header);
         this.initResizeObserver();
     }
 
@@ -45,33 +47,6 @@ export class FloatingWindow {
         } else {
             this.hide();
         }
-    }
-
-    makeDraggable() {
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        const element = this.window;
-        const handle = this.header;
-
-        handle.onmousedown = (e) => {
-            e = e || window.event;
-            e.preventDefault();
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = () => {
-                document.onmouseup = null;
-                document.onmousemove = null;
-            };
-            document.onmousemove = (e) => {
-                e = e || window.event;
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                element.style.top = (element.offsetTop - pos2) + "px";
-                element.style.left = (element.offsetLeft - pos1) + "px";
-            };
-        };
     }
 }
 

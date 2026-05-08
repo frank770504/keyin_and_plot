@@ -133,9 +133,36 @@ The Unified Table System provides a high-density, customizable interface for dat
 - **Storage**: Layout preferences are saved in `localStorage` using unique keys (e.g., `table-widths-measurements`, `table-column-order-measurements`).
 - **Logic**: Widths and orders are stored as ID-to-Value maps. This ensures that a column's width follows it even after it has been moved to a new position.
 
-## 4. Implementation Details
+## 4. Floating Window Management
+
+### A. Viewport Clamping & Containment
+To prevent windows from becoming unreachable or obscuring critical UI, all floating elements implement strict clamping logic during dragging and viewport resizing via the `drag_utils.js` utility.
+
+#### 1. Viewport Clamping (Analysis Window)
+- **Scope**: Used for windows that float globally over the entire application.
+- **Constraint**: At least **30px** of the window's header must remain within the visible viewport.
+- **Vertical**: `top >= 0` (cannot disappear above the top).
+- **Horizontal**: At least 30px of the header must stay within the left/right viewport edges.
+
+#### 2. Parent Containment (Legend)
+- **Scope**: Used for pane-specific elements that must not cross layout boundaries (gutters).
+- **Constraint**: The element is strictly clamped to the boundaries of its **Right Pane** (`offsetParent`).
+- **Gutter Protection**: Clamping prevents the legend from crossing the gutter line into the center or left columns.
+
+### B. Stacking Order (z-index)
+Floating elements utilize a high `z-index` to ensure they remain interactive and visible on top of collapsible columns, gutters, and data tables.
+- **Analysis Window**: `z-index: 2000`.
+- **Legend Window**: `z-index: 1500`.
+- **Comparison**: Standard layout elements (gutters, columns) occupy `z-index: 10-30`.
+
+### C. Implementation Details
+- **Module**: `static/js/ui/drag_utils.js` provides the shared `enableDragging` utility with `containment: 'parent' | 'viewport'` options.
+- **Logic Persistence**: Clamping is reapplied on the window `resize` event to maintain accessibility.
+
+## 5. Implementation Details
 - **Modules**:
     - `static/js/ui/table_resizer.js`: Logic for drag-to-resize handles.
     - `static/js/ui/column_reorderer.js`: Logic for drag-to-reorder headers.
     - `static/js/ui/measurement_ui.js`: Order-aware rendering for the measurement list.
-- **CSS**: Located in the "Table Styles" section of `static/style.css`.
+    - `static/js/ui/drag_utils.js`: Viewport and Parent clamped dragging for floating elements.
+- **CSS**: Located in the "Table Styles" and "Floating Window" sections of `static/style.css`.
