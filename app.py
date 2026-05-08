@@ -4,6 +4,7 @@ import argparse
 from flask import Flask, render_template
 from models import db
 from api import api_bp
+from tools import backup_service
 
 
 def create_app():
@@ -36,4 +37,8 @@ if __name__ == '__main__':
     main_app = create_app()
     with main_app.app_context():
         db.create_all()
+
+    # Run backup check on startup
+    backup_service.check_and_trigger()
+
     main_app.run(debug=True, host=args.url, port=args.port)
