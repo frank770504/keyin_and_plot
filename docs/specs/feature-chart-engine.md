@@ -38,13 +38,24 @@ The Unified Reactive Chart Engine provides a high-performance, consistent visual
 - **Auto-Update**: Any state change or data modification triggers an immediate re-render of the relevant chart instance.
 
 ## 4. Unified GUI (Analyze vs. Measurement Plots)
-Both chart interfaces implement an identical control bar:
-- **Scale Toggles**: `X-Log` and `Y-Log` buttons.
-- **Regression Toggles**: `Linear` and `Power` law checkboxes.
-- **Custom Curve Management**: A dynamic list of badges for active custom curves, each providing a delete button (×) for individual removal.
-- **Viewport Control**: A `Reset Zoom` button (⟲) that appears on hover/interaction to restore auto-fitted scales.
+The Comparison Chart implements a high-density, modular control interface:
+- **Integrated Header Bar**: To maximize vertical space, primary actions are integrated into a single horizontal row above the chart:
+    - **Editable Title**: Centered `contenteditable` heading.
+    - **Export Controls**: Format/DPI selectors and the "Save" button.
+    - **Viewport Control**: An integrated "Reset Zoom" button (⟲) that appears only when the chart is zoomed or measurements are plotted.
+- **Accordion Control Layout**: Advanced configuration is organized into a collapsible accordion container (hidden by default):
+    - **Axes & Scale**: `X-Log`, `Y-Log`, and manual axis limit inputs.
+    - **Regression**: Toggles for `Linear` and `Power Law` fits.
+    - **Custom Curves**: Tools for adding user-defined mathematical models.
 
-## 5. Implementation Details
+## 5. Custom Curve Management
+The system supports the addition of multiple custom mathematical curves to the comparison plot.
+- **Interactive Modeling**: Users select a model type (Linear or Power Law) and input specific parameters.
+- **KaTeX Formula Preview**: A dynamic preview box renders the selected equation in real-time (e.g., $\sigma = m\dot{\gamma} + c$) using KaTeX.
+- **Dynamic Parameter Labeling**: Input fields adapt their labels ($m, c, a, b$) and placeholders (Slope, Factor, etc.) based on the selected model to provide immediate mathematical context.
+- **Persistence**: Added curves appear as badges below the inputs, allowing for individual removal.
+
+## 6. Implementation Details
 - **Orchestrator**: `static/js/chart_service.js` (Handles Chart.js initialization, LaTeX plugin, and caching).
 - **LaTeX Integration**: A custom Chart.js plugin (`katexChartPlugin`) manages the lifecycle of KaTeX-rendered axis titles and tooltips.
 - **Dependencies**: Chart.js 4.x, KaTeX, chartjs-plugin-zoom.
@@ -101,15 +112,20 @@ The measurement plotting system allows users to visualize multiple rheology meas
 The Chart Export System allows users to save the Measurement Comparison workspace (including the editable title, the interactive chart, and the floating legend) as high-resolution image files. It is designed to produce publication-quality output in both raster (PNG) and vector (SVG) formats.
 
 ## 2. UI Components
-- **Editable Chart Title**: A `contenteditable` heading located directly above the chart canvas. It defaults to "Rheology Compare". This element is rendered as native text in the export, avoiding the "input box" appearance.
-- **Permanent Export Bar**: A control group located in the right-pane header (permanently visible even when advanced chart controls are hidden). It contains:
-    - **Format Selector**: Dropdown for PNG or SVG.
-    - **DPI Selector**: Options for 96 DPI (Web), 300 DPI (Print), and 600 DPI (Ultra-High).
+- **Capture Container**: The export system captures the `#comparison-chart-container`. This container is nested to include the **Title**, **Chart**, and **Floating Legend**.
+- **Permanent Export Bar**: Integrated into the chart header for immediate access. It contains:
+    - **Format Selector**: PNG or SVG.
+    - **DPI Selector**: 96 DPI to 600 DPI options.
     - **Save Button**: Triggers the serialized capture and download process.
 
 ## 3. Export Logic & Processing
 
-### A. High-Resolution Scaling (DPI)
+### A. Component Filtering
+To ensure a professional output, the system utilizes a filter function during capture to exclude UI-only elements that should not appear in the final image:
+- **Excluded IDs**: `#reset-zoom-btn`, `#export-controls-group`, and `#export-spacer`.
+- **Result**: The exported image contains only the centered title, the data visualization, and the legend.
+
+### B. High-Resolution Scaling (DPI)
 To prevent the Chart.js canvas from appearing blurry in high-resolution exports, the system implements a dynamic pixel-density boost:
 1.  **Scale Calculation**: A `scale` factor is derived from the selected DPI (e.g., 300 DPI corresponds to a ~3.125x scale).
 2.  **Resolution Injection**: The Chart.js `devicePixelRatio` is temporarily set to `window.devicePixelRatio * scale`.

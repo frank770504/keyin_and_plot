@@ -2,8 +2,8 @@
 
 ## 1. Typography & Hierarchy
 - **Base Font Size:** 14px (`0.875rem`) for standard text and data tables.
-- **Headers:** H1 is 20px (`1.25rem`, bold), H2 is 18px (`1.125rem`, semibold/bold).
-- **Small Text:** 12px (`0.75rem`) for hints and small buttons.
+- **Headers:** H1 is 28px (`1.75rem`, bold), H2 is 24px (`1.5rem`, semibold/bold).
+- **Small Text:** 14px (`0.875rem`) for hints and small buttons.
 - **Conventions:** Standard action buttons use clear text combined with standard icons where appropriate (e.g., `✎ Edit`, `💾 Save`).
 
 ## 2. Interactive Elements & Sizing
@@ -15,7 +15,8 @@ To guarantee perfect horizontal alignment in toolbars and rows, all interactive 
 
 ### B. Form Alignment (Vertical Centering)
 - **Zero Global Margin:** Global `input`, `select`, and `textarea` elements must have `margin: 0`.
-- **Centering:** Label/Input pairs are placed inside flex containers (e.g., `.metadata-row`, `.control-group`) with `align-items: center`. The removal of global bottom margins ensures perfect baseline centering between text labels and their input fields.
+- **Centering:** Label/Input pairs are placed inside flex containers (e.g., `.metadata-row`, `.control-group`) with `align-items: center`.
+- **Spacing:** Global `.control-group` utilizes a `6px` gap. Specific high-density areas (Right Pane) may utilize tighter gaps (3px - 4px) via inline overrides.
 
 ### C. Button Hierarchy (Modern Minimalist)
 The application avoids heavy, distracting blocks of solid color, utilizing an outline-based aesthetic to keep visual noise low while retaining clear hierarchy.
@@ -24,6 +25,22 @@ The application avoids heavy, distracting blocks of solid color, utilizing an ou
     - **Functional Modifiers:** Secondary buttons support state context: `.success` (Green text/border) and `.danger` (Red text/border).
 - **Danger (`.btn-danger`):** Standalone destructive class (White background, Red text/border). Turns solid Red on hover. Functionally identical to `.btn-secondary.danger`.
 - **Ghost (`.btn-ghost`):** Subtle button appearance (very light gray `#f1f3f5` background, slight border/shadow). Used for toggles (e.g., scale toggles, "⚙ Hide Controls") where the button should look clickable but not distract from data. Turns blue when `.active`.
+
+---
+
+# Technical Specification: Metadata & Workspace Persistence
+
+## 1. Fixed-Width Metadata Box
+To ensure visual stability during pane resizing, the `.metadata-box` implements a non-responsive layout:
+- **Fixed Width**: `375px`.
+- **Constraint**: `flex-shrink: 0` prevents the box from narrowing when the center column is compressed.
+- **Internal Alignment**: Labels are fixed at `90px`, and inputs are fixed at `250px`.
+
+## 2. Accordion Control System
+Complex control sets (e.g., Chart Comparison Controls) utilize a vertically stacked accordion system:
+- **Container**: Rounded borders (`8px`) with a light gray background (`#f8f9fa`).
+- **Headers**: Clickable bars that toggle visibility of their child content. Active headers highlight in blue and rotate their chevron icon.
+- **Persistence**: Content visibility is managed via `display: block/none`.
 
 ---
 
