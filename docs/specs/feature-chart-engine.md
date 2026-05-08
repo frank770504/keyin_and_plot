@@ -47,13 +47,24 @@ The Comparison Chart implements a high-density, modular control interface:
     - **Axes & Scale**: `X-Log`, `Y-Log`, and manual axis limit inputs.
     - **Regression**: Toggles for `Linear` and `Power Law` fits.
     - **Custom Curves**: Tools for adding user-defined mathematical models.
+    - **Reference Curves**: Toggles for predefined industry standard or baseline equations.
 
-## 5. Custom Curve Management
-The system supports the addition of multiple custom mathematical curves to the comparison plot.
+## 5. Custom & Reference Curve Management
+The system supports the addition of mathematical models to the comparison plot through two distinct interfaces.
+
+### A. Custom Curves (User-Defined)
 - **Interactive Modeling**: Users select a model type (Linear or Power Law) and input specific parameters.
 - **KaTeX Formula Preview**: A dynamic preview box renders the selected equation in real-time (e.g., $\sigma = m\dot{\gamma} + c$) using KaTeX.
-- **Dynamic Parameter Labeling**: Input fields adapt their labels ($m, c, a, b$) and placeholders (Slope, Factor, etc.) based on the selected model to provide immediate mathematical context.
 - **Persistence**: Added curves appear as badges below the inputs, allowing for individual removal.
+
+### B. Reference Curves (System-Defined)
+- **Data Source**: Predefined equations provided by the backend via the `/api/reference-curves` endpoint.
+- **Selection**: Managed via a dedicated accordion item containing a list of available reference curves with checkboxes.
+- **Mathematical Context**: Each reference item displays its full mathematical equation (rendered via KaTeX) alongside its name for immediate verification.
+
+### C. Plotting Behavior
+- **Range Adaptation**: Curves are plotted across the current X-axis extent of all selected measurements. If no measurements are selected, the system defaults to a range of $0.1$ to $100$ to ensure visibility.
+- **Persistence**: Selected reference curves and custom curves remain on the chart even if the raw measurement data is cleared, providing a stable baseline for comparison.
 
 ## 6. Implementation Details
 - **Orchestrator**: `static/js/chart_service.js` (Handles Chart.js initialization, LaTeX plugin, and caching).
