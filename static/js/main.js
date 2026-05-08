@@ -522,7 +522,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // 3. User Actions
     function handleSort(e) {
-        const column = e.currentTarget.dataset.sort;
+        // Only trigger sort if the label was clicked
+        if (!e.target.closest('.sort-label')) return;
+
+        const th = e.currentTarget;
+        const column = th.dataset.sort;
         let { direction } = state.sortState;
 
         if (state.sortState.column === column) {

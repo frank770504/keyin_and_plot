@@ -40,6 +40,46 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
     // For simplicity and to maintain resizer handles, we'll assume ColumnReorderer handles header DOM moves.
     // Here we focus on rendering the BODY rows according to the current header order.
     const currentHeaders = Array.from(thead.querySelectorAll('th'));
+
+    // Ensure all headers have the required structure for Option 1
+    currentHeaders.forEach(th => {
+        if (th.classList.contains('checkbox-column')) return;
+
+        let content = th.querySelector('.header-content');
+        if (!content) {
+            content = document.createElement('div');
+            content.classList.add('header-content');
+            while (th.firstChild) content.appendChild(th.firstChild);
+            th.appendChild(content);
+        }
+
+        // Identify sortable columns and wrap text in sort-label
+        if (th.dataset.sort) {
+            // Find text nodes or elements that aren't icons/handles
+            const children = Array.from(content.childNodes);
+            let labelSpan = content.querySelector('.sort-label');
+
+            if (!labelSpan) {
+                labelSpan = document.createElement('span');
+                labelSpan.classList.add('sort-label');
+
+                // Move text nodes and specific spans into labelSpan
+                children.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('drag-handle') && !node.classList.contains('sort-icon'))) {
+                        labelSpan.appendChild(node);
+                    }
+                });
+
+                const icon = content.querySelector('.sort-icon');
+                if (icon) {
+                    content.insertBefore(labelSpan, icon);
+                } else {
+                    content.appendChild(labelSpan);
+                }
+            }
+        }
+    });
+
     const currentOrder = currentHeaders.map(th => th.dataset.colId || (th.classList.contains('checkbox-column') ? 'plot' : ''));
 
     tbody.innerHTML = '';

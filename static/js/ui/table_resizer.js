@@ -20,6 +20,7 @@ export class TableResizer {
         this.loadWidths();
         this.headers.forEach((th, index) => {
             // Create and append resizer handle
+            // We append to th (absolute positioned relative to th)
             const resizer = document.createElement('div');
             resizer.classList.add('resizer');
             th.appendChild(resizer);

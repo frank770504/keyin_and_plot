@@ -18,13 +18,54 @@ export class ColumnReorderer {
     init() {
         this.loadOrder();
         this.headers.forEach(th => {
-            th.draggable = true;
+            // Checkbox column usually shouldn't be reordered if it's the first
+            if (th.classList.contains('checkbox-column')) return;
+
+            // Wrap existing content or ensure header-content exists
+            let content = th.querySelector('.header-content');
+            if (!content) {
+                content = document.createElement('div');
+                content.classList.add('header-content');
+                while (th.firstChild) content.appendChild(th.firstChild);
+                th.appendChild(content);
+            }
+
+            // Add drag handle if it doesn't exist
+            if (!content.querySelector('.drag-handle')) {
+                const handle = document.createElement('div');
+                handle.classList.add('drag-handle');
+                handle.innerHTML = '&#8942;&#8942;'; // ⋮⋮
+                handle.title = 'Drag to reorder';
+                content.insertBefore(handle, content.firstChild);
+            }
+
+            // By default, headers are not draggable. We only enable it when the handle is pressed.
+            th.draggable = false;
             th.classList.add('draggable-header');
 
-            th.addEventListener('dragstart', (e) => this.dragStart(e, th));
+            const handle = content.querySelector('.drag-handle');
+            if (handle) {
+                handle.addEventListener('mousedown', () => {
+                    th.draggable = true;
+                });
+            }
+
+            th.addEventListener('dragstart', (e) => {
+                this.dragStart(e, th);
+            });
             th.addEventListener('dragover', (e) => this.dragOver(e, th));
             th.addEventListener('drop', (e) => this.drop(e, th));
-            th.addEventListener('dragend', () => this.dragEnd());
+            th.addEventListener('dragend', () => {
+                this.dragEnd();
+                th.draggable = false; // Disable until next handle mousedown
+            });
+
+            // Safety: if mouseup happens without a drag starting, reset draggable
+            window.addEventListener('mouseup', () => {
+                if (th.draggable && !this.draggedHeader) {
+                    th.draggable = false;
+                }
+            });
         });
     }
 

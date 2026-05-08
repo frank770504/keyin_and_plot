@@ -111,18 +111,25 @@ The Unified Table System provides a high-density, customizable interface for dat
 ## 3. Customization & Persistence
 
 ### A. Column Resizing (`TableResizer`)
-- **Interaction**: Users can drag invisible 5px-wide handles on the right edge of any header.
+- **Interaction**: Users can drag invisible **8px-wide** handles on the right edge of any header.
+- **Visual Feedback**: Handle highlights with a **semi-transparent blue background** on hover and during active resizing.
 - **Constraints**: Minimum width is enforced at **20px**.
 - **Layout**: Uses `table-layout: fixed` to ensure column width adjustments are predictable and stable.
 
 ### B. Column Reordering (`ColumnReorderer`)
-- **Interaction**: Uses the HTML5 Drag and Drop API. Headers are marked with `draggable="true"` and change cursor to `grab/grabbing`.
+- **Interaction**: Uses the HTML5 Drag and Drop API initiated exclusively via a **Grip Handle** (`⋮⋮`, `.drag-handle`).
+- **Targeting**: Headers are only marked as `draggable` when the grip handle is actively pressed (`mousedown`) to prevent interference with other interactions.
 - **Visual Feedback**:
     - `.dragging-header`: 50% opacity and muted background for the column being moved.
     - `.drop-before` / `.drop-after`: Blue vertical border highlighting the insertion point.
 - **ID-Bound Logic**: Rendering and reordering logic is bound to **Column IDs** (`data-col-id` or `data-field`), not array indices.
 
-### C. Layout Persistence
+### C. Column Sorting
+- **Interaction**: Triggered by clicking the **Column Label** (`.sort-label`). 
+- **Exclusion**: Interaction with the grip handle or resize handle does not trigger sorting.
+- **Visuals**: Sort state is indicated by `.sort-icon` (▲/▼) appended after the label.
+
+### D. Layout Persistence
 - **Storage**: Layout preferences are saved in `localStorage` using unique keys (e.g., `table-widths-measurements`, `table-column-order-measurements`).
 - **Logic**: Widths and orders are stored as ID-to-Value maps. This ensures that a column's width follows it even after it has been moved to a new position.
 
