@@ -246,7 +246,9 @@
                             <button id="reset-zoom-btn" class="btn-secondary btn-small" title="Reset Zoom" style="display: none;">⟲</button>
                         </div>
                     </div>
-                    <canvas id="comparison-chart"></canvas>
+                    <div id="comparison-chart-wrapper" style="position: relative; width: 100%;">
+                        <canvas id="comparison-chart"></canvas>
+                    </div>
                     <div id="custom-legend" class="floating-legend" style="display: none;"></div>
                 </div>
             </div>
@@ -273,9 +275,11 @@
                     </div>
                 </div>
             </div>
-            <div id="active-chart-container" style="position: relative; width: 100%;">
+            <div id="active-chart-container">
                 <button id="reset-active-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
-                <canvas id="active-chart"></canvas>
+                <div id="active-chart-wrapper">
+                    <canvas id="active-chart"></canvas>
+                </div>
             </div>
         </div>
     </div>

@@ -129,6 +129,10 @@ body.resizing .column-content-wrapper {
     transition: none !important;
 }
 
+#right-column .column-content-wrapper {
+    overflow-y: hidden;
+}
+
 .column-content-wrapper {
     flex: 1;
     overflow-y: auto;
@@ -145,7 +149,20 @@ body.resizing .column-content-wrapper {
     position: relative;
     width: 100%;
     flex: 1;
-    min-height: 300px; /* Prevent collapse */
+    min-height: 380px; /* Increased for stability */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+}
+
+#comparison-chart-wrapper,
+#active-chart-wrapper {
+    flex: 1;
+    position: relative;
+    width: calc(100% - 40px); /* Leave room for Y-axis title on the left */
+    margin-left: 40px;
+    margin-bottom: 30px; /* Leave room for X-axis title at the bottom */
+    overflow: visible;
 }
 
 .right-header {

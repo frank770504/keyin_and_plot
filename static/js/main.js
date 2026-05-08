@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportFormat: document.getElementById('export-format'),
         exportDpi: document.getElementById('export-dpi'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
+        comparisonChartWrapper: document.getElementById('comparison-chart-wrapper'),
         customLegend: document.getElementById('custom-legend'),
         toggleChartControlsBtn: document.getElementById('toggle-chart-controls'),
         toggleLegendBtn: document.getElementById('toggle-legend'),
@@ -1050,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let dataUrl;
             if (format === 'svg') {
-                dataUrl = await domtoimage.toSvg(elements.comparisonChartContainer, options);
+                dataUrl = await domtoimage.toSvg(elements.comparisonChartWrapper, options);
 
                 // Use fetch to reliably decode the data URL (handles base64/URI encoding automatically)
                 const response = await fetch(dataUrl);
@@ -1102,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
                 dataUrl = URL.createObjectURL(blob);
             } else {
-                dataUrl = await domtoimage.toPng(elements.comparisonChartContainer, options);
+                dataUrl = await domtoimage.toPng(elements.comparisonChartWrapper, options);
             }
 
             const link = document.createElement('a');

@@ -99,20 +99,24 @@ const katexChartPlugin = {
 
         if (xDiv && chart.scales.x) {
             const xPos = chart.scales.x.left + chart.scales.x.width / 2;
-            const yPos = chart.scales.x.bottom + 25;
+            const yPos = chart.scales.x.bottom + 12; // Tighter gap
             xDiv.style.left = `${xPos}px`;
             xDiv.style.top = `${yPos}px`;
             xDiv.style.transform = 'translateX(-50%)';
             xDiv.style.fontSize = '14px';
+            xDiv.style.display = 'inline-block';
         }
 
         if (yDiv && chart.scales.y) {
-            const xPos = chart.scales.y.left - 55;
+            const xPos = chart.scales.y.left - 50; // Tighter gap
             const yPos = chart.scales.y.top + chart.scales.y.height / 2;
             yDiv.style.left = `${xPos}px`;
             yDiv.style.top = `${yPos}px`;
             yDiv.style.transform = 'translateY(-50%) rotate(-90deg)';
+            yDiv.style.transformOrigin = 'right center'; // Anchor right side to xPos
             yDiv.style.fontSize = '14px';
+            yDiv.style.display = 'inline-block';
+            yDiv.style.whiteSpace = 'nowrap';
         }
     }
 };
@@ -199,8 +203,8 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
         maintainAspectRatio: false,
         layout: {
             padding: {
-                bottom: 40,
-                left: 60,
+                bottom: 35, // Reduced from 40
+                left: 55,   // Reduced from 60
                 right: 20,
                 top: 10
             }
@@ -267,6 +271,7 @@ export function destroyChart(chartInstance) {
     if (chartInstance && chartInstance.canvas) {
         const container = chartInstance.canvas.parentElement;
         if (container) {
+            // Remove titles from the current container
             ['x', 'y'].forEach(axis => {
                 const titleDiv = container.querySelector(`.katex-axis-title-${axis}`);
                 if (titleDiv) titleDiv.remove();
