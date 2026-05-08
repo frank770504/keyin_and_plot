@@ -189,8 +189,8 @@
                         <!-- Row 3: Custom Curve -->
                         <div class="control-group" style="grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
                             <label style="margin-right: 5px;">Custom Curve:</label>
-                            <input type="text" id="custom-curve-name" placeholder="Curve Name" style="padding: 4px; border-radius: 4px; border: 1px solid #ced4da; width: 120px;">
-                            <select id="custom-curve-type" style="padding: 4px; border-radius: 4px; border: 1px solid #ced4da;">
+                            <input type="text" id="custom-curve-name" placeholder="Curve Name" style="width: 120px;">
+                            <select id="custom-curve-type">
                                 <option value="linear">Linear (σ = mγ̇ + c)</option>
                                 <option value="power">Power (σ = aγ̇^b)</option>
                             </select>
@@ -262,9 +262,9 @@
             <h3>Unsaved Changes</h3>
             <p>You are currently editing a measurement. What would you like to do before switching?</p>
             <div class="modal-actions">
-                <button id="unsaved-save-btn" type="submit" value="save" class="btn-success" style="background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Save Changes</button>
-                <button type="submit" value="discard" class="btn-danger" style="background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Discard Changes</button>
-                <button type="submit" value="stay" class="btn-secondary" style="background-color: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Stay Here</button>
+                <button id="unsaved-save-btn" type="submit" value="save" class="btn-success">Save Changes</button>
+                <button type="submit" value="discard" class="btn-danger">Discard Changes</button>
+                <button type="submit" value="stay" class="btn-secondary">Stay Here</button>
             </div>
         </form>
     </dialog>
