@@ -354,10 +354,6 @@ body.resizing .column-content-wrapper {
 }
 
 /* Ensure metadata and table have a stable width independent of column shrinking */
-#center-column .metadata-area {
-    width: fit-content;
-}
-
 #right-column {
     /* width: 60%; Removed to allow flex-grow to handle remaining space naturally */
     flex-grow: 1;
@@ -610,6 +606,8 @@ ul {
     border: 1px solid #ccc;
     border-radius: 4px;
     margin-bottom: 20px;
+    width: 375px; /* Fixed width: 90px label + 5px gap + 250px input + 30px padding */
+    flex-shrink: 0;
 }
 
 .metadata-row {
@@ -646,6 +644,7 @@ ul {
     border-radius: 4px;
     width: 250px;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .readonly-input {
