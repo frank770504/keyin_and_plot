@@ -1105,7 +1105,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleDrawSelected() {
         renderCustomCurvesList(); // Always refresh the management list
         const selectedIds = Array.from(state.comparisonSelected);
-        if (selectedIds.length === 0) {
+        const hasCustomCurves = state.chartConfig.comparison.customCurves.length > 0;
+        const hasReferenceCurves = state.chartConfig.comparison.selectedReferenceCurves.size > 0;
+
+        if (selectedIds.length === 0 && !hasCustomCurves && !hasReferenceCurves) {
             if (comparisonChart) {
                 chartService.destroyChart(comparisonChart);
                 comparisonChart = null;

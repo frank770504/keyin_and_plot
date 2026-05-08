@@ -326,18 +326,20 @@ export async function getSelectedMeasurementsForChart(measurementIds, options = 
         }
     }
 
-    if (customCurves && customCurves.length > 0 && chartData.datasets.length > 0) {
+    if (customCurves && customCurves.length > 0) {
         let minX = Infinity;
         let maxX = -Infinity;
 
-        chartData.datasets.forEach(ds => {
-            if (ds.type === 'scatter') {
-                ds.data.forEach(p => {
-                    if (p.x < minX) minX = p.x;
-                    if (p.x > maxX) maxX = p.x;
-                });
-            }
-        });
+        if (chartData.datasets.length > 0) {
+            chartData.datasets.forEach(ds => {
+                if (ds.type === 'scatter') {
+                    ds.data.forEach(p => {
+                        if (p.x < minX) minX = p.x;
+                        if (p.x > maxX) maxX = p.x;
+                    });
+                }
+            });
+        }
 
         if (minX === Infinity) minX = 0.1;
         if (maxX === -Infinity) maxX = 100;
