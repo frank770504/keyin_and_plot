@@ -29,7 +29,10 @@ The measurement plotting system allows users to visualize multiple rheology meas
 
 ### B. Viewport Control
 - **Editable Title**: An input field at the top of the chart container allows users to set a custom title for the comparison plot (Default: "Rheology Compare").
-- **Save as PNG**: A button in the controls allows users to export the entire chart container (Title, Chart, and Floating Legend) as a PNG image. The export uses `dom-to-image-more` for high-fidelity rendering, including KaTeX math.
+- **Save as Image**: A button in the controls allows users to export the entire chart container (Title, Chart, and Floating Legend). 
+    - **Formats**: Supports both PNG and SVG.
+    - **Resolution**: Supports high-DPI scaling (Standard, 300 DPI, 600 DPI) for professional-grade exports.
+    - **Technology**: Uses `dom-to-image-more` for high-fidelity rendering, including KaTeX math.
 - **General Reset View**: A "Reset Zoom" button (⟲) appears as an overlay in the top-right corner of the chart container.
 - **Visibility**: The button is only visible when a plot exists.
 - **Behavior**: Clicking the button calls `resetZoom()` to restore the chart to its original auto-fit scales, undoing all pan and zoom actions.

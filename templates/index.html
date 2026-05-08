@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rheology Plotter</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
 </head>
@@ -138,9 +138,24 @@
         <div class="column" id="right-column">
             <div class="column-content-wrapper">
                 <div class="right-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <h1>Measurement Plots</h1>
-                        <button id="toggle-chart-controls" class="toggle-btn" title="Toggle Controls">⚙ Hide Controls</button>
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <h1>Measurement Plots</h1>
+                            <button id="toggle-chart-controls" class="toggle-btn" title="Toggle Controls">⚙ Hide Controls</button>
+                        </div>
+                        <div class="control-group" style="margin-bottom: 0; display: flex; align-items: center; gap: 5px;">
+                            <label>Export:</label>
+                            <select id="export-format" class="toggle-btn small" style="width: auto; padding: 2px 5px;">
+                                <option value="png">PNG</option>
+                                <option value="svg">SVG</option>
+                            </select>
+                            <select id="export-dpi" class="toggle-btn small" style="width: auto; padding: 2px 5px;">
+                                <option value="1">96 DPI (Web)</option>
+                                <option value="3.125">300 DPI</option>
+                                <option value="6.25">600 DPI</option>
+                            </select>
+                            <button id="save-chart-btn" class="toggle-btn small" style="background-color: #17a2b8; color: white; border-color: #17a2b8;">💾 Save</button>
+                        </div>
                     </div>
                     <div class="chart-controls unified-controls" id="comp-chart-controls">
                         <!-- Row 1: X-Axis | Scale -->
@@ -169,7 +184,6 @@
                             <label>Regression:</label>
                             <label class="checkbox-label"><input type="checkbox" id="comp-include-linear"> Linear</label>
                             <label class="checkbox-label"><input type="checkbox" id="comp-include-power" checked> Power</label>
-                            <button id="save-chart-btn" class="toggle-btn small" style="margin-left: 10px; background-color: #17a2b8; color: white; border-color: #17a2b8;">💾 Save PNG</button>
                         </div>
 
                         <!-- Row 3: Custom Curve -->
@@ -191,7 +205,7 @@
                 </div>
                 <div id="comparison-chart-container" style="position: relative; width: 100%;">
                     <div class="chart-title-wrapper">
-                        <input type="text" id="comparison-chart-title" value="Rheology Compare" placeholder="Enter Chart Title">
+                        <div id="comparison-chart-title" contenteditable="true" spellcheck="false">Rheology Compare</div>
                     </div>
                     <button id="reset-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
                     <canvas id="comparison-chart"></canvas>

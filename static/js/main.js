@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
         comparisonChartTitle: document.getElementById('comparison-chart-title'),
         comparisonChartContainer: document.getElementById('comparison-chart-container'),
         saveChartBtn: document.getElementById('save-chart-btn'),
+        exportFormat: document.getElementById('export-format'),
+        exportDpi: document.getElementById('export-dpi'),
         comparisonChartCanvas: document.getElementById('comparison-chart').getContext('2d'),
         customLegend: document.getElementById('custom-legend'),
         toggleChartControlsBtn: document.getElementById('toggle-chart-controls'),
@@ -915,14 +917,23 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleSaveChart() {
         if (!elements.comparisonChartContainer) return;
 
+        // Blur title to remove cursor/focus during export
+        if (document.activeElement === elements.comparisonChartTitle) {
+            elements.comparisonChartTitle.blur();
+        }
+
         const originalBtnText = elements.saveChartBtn.textContent;
         elements.saveChartBtn.textContent = '⌛ Exporting...';
         elements.saveChartBtn.disabled = true;
+
+        const format = elements.exportFormat.value;
+        const scale = parseFloat(elements.exportDpi.value) || 1;
 
         try {
             // Options for dom-to-image-more
             const options = {
                 bgcolor: '#ffffff',
+                scale: scale,
                 filter: (node) => {
                     // Skip the reset zoom button
                     if (node.id === 'reset-zoom-btn') return false;
@@ -930,15 +941,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            // Use the global domtoimage provided by the script tag
-            const dataUrl = await domtoimage.toPng(elements.comparisonChartContainer, options);
-            
+            let dataUrl;
+            if (format === 'svg') {
+                dataUrl = await domtoimage.toSvg(elements.comparisonChartContainer, options);
+
+                // Use fetch to reliably decode the data URL (handles base64/URI encoding automatically)
+                const response = await fetch(dataUrl);
+                let svgString = await response.text();
+
+                // Improve SVG compatibility and fix XML Parsing Errors
+
+                // 1. Ensure XHTML compliance: Close self-closing tags (input, img, br, hr)
+                // that are valid in HTML5 but required to be closed in XHTML/foreignObject.
+                svgString = svgString.replace(/<(input|img|br|hr)([^>]*?)(\/?)>/gi, (match, tag, attrs, closed) => {
+                    return closed ? match : `<${tag}${attrs} />`;
+                });
+
+                // 2. Escape raw ampersands that aren't already part of an XML entity
+                svgString = svgString.replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[a-f\d]+);)/gi, '&amp;');
+
+                // 3. Add XML declaration if missing
+                if (!svgString.trim().startsWith('<?xml')) {
+                    svgString = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\r\n' + svgString;
+                }
+
+                // 4. Ensure viewBox is set for better thumbnailing
+                const width = elements.comparisonChartContainer.offsetWidth;
+                const height = elements.comparisonChartContainer.offsetHeight;
+                if (!svgString.includes('viewBox')) {
+                    svgString = svgString.replace('<svg', `<svg viewBox="0 0 ${width} ${height}"`);
+                }
+
+                // 5. Create a Blob for a cleaner, standard SVG file
+                const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+                dataUrl = URL.createObjectURL(blob);
+            } else {
+                dataUrl = await domtoimage.toPng(elements.comparisonChartContainer, options);
+            }
+
             const link = document.createElement('a');
-            const title = elements.comparisonChartTitle.value.trim() || 'Rheology_Compare';
+            const title = elements.comparisonChartTitle.textContent.trim() || 'Rheology_Compare';
             const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            link.download = `${filename}.png`;
+            link.download = `${filename}.${format}`;
             link.href = dataUrl;
             link.click();
+
+            if (format === 'svg') {
+                URL.revokeObjectURL(dataUrl); // Clean up
+            }
         } catch (error) {
             console.error('Export failed:', error);
             alert('Failed to save chart image.');
