@@ -958,30 +958,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(dataUrl);
                 let svgString = await response.text();
 
-                // Improve SVG compatibility and fix XML Parsing Errors
-
-                // 1. Ensure XHTML compliance: Close self-closing tags (input, img, br, hr) 
-                // that are valid in HTML5 but required to be closed in XHTML/foreignObject.
+                // 1. Ensure XHTML compliance: Close self-closing tags (input, img, br, hr)
+                // This is critical for SVG foreignObject content.
                 svgString = svgString.replace(/<(input|img|br|hr)([^>]*?)(\/?)>/gi, (match, tag, attrs, closed) => {
-                    return closed ? match : `<${tag}${attrs} />`;
+                    return (closed && closed.includes('/')) ? match : `<${tag}${attrs} />`;
                 });
 
-                // 2. Escape raw ampersands that aren't already part of an XML entity
+                // 2. Escape raw ampersands that aren't part of an XML entity
                 svgString = svgString.replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[a-f\d]+);)/gi, '&amp;');
 
-                // 3. Add XML declaration if missing
-                if (!svgString.trim().startsWith('<?xml')) {
-                    svgString = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\r\n' + svgString;
-                }
-
-                // 4. Ensure viewBox is set for better thumbnailing
                 const width = elements.comparisonChartContainer.offsetWidth;
                 const height = elements.comparisonChartContainer.offsetHeight;
-                if (!svgString.includes('viewBox')) {
-                    svgString = svgString.replace('<svg', `<svg viewBox="0 0 ${width} ${height}"`);
+
+                // 3. Robust SVG Header Normalization
+                // We use a helper to ensure attributes are present exactly once.
+                svgString = svgString.replace(/<svg([^>]*?)>/i, (match, attrs) => {
+                    let a = attrs;
+                    // Remove existing problematic attributes to re-add them cleanly
+                    a = a.replace(/xmlns="[^"]*"/gi, '');
+                    a = a.replace(/version="[^"]*"/gi, '');
+                    a = a.replace(/viewBox="[^"]*"/gi, '');
+                    a = a.replace(/width="[^"]*"/gi, '');
+                    a = a.replace(/height="[^"]*"/gi, '');
+
+                    return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"${a}>`;
+                });
+
+                // 4. Add XHTML namespace to the internal container div
+                // Standalone viewers require this to render the HTML content correctly.
+                svgString = svgString.replace(/<div([^>]*?id="comparison-chart-container"[^>]*?)>/i, (match, attrs) => {
+                    if (attrs.includes('xmlns=')) return match;
+                    return `<div${attrs} xmlns="http://www.w3.org/1999/xhtml">`;
+                });
+
+                // 5. Convert all relative dimensions in the SVG structure to absolute pixels
+                // Percentage units in foreignObject are a common cause of failure in standalone viewers.
+                svgString = svgString.replace(/width="100%"/gi, `width="${width}"`);
+                svgString = svgString.replace(/height="100%"/gi, `height="${height}"`);
+
+                // 6. Ensure XML Declaration is at the very top
+                if (!svgString.trim().startsWith('<?xml')) {
+                    svgString = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + svgString;
                 }
 
-                // 5. Create a Blob for a cleaner, standard SVG file
                 const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
                 dataUrl = URL.createObjectURL(blob);
             } else {
