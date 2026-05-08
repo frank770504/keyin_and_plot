@@ -54,6 +54,24 @@ Follow these steps to set up and run the project locally.
     Open your web browser and navigate to:
     [http://127.0.0.1:5001](http://127.0.0.1:5001)
 
+## Database Maintenance
+
+The application includes an automated backup system and a manual restore utility to protect your data.
+
+### Automated Backups
+- **Frequency**: A backup is automatically created every 24 hours when the application starts.
+- **Technology**: Uses atomic snapshots to ensure data integrity even if the app is active.
+- **Retention**: Backups are stored in the `backups/` directory and kept for 14 days.
+
+### Manual Restore
+If you need to revert the database to a previous state:
+1.  **Run the restore utility**:
+    ```bash
+    uv run python tools/restore_db.py
+    ```
+2.  **Follow the prompts**: Select a backup from the list. The tool will automatically create a safety copy of your current database before performing the restore.
+3.  **Safety First**: Avoid restoring while another user is actively editing (the tool will warn you if a lock is detected).
+
 ## API Testing Examples
 
 You can test the backend API using `curl`. Most write operations require an `X-Session-ID` header and the Global Editor Lock.
