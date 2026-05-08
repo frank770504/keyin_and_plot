@@ -21,6 +21,18 @@ SPINDLE_ID2FACTOR = {
 }
 
 
+# --- Configuration & Security ---
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "admin123")  # Change this in production!
+
+
+def check_admin_token():
+    """Verifies the administrative token provided in the headers."""
+    provided_token = request.headers.get('X-Admin-Token')
+    if not provided_token or provided_token != ADMIN_TOKEN:
+        return False, "Unauthorized: Invalid or missing Admin Token"
+    return True, None
+
+
 def get_best_measurement(measurement_pkey):
     """Helper to return the draft if it exists, otherwise the original."""
     # If we are looking for a specific ID, it might be a draft or a production record.
@@ -694,9 +706,21 @@ def update_point(measurement_id, point_id):
 
 # --- Admin & Backup Management APIs ---
 
+@api_bp.route('/admin/verify', methods=['POST'])
+def verify_admin_token():
+    """Endpoint for the UI to verify if the admin token is valid."""
+    success, error = check_admin_token()
+    if not success:
+        return jsonify({"error": error}), 401
+    return jsonify({"message": "Token verified"}), 200
+
+
 @api_bp.route('/admin/backups', methods=['GET'])
 def list_backups():
     """Returns a list of available database backups."""
+    success, error = check_admin_token()
+    if not success:
+        return jsonify({"error": error}), 401
     backup_dir = backup_service.get_backup_dir()
     if not os.path.exists(backup_dir):
         return jsonify([]), 200
@@ -720,6 +744,9 @@ def list_backups():
 @api_bp.route('/admin/backup/now', methods=['POST'])
 def trigger_manual_backup():
     """Triggers an immediate manual backup. No lock required as it is non-destructive."""
+    success, error = check_admin_token()
+    if not success:
+        return jsonify({"error": error}), 401
     filename = backup_service.perform_named_backup("manual_backup")
     if filename:
         return jsonify({"message": "Manual backup created", "filename": filename}), 201
@@ -729,6 +756,9 @@ def trigger_manual_backup():
 @api_bp.route('/admin/export', methods=['GET'])
 def export_database():
     """Download the current project.db file."""
+    success, error = check_admin_token()
+    if not success:
+        return jsonify({"error": error}), 401
     db_path = backup_service.get_db_path()
     if not os.path.exists(db_path):
         return jsonify({"error": "Database file not found"}), 404
@@ -743,6 +773,9 @@ def export_database():
 @api_bp.route('/admin/restore/<filename>', methods=['POST'])
 def restore_from_backup(filename):
     """Restore the database from a specific backup file."""
+    success, error = check_admin_token()
+    if not success:
+        return jsonify({"error": error}), 401
     session_id = request.headers.get('X-Session-ID')
     lock = GlobalLock.query.first()
 

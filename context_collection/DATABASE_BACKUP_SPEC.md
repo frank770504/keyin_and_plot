@@ -45,7 +45,17 @@ Backups follow a naming convention: `{prefix}_backup_YYYYMMDD_HHMMSS.db`
 - **Browser-based**: Users select a snapshot from the UI list and click "Restore". The application performs the restore and forces a page reload to ensure all state is synchronized with the new data.
 - **CLI-based**: Administrators can run `python tools/restore_db.py` for a guided command-line restoration.
 
-## 5. Implementation Details
+## 5. Administrative Security
+
+### A. Secret Admin Token
+- **Mechanism**: All administrative APIs (`/api/admin/*`) require a valid `X-Admin-Token` in the request header.
+- **Verification**: The system uses a master `ADMIN_TOKEN` defined on the backend (default: `admin123`, configurable via environment variable).
+- **Frontend Flow**: 
+    - When a user attempts to expand the "Database Management" section, the UI checks for a stored token in `localStorage`.
+    - If missing or invalid, the user is prompted for the Administrative Token via a secure prompt.
+    - Upon successful verification with the `/api/admin/verify` endpoint, the token is cached locally to authorize future requests.
+
+## 6. Implementation Details
 - **Location**: Logic is decoupled into the `tools/` package.
 - **Git Integrity**: The `backups/` directory and `.bak` safety copies are excluded via `.gitignore`.
 - **Dependencies**: Standard library only (`os`, `sqlite3`, `shutil`, `datetime`).

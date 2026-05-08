@@ -6,9 +6,11 @@ import state from './state.js';
  * and handles common error scenarios.
  */
 async function fetchWithLock(url, options = {}) {
+    const adminToken = localStorage.getItem('adminToken');
     const headers = {
         'Content-Type': 'application/json',
         'X-Session-ID': state.sessionID,
+        'X-Admin-Token': adminToken || '',
         ...(options.headers || {})
     };
 
@@ -131,6 +133,13 @@ export async function fetchRegression(id, type = 'linear') {
 
 export async function fetchBackups() {
     return fetchWithLock('/api/admin/backups');
+}
+
+export async function verifyAdminToken(token) {
+    return fetchWithLock('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token }
+    });
 }
 
 export async function triggerManualBackup() {
