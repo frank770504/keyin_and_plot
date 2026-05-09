@@ -6,14 +6,15 @@ from datetime import datetime
 BACKUP_DIR = 'backups'
 DB_FILE = 'project.db'
 
-def get_db_path():
+def get_project_root():
     # Tools is in the project root, so the root is the parent of this file's directory
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    return os.path.join(root_dir, DB_FILE)
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+def get_db_path():
+    return os.path.join(get_project_root(), DB_FILE)
 
 def get_backup_dir():
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    return os.path.join(root_dir, BACKUP_DIR)
+    return os.path.join(get_project_root(), BACKUP_DIR)
 
 def check_lock():
     """Checks if the database is currently locked by an editor."""

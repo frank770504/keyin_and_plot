@@ -16,8 +16,28 @@ The Database Backup & Restore System provides automated, non-blocking data prote
 ### C. Retention Policy
 - **Rotation**: The service automatically scans the `backups/` directory during each run.
 - **Pruning**: Files older than **14 days** (based on file modification time) are automatically deleted to manage storage overhead.
+## 3. Secondary Off-site Archive Sync (`tools/offsite_sync.py`)
 
-## 3. Restore Utility (`tools/restore_db.py`)
+### A. Integrity-First Synchronization
+- **Verification**: Before any data is moved, the script performs a `PRAGMA integrity_check` on the latest primary backup file. This ensures that corruption in the primary storage does not propagate to the secondary archive.
+- **Transfer**: Validated backups are copied to a `SECONDARY_BACKUP_PATH` (e.g., a different physical drive or network share) defined in `.env`.
+
+### B. Extended Retention
+- **Policy**: The secondary archive maintains a **30-day retention** window (overriding the primary's 14-day limit).
+- **Automation**: Designed to be triggered via system-level schedulers (Cron or Task Scheduler) to provide protection even if the Flask application remains inactive.
+
+## 4. System Health Monitoring & Notifications
+
+### A. Event Logging
+- **Database Tracking**: Successes and failures of both primary and secondary backup cycles are recorded in the `system_events` table.
+- **Traceability**: Each log entry includes a timestamp, the event type, a status code (`success`/`failure`), and a detailed error message if applicable.
+
+### B. Admin Dashboard
+- **Real-time Status**: The Admin Area (`/admin`) displays a "System Health" log showing the most recent 50 events.
+- **Alert Visibility**: Backup failures are highlighted in Red within the dashboard, providing immediate feedback to operators without needing to inspect raw log files on the server.
+
+## 5. Restore Utility (`tools/restore_db.py`)
+...
 Provides the core logic used by both the CLI and the web Admin Area.
 
 ### A. Safety Checks

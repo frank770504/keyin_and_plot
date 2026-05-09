@@ -44,8 +44,13 @@ Follow these steps to set up and run the project locally.
 
 ## Running the Application
 
-1.  **Start the Flask server:**
-    This command uses `uv` to execute the `app.py` script within the project's virtual environment.
+1.  **Start the Flask server and setup backups:**
+    We provide a launch script that automatically starts the application and ensures the secondary backup cron job is correctly configured.
+    ```bash
+    ./launch.sh
+    ```
+    
+    Alternatively, to start the Flask server manually:
     ```bash
     uv run python app.py
     ```

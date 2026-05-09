@@ -3,11 +3,12 @@ APIs
 """
 
 from datetime import datetime, UTC
+import os
 from flask import Blueprint, jsonify, request, session
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from models import db, Measurement, Point, GlobalLock
+from models import db, Measurement, Point, GlobalLock, SystemEvent
 
 api_bp = Blueprint('api', __name__)
 
@@ -703,9 +704,27 @@ def update_point(measurement_id, point_id):
 @api_bp.route('/admin/backups', methods=['GET'])
 def get_backups():
     """Get list of available backups."""
+    if not session.get('admin_logged_in'):
+        return jsonify({"error": "Unauthorized"}), 401
+
     from tools.restore_db import list_backups
     backups = list_backups()
     return jsonify(backups)
+
+@api_bp.route('/admin/system-events', methods=['GET'])
+def get_system_events():
+    """Fetch recent system events (e.g., backup status)."""
+    if not session.get('admin_logged_in'):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    events = SystemEvent.query.order_by(SystemEvent.timestamp.desc()).limit(50).all()
+    return jsonify([{
+        "id": e.id,
+        "event_type": e.event_type,
+        "status": e.status,
+        "message": e.message,
+        "timestamp": e.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    } for e in events])
 
 @api_bp.route('/admin/restore', methods=['POST'])
 def perform_restore():

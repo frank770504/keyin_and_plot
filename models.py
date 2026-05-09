@@ -51,3 +51,16 @@ class Point(db.Model):
 
     def __repr__(self):
         return f'<Point(N={self.N}, eta={self.eta})>'
+
+
+class SystemEvent(db.Model):
+    __tablename__ = 'system_events'
+    id = db.Column(db.Integer, primary_key=True)
+    event_type = db.Column(db.String(50), nullable=False)  # e.g., 'backup_primary', 'backup_secondary'
+    status = db.Column(db.String(20), nullable=False)      # 'success', 'failure'
+    message = db.Column(db.Text, nullable=True)
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC).replace(tzinfo=None))
+
+    def __repr__(self):
+        return f'<SystemEvent {self.event_type} - {self.status}>'
+
