@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Rheology Plotter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body style="background-color: #f8f9fa;">
+    <div class="login-container">
+        <h2 style="text-align: center; margin-top: 0;">Admin Access</h2>
+        
+        {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form class="login-form" method="POST" action="/admin/login">
+            <div class="control-group" style="flex-direction: column; align-items: flex-start;">
+                <label for="password" style="width: auto;">Admin Password:</label>
+                <input type="password" id="password" name="password" required style="width: 100%; box-sizing: border-box; height: 34px; padding: 6px 12px;">
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <a href="/" style="color: #6c757d; text-decoration: none; font-size: 14px;">&larr; Back to Workspace</a>
+                <button type="submit" class="btn-primary" style="width: 120px;">Login</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
