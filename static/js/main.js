@@ -673,8 +673,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const serialId = elements.measurementSerialIdInput.value.trim();
         const spindleId = elements.measurementSpindleSelect.value;
 
-        // Simple date format check: YYYY-MM-DD or YYYY/MM/DD
-        const dateRegex = /^\d{4}[-/]\d{2}[-/]\d{2}$/;
+        // Date format check: YYYY-MM-DD, YYYY/MM/DD, or YYYYMMDD
+        const dateRegex = /^(\d{4}[-/]\d{2}[-/]\d{2}|\d{8})$/;
         const isDateValid = dateRegex.test(date);
 
         // Toggle validation error class for visual feedback
@@ -1412,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.deleteMeasurementBtn.addEventListener('click', () => handleDeleteMeasurement());
     elements.saveChartBtn.addEventListener('click', handleSaveChart);
     const preventWhitespace = (e) => {
-        if (e.key === ' ' || e.key === 'Tab') {
+        if (e.key === ' ') {
             e.preventDefault();
         }
     };
@@ -1440,6 +1440,15 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.activeMeasurementNameInput.addEventListener('change', handleMeasurementRename);
     elements.activeMeasurementNameInput.addEventListener('input', () => {
         updateSaveButtonState();
+    });
+
+    elements.measurementDateInput.addEventListener('change', () => {
+        const val = elements.measurementDateInput.value.trim();
+        if (/^\d{8}$/.test(val)) {
+            const formatted = `${val.substring(0, 4)}-${val.substring(4, 6)}-${val.substring(6, 8)}`;
+            elements.measurementDateInput.value = formatted;
+            updateSaveButtonState(); // Refresh validation
+        }
     });
 
     elements.measurementDateInput.addEventListener('change', handleMetadataChange);
