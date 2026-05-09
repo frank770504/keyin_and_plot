@@ -3,7 +3,7 @@ APIs
 """
 
 from datetime import datetime, UTC
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 import numpy as np
 from sklearn.linear_model import LinearRegression
 

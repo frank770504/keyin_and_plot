@@ -13,6 +13,7 @@ dependencies = [
     "SQLAlchemy",
     "scikit-learn",
     "numpy",
+    "python-dotenv>=1.2.2",
 ]
 
 [tool.pylsp.plugins.jedi]
