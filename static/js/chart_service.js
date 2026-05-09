@@ -210,6 +210,45 @@ const externalTooltipHandler = (context) => {
 
 // --- Main Chart Interface ---
 
+// Helper to format tick labels to prevent them from becoming too long
+function formatTickLabel(value, axisType) {
+    if (axisType === 'logarithmic') return value.toExponential(0);
+    if (value === 0) return '0';
+    if (Math.abs(value) >= 1e5 || Math.abs(value) <= 1e-4) return value.toExponential(2);
+    // Limit to 4 significant digits to prevent long decimals squeezing the chart
+    return parseFloat(value.toPrecision(4)).toString();
+}
+
+// Helper to determine which axis to interact with based on cursor position
+const getInteractionAxis = (context) => {
+    if (!context || !context.chart || !context.event) return 'xy';
+    const {chart, event} = context;
+    
+    let x, y;
+    // Native event (e.g. wheel)
+    if (event.offsetX !== undefined && event.offsetY !== undefined) {
+        x = event.offsetX;
+        y = event.offsetY;
+    } 
+    // Hammer event (e.g. pan/pinch)
+    else if (event.center) {
+        const rect = chart.canvas.getBoundingClientRect();
+        x = event.center.x - rect.left;
+        y = event.center.y - rect.top;
+    } else {
+        return 'xy';
+    }
+
+    // Check if cursor is over a scale
+    for (const scale of Object.values(chart.scales)) {
+        if (x >= scale.left && x <= scale.right && y >= scale.top && y <= scale.bottom) {
+            return scale.axis;
+        }
+    }
+    
+    return 'xy'; // Default to both axes if in the main chart area
+};
+
 export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
     const {
         xAxisType = 'linear',
@@ -241,7 +280,7 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
                 grid: { color: 'rgba(0, 0, 0, 0.05)' },
                 ticks: {
                     callback: function(value) {
-                        return xAxisType === 'logarithmic' ? value.toExponential(0) : value;
+                        return formatTickLabel(value, xAxisType);
                     }
                 }
             },
@@ -251,7 +290,7 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
                 grid: { color: 'rgba(0, 0, 0, 0.05)' },
                 ticks: {
                     callback: function(value) {
-                        return yAxisType === 'logarithmic' ? value.toExponential(0) : value;
+                        return formatTickLabel(value, yAxisType);
                     }
                 }
             }
@@ -268,11 +307,14 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
                 external: externalTooltipHandler
             },
             zoom: {
-                pan: { enabled: true, mode: 'xy' },
+                pan: { 
+                    enabled: true, 
+                    mode: getInteractionAxis 
+                },
                 zoom: {
                     wheel: { enabled: true },
                     pinch: { enabled: true },
-                    mode: 'xy',
+                    mode: getInteractionAxis,
                 }
             }
         }
