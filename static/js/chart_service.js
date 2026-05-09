@@ -223,13 +223,13 @@ function formatTickLabel(value, axisType) {
 const getInteractionAxis = (context) => {
     if (!context || !context.chart || !context.event) return 'xy';
     const {chart, event} = context;
-    
+
     let x, y;
     // Native event (e.g. wheel)
     if (event.offsetX !== undefined && event.offsetY !== undefined) {
         x = event.offsetX;
         y = event.offsetY;
-    } 
+    }
     // Hammer event (e.g. pan/pinch)
     else if (event.center) {
         const rect = chart.canvas.getBoundingClientRect();
@@ -245,7 +245,7 @@ const getInteractionAxis = (context) => {
             return scale.axis;
         }
     }
-    
+
     return 'xy'; // Default to both axes if in the main chart area
 };
 
@@ -304,12 +304,27 @@ export function initializeOrUpdateChart(ctx, chartDatasets, options = {}) {
             legend: { display: false },
             tooltip: {
                 enabled: false,
-                external: externalTooltipHandler
+                external: externalTooltipHandler,
+                callbacks: {
+                    title: function(context) {
+                        if (!context || context.length === 0) return '';
+                        const chart = context[0].chart;
+                        const x = context[0].parsed.x;
+                        const y = context[0].parsed.y;
+                        const fx = formatTickLabel(x, chart.scales.x.type);
+                        const fy = formatTickLabel(y, chart.scales.y.type);
+                        return `(${fx}, ${fy})`;
+                    },
+                    label: function(context) {
+                        const label = context.dataset.label || '';
+                        return label; // Coordinates are now in the title
+                    }
+                }
             },
             zoom: {
-                pan: { 
-                    enabled: true, 
-                    mode: getInteractionAxis 
+                pan: {
+                    enabled: true,
+                    mode: getInteractionAxis
                 },
                 zoom: {
                     wheel: { enabled: true },

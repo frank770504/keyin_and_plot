@@ -620,10 +620,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (type === 'linear') {
             const { slope, intercept } = regData;
-            label = `${name} (Linear): $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2=${r2}$`;
+            label = `Linear (${name}): $\\sigma = ${slope.toFixed(3)}\\dot{\\gamma} ${intercept >= 0 ? '+' : ''} ${intercept.toFixed(3)}, R^2=${r2}$`;
         } else {
             const { a, b } = regData;
-            label = `${name} (Power): $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2=${r2}$`;
+            label = `Power (${name}): $\\sigma = ${a.toFixed(3)}\\dot{\\gamma}^{${b.toFixed(3)}}, R^2=${r2}$`;
         }
 
         return {
