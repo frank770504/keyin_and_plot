@@ -73,6 +73,20 @@ document.addEventListener('DOMContentLoaded', () => {
         activeIncludePower: document.getElementById('active-include-power'),
         analysisResultsCard: document.getElementById('analysis-results-card'),
         resetActiveZoomBtn: document.getElementById('reset-active-zoom-btn'),
+        
+        // Active Chart Limits & Export
+        activeXMin: document.getElementById('active-x-min'),
+        activeXMax: document.getElementById('active-x-max'),
+        applyActiveXLimits: document.getElementById('apply-active-x-limits'),
+        clearActiveXLimits: document.getElementById('clear-active-x-limits'),
+        activeYMin: document.getElementById('active-y-min'),
+        activeYMax: document.getElementById('active-y-max'),
+        applyActiveYLimits: document.getElementById('apply-active-y-limits'),
+        clearActiveYLimits: document.getElementById('clear-active-y-limits'),
+        activeExportFormat: document.getElementById('active-export-format'),
+        activeExportDpi: document.getElementById('active-export-dpi'),
+        saveActiveChartBtn: document.getElementById('save-active-chart-btn'),
+        activeChartTitle: document.getElementById('active-chart-title'),
 
         // Custom Curve Controls
         customCurveName: document.getElementById('custom-curve-name'),
@@ -141,6 +155,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     rightColumnObserver.observe(elements.rightColumn);
+
+    const activeChartContainer = document.getElementById('active-chart-container');
+    if (activeChartContainer) {
+        let activeChartResizeTimer;
+        const activeChartObserver = new ResizeObserver(() => {
+            cancelAnimationFrame(activeChartResizeTimer);
+            activeChartResizeTimer = requestAnimationFrame(() => {
+                if (activeChart) activeChart.resize();
+            });
+        });
+        activeChartObserver.observe(activeChartContainer);
+    }
 
     const analysisWindow = new layout.FloatingWindow(
         'floating-chart-window',
@@ -510,7 +536,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const chartOptions = {
             xAxisType: state.chartConfig.active.xLog ? 'logarithmic' : 'linear',
-            yAxisType: state.chartConfig.active.yLog ? 'logarithmic' : 'linear'
+            yAxisType: state.chartConfig.active.yLog ? 'logarithmic' : 'linear',
+            xMin: state.chartConfig.active.xMin,
+            xMax: state.chartConfig.active.xMax,
+            yMin: state.chartConfig.active.yMin,
+            yMax: state.chartConfig.active.yMax
         };
 
         if (activeChart) chartService.destroyChart(activeChart);
@@ -1082,28 +1112,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function handleSaveChart() {
-        if (!elements.comparisonChartContainer) return;
+    async function handleSaveChart(containerEl, titleText, formatType, dpiValue) {
+        const container = containerEl || elements.comparisonChartContainer;
+        if (!container) return;
+
+        const titleElement = container === elements.comparisonChartContainer ? elements.comparisonChartTitle : elements.activeChartTitle;
+        const btnElement = container === elements.comparisonChartContainer ? elements.saveChartBtn : elements.saveActiveChartBtn;
 
         // Blur title to remove cursor/focus during export
-        if (document.activeElement === elements.comparisonChartTitle) {
-            elements.comparisonChartTitle.blur();
+        if (titleElement && document.activeElement === titleElement) {
+            titleElement.blur();
         }
 
-        const originalBtnText = elements.saveChartBtn.textContent;
-        elements.saveChartBtn.textContent = '⌛ Exporting...';
-        elements.saveChartBtn.disabled = true;
+        const originalBtnText = btnElement.textContent;
+        btnElement.textContent = '⌛ Exporting...';
+        btnElement.disabled = true;
 
-        const format = elements.exportFormat.value;
-        const scale = parseFloat(elements.exportDpi.value) || 1;
+        const format = formatType || elements.exportFormat.value;
+        const scale = parseFloat(dpiValue || elements.exportDpi.value) || 1;
+
+        // Determine which chart instance we are saving
+        const targetChart = container === elements.comparisonChartContainer ? comparisonChart : activeChart;
 
         // Temporarily boost Chart.js resolution for the export
-        // We use window.devicePixelRatio as base and multiply by our scale factor
         let originalDPR = window.devicePixelRatio || 1;
-        if (comparisonChart) {
-            originalDPR = comparisonChart.options.devicePixelRatio || window.devicePixelRatio || 1;
-            comparisonChart.options.devicePixelRatio = window.devicePixelRatio * scale;
-            comparisonChart.resize();
+        if (targetChart) {
+            originalDPR = targetChart.options.devicePixelRatio || window.devicePixelRatio || 1;
+            targetChart.options.devicePixelRatio = window.devicePixelRatio * scale;
+            targetChart.resize();
         }
 
         try {
@@ -1113,13 +1149,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 scale: scale,
                 filter: (node) => {
                     // Skip the reset zoom button, the export control group, and the spacer
-                    return !(node.id === 'reset-zoom-btn' || node.id === 'export-controls-group' || node.id === 'export-spacer');
+                    return !(node.id === 'reset-zoom-btn' || node.id === 'reset-active-zoom-btn' || node.id === 'export-controls-group' || node.id === 'export-spacer');
                 }
             };
 
             let dataUrl;
             if (format === 'svg') {
-                dataUrl = await domtoimage.toSvg(elements.comparisonChartContainer, options);
+                dataUrl = await domtoimage.toSvg(container, options);
 
                 // Use fetch to reliably decode the data URL (handles base64/URI encoding automatically)
                 const response = await fetch(dataUrl);
@@ -1134,8 +1170,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 2. Escape raw ampersands that aren't part of an XML entity
                 svgString = svgString.replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[a-f\d]+);)/gi, '&amp;');
 
-                const width = elements.comparisonChartContainer.offsetWidth;
-                const height = elements.comparisonChartContainer.offsetHeight;
+                const width = container.offsetWidth;
+                const height = container.offsetHeight;
 
                 // 3. Robust SVG Header Normalization
                 // We use a helper to ensure attributes are present exactly once.
@@ -1153,7 +1189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 4. Add XHTML namespace to the internal container div
                 // Standalone viewers require this to render the HTML content correctly.
-                svgString = svgString.replace(/<div([^>]*?id="comparison-chart-container"[^>]*?)>/i, (match, attrs) => {
+                svgString = svgString.replace(/<div([^>]*?id="(comparison-chart-container|active-chart-container)"[^>]*?)>/i, (match, attrs) => {
                     if (attrs.includes('xmlns=')) return match;
                     return `<div${attrs} xmlns="http://www.w3.org/1999/xhtml">`;
                 });
@@ -1171,12 +1207,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
                 dataUrl = URL.createObjectURL(blob);
             } else {
-                dataUrl = await domtoimage.toPng(elements.comparisonChartContainer, options);
+                dataUrl = await domtoimage.toPng(container, options);
             }
 
             const link = document.createElement('a');
-            const title = elements.comparisonChartTitle.textContent.trim() || 'Rheology_Compare';
-            const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const title = titleText || (titleElement ? titleElement.textContent.trim() : 'Chart_Export');
+            const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'export';
             link.download = `${filename}.${format}`;
             link.href = dataUrl;
             link.click();
@@ -1189,12 +1225,12 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Failed to save chart image.');
         } finally {
             // Restore original Chart.js resolution
-            if (comparisonChart) {
-                comparisonChart.options.devicePixelRatio = originalDPR;
-                comparisonChart.resize();
+            if (targetChart) {
+                targetChart.options.devicePixelRatio = originalDPR;
+                targetChart.resize();
             }
-            elements.saveChartBtn.textContent = originalBtnText;
-            elements.saveChartBtn.disabled = false;
+            btnElement.textContent = originalBtnText;
+            btnElement.disabled = false;
         }
     }
 
@@ -1622,6 +1658,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeChart) {
             activeChart.resetZoom();
         }
+    });
+
+    elements.applyActiveXLimits.addEventListener('click', () => {
+        const minVal = parseFloat(elements.activeXMin.value);
+        const maxVal = parseFloat(elements.activeXMax.value);
+        state.chartConfig.active.xMin = isNaN(minVal) ? null : minVal;
+        state.chartConfig.active.xMax = isNaN(maxVal) ? null : maxVal;
+        updateActiveChart();
+    });
+
+    elements.clearActiveXLimits.addEventListener('click', () => {
+        elements.activeXMin.value = '';
+        elements.activeXMax.value = '';
+        state.chartConfig.active.xMin = null;
+        state.chartConfig.active.xMax = null;
+        updateActiveChart();
+    });
+
+    elements.applyActiveYLimits.addEventListener('click', () => {
+        const minVal = parseFloat(elements.activeYMin.value);
+        const maxVal = parseFloat(elements.activeYMax.value);
+        state.chartConfig.active.yMin = isNaN(minVal) ? null : minVal;
+        state.chartConfig.active.yMax = isNaN(maxVal) ? null : maxVal;
+        updateActiveChart();
+    });
+
+    elements.clearActiveYLimits.addEventListener('click', () => {
+        elements.activeYMin.value = '';
+        elements.activeYMax.value = '';
+        state.chartConfig.active.yMin = null;
+        state.chartConfig.active.yMax = null;
+        updateActiveChart();
+    });
+
+    elements.saveActiveChartBtn.addEventListener('click', () => {
+        handleSaveChart(
+            document.getElementById('active-chart-container'),
+            elements.activeChartTitle.textContent.trim() || 'Active_Analysis',
+            elements.activeExportFormat.value,
+            elements.activeExportDpi.value
+        );
     });
 
     // --- Initial Load & Polling ---

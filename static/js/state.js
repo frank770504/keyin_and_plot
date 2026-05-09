@@ -42,7 +42,11 @@ const state = {
             xLog: false,
             yLog: false,
             includeLinear: false,
-            includePower: false
+            includePower: false,
+            xMin: null,
+            xMax: null,
+            yMin: null,
+            yMax: null
         }
     }
 };

@@ -266,29 +266,77 @@
                 <button id="close-chart-window" class="close-btn">&times;</button>
             </div>
         </div>
-        <div class="window-content">
-            <div class="analysis-control-bar">
-                <div class="control-group">
-                    <label>Scales:</label>
+        <div class="window-content-horizontal">
+            <!-- Left Side: Sidebar -->
+            <div class="analysis-sidebar">
+                <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 5px;">Plot Controls</h3>
+                <div class="control-group" style="margin-bottom: 5px;">
+                    <label style="width: 65px; display: inline-block;">X-Axis:</label>
+                    <input type="number" id="active-x-min" placeholder="Min" step="any" class="limit-input" style="width: 70px;">
+                    <input type="number" id="active-x-max" placeholder="Max" step="any" class="limit-input" style="width: 70px;">
+                </div>
+                <div class="control-group" style="margin-bottom: 5px;">
+                    <div style="margin-left: 70px; display: flex; gap: 5px;">
+                        <button id="apply-active-x-limits" class="btn-secondary btn-small">Apply</button>
+                        <button id="clear-active-x-limits" class="btn-secondary btn-small">Clear</button>
+                    </div>
+                </div>
+                <div class="control-group" style="margin-bottom: 10px;">
+                    <label style="width: 65px; display: inline-block;">X-Scale:</label>
                     <button id="toggle-active-log-x" class="btn-ghost btn-small" title="Toggle X-axis Log/Linear">X-Log</button>
+                </div>
+
+                <div class="control-group" style="margin-bottom: 5px;">
+                    <label style="width: 65px; display: inline-block;">Y-Axis:</label>
+                    <input type="number" id="active-y-min" placeholder="Min" step="any" class="limit-input" style="width: 70px;">
+                    <input type="number" id="active-y-max" placeholder="Max" step="any" class="limit-input" style="width: 70px;">
+                </div>
+                <div class="control-group" style="margin-bottom: 5px;">
+                    <div style="margin-left: 70px; display: flex; gap: 5px;">
+                        <button id="apply-active-y-limits" class="btn-secondary btn-small">Apply</button>
+                        <button id="clear-active-y-limits" class="btn-secondary btn-small">Clear</button>
+                    </div>
+                </div>
+                <div class="control-group" style="margin-bottom: 15px;">
+                    <label style="width: 65px; display: inline-block;">Y-Scale:</label>
                     <button id="toggle-active-log-y" class="btn-ghost btn-small" title="Toggle Y-axis Log/Linear">Y-Log</button>
                 </div>
-                <div class="control-group">
-                    <label>Regression:</label>
+
+                <div class="control-group" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px;">
+                    <label style="width: 65px; display: inline-block;">Export:</label>
+                    <select id="active-export-format" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
+                        <option value="png">PNG</option>
+                        <option value="svg">SVG</option>
+                    </select>
+                    <select id="active-export-dpi" class="btn-ghost btn-small" style="width: auto; padding: 2px 5px;">
+                        <option value="3.125">300 DPI</option>
+                        <option value="1">96 DPI (Web)</option>
+                        <option value="6.25">600 DPI</option>
+                    </select>
+                    <button id="save-active-chart-btn" class="btn-secondary btn-small" title="Save Image">💾</button>
+                </div>
+
+                <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 5px;">Regression</h3>
+                <div class="control-group" style="margin-bottom: 10px; display: flex; gap: 10px;">
                     <label class="checkbox-label"><input type="checkbox" id="active-include-linear"> Linear</label>
                     <label class="checkbox-label"><input type="checkbox" id="active-include-power"> Power law</label>
                 </div>
-            </div>
-            
-            <div id="active-chart-container">
-                <button id="reset-active-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
-                <div id="active-chart-wrapper">
-                    <canvas id="active-chart"></canvas>
+                <div id="analysis-results-card" class="analysis-results-card">
+                    <div class="results-placeholder">Select a regression type to see calculated parameters</div>
                 </div>
             </div>
 
-            <div id="analysis-results-card" class="analysis-results-card">
-                <div class="results-placeholder">Select a regression type to see calculated parameters</div>
+            <!-- Right Side: Chart -->
+            <div style="flex-grow: 1; overflow: auto; padding: 15px; display: flex;">
+                <div id="active-chart-container" class="analysis-chart-area">
+                    <div class="chart-title-wrapper" style="text-align: center; margin: 0 0 10px 0; flex-shrink: 0;">
+                        <div id="active-chart-title" contenteditable="true" spellcheck="false" style="font-size: 1.2rem; font-weight: bold;">Current Analysis</div>
+                    </div>
+                    <button id="reset-active-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
+                    <div id="active-chart-wrapper" style="position: relative; width: 100%; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0;">
+                        <canvas id="active-chart" style="flex-grow: 1; min-height: 0;"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

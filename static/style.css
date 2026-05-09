@@ -160,7 +160,7 @@ body.resizing .column-content-wrapper {
     flex: 1;
     position: relative;
     width: calc(100% - 40px); /* Leave room for Y-axis title on the left */
-    margin-left: 40px;
+    margin-left: 0px;
     margin-bottom: 30px; /* Leave room for X-axis title at the bottom */
     overflow: visible;
 }
@@ -776,9 +776,9 @@ canvas {
     display: none;
     position: absolute;
     top: 100px;
-    left: 60%; /* Position over right column approximately */
-    width: 500px;
-    height: 400px;
+    left: 30%; /* Position over right column approximately */
+    width: 1200px;
+    height: 500px;
     background-color: white;
     border: 1px solid #ccc;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
@@ -817,26 +817,45 @@ canvas {
     background: none;
 }
 
-.window-content {
-    padding: 15px;
-    flex-grow: 1;
+.window-content-horizontal {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-grow: 1;
     overflow: visible !important; /* Prevent canvas overflow issues and show LaTeX titles */
 }
 
-.window-content canvas {
-    flex-grow: 0;
-    margin-top: 0;
+.analysis-chart-area {
+    width: 100%;
+    min-width: 400px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    resize: both;
+    overflow: hidden;
+    position: relative;
+    border: 1px dashed transparent;
+    transition: border-color 0.2s;
+    padding-bottom: 10px; /* Space for the resize handle */
 }
 
-.analysis-control-bar {
+.analysis-chart-area:hover {
+    border-color: #ccc;
+}
+
+.analysis-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    padding: 15px;
+    background-color: #fafafa;
+    border-right: 1px solid #ddd;
+    overflow-y: hidden;
     display: flex;
-    gap: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
+    flex-direction: column;
+}
+
+.analysis-chart-area canvas {
+    flex-grow: 0;
+    margin-top: 0;
 }
 
 .analysis-results-card {
@@ -1228,5 +1247,8 @@ canvas {
 .accordion-content {
     padding: 15px;
     background: #ffffff;
+}
+
+ground: #ffffff;
 }
 
