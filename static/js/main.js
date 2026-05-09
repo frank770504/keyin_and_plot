@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleActiveLogY: document.getElementById('toggle-active-log-y'),
         activeIncludeLinear: document.getElementById('active-include-linear'),
         activeIncludePower: document.getElementById('active-include-power'),
+        analysisResultsCard: document.getElementById('analysis-results-card'),
         resetActiveZoomBtn: document.getElementById('reset-active-zoom-btn'),
 
         // Custom Curve Controls
@@ -489,18 +490,21 @@ document.addEventListener('DOMContentLoaded', () => {
             type: 'scatter'
         }];
 
+        let linearReg = null;
+        let powerReg = null;
+
         // Add Regressions if enabled
         if (state.chartConfig.active.includeLinear) {
             try {
-                const reg = await api.fetchRegression(state.activeMeasurement, 'linear');
-                datasets.push(createRegressionDataset(displayName, reg, 'linear', 'rgba(255, 99, 132, 1)'));
+                linearReg = await api.fetchRegression(state.activeMeasurement, 'linear');
+                datasets.push(createRegressionDataset(displayName, linearReg, 'linear', 'rgba(255, 99, 132, 1)'));
             } catch (e) { console.warn('Active linear reg failed', e); }
         }
 
         if (state.chartConfig.active.includePower) {
             try {
-                const reg = await api.fetchRegression(state.activeMeasurement, 'power');
-                datasets.push(createRegressionDataset(displayName, reg, 'power', 'rgba(54, 162, 235, 1)'));
+                powerReg = await api.fetchRegression(state.activeMeasurement, 'power');
+                datasets.push(createRegressionDataset(displayName, powerReg, 'power', 'rgba(54, 162, 235, 1)'));
             } catch (e) { console.warn('Active power reg failed', e); }
         }
 
@@ -512,6 +516,70 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeChart) chartService.destroyChart(activeChart);
         activeChart = chartService.initializeOrUpdateChart(elements.activeChartCanvas, datasets, chartOptions);
         elements.resetActiveZoomBtn.style.display = 'flex';
+
+        updateAnalysisResultsUI(linearReg, powerReg);
+    }
+
+    function updateAnalysisResultsUI(linearReg, powerReg) {
+        const card = elements.analysisResultsCard;
+        if (!card) return;
+
+        card.innerHTML = '';
+
+        if (!linearReg && !powerReg) {
+            card.innerHTML = '<div class="results-placeholder">Select a regression type to see calculated parameters</div>';
+            return;
+        }
+
+        if (linearReg) {
+            const row = document.createElement('div');
+            row.className = 'regression-result-row linear-result';
+            
+            const formula = `\\sigma = ${linearReg.slope.toFixed(3)}\\dot{\\gamma} ${linearReg.intercept >= 0 ? '+' : ''} ${linearReg.intercept.toFixed(3)}`;
+            
+            row.innerHTML = `
+                <div class="result-formula"></div>
+                <div class="result-metrics">
+                    <span class="metric-badge" title="R-squared (Fit Quality)">$R^2 = ${linearReg.r_squared.toFixed(4)}$</span>
+                </div>
+            `;
+            card.appendChild(row);
+            
+            if (window.katex) {
+                try {
+                    katex.render(formula, row.querySelector('.result-formula'), { throwOnError: false, displayMode: false });
+                    renderMathInElement(row.querySelector('.result-metrics'), { 
+                        delimiters: [{left: '$', right: '$', display: false}],
+                        throwOnError: false
+                    });
+                } catch (e) { console.error("KaTeX error:", e); }
+            }
+        }
+
+        if (powerReg) {
+            const row = document.createElement('div');
+            row.className = 'regression-result-row power-result';
+            
+            const formula = `\\sigma = ${powerReg.a.toFixed(3)}\\dot{\\gamma}^{${powerReg.b.toFixed(3)}}`;
+            
+            row.innerHTML = `
+                <div class="result-formula"></div>
+                <div class="result-metrics">
+                    <span class="metric-badge" title="R-squared (Fit Quality)">$R^2 = ${powerReg.r_squared.toFixed(4)}$</span>
+                </div>
+            `;
+            card.appendChild(row);
+            
+            if (window.katex) {
+                try {
+                    katex.render(formula, row.querySelector('.result-formula'), { throwOnError: false, displayMode: false });
+                    renderMathInElement(row.querySelector('.result-metrics'), { 
+                        delimiters: [{left: '$', right: '$', display: false}],
+                        throwOnError: false
+                    });
+                } catch (e) { console.error("KaTeX error:", e); }
+            }
+        }
     }
 
     // Helper for creating regression datasets

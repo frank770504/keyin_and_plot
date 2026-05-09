@@ -160,10 +160,23 @@ Floating elements utilize a high `z-index` to ensure they remain interactive and
 - **Module**: `static/js/ui/drag_utils.js` provides the shared `enableDragging` utility with `containment: 'parent' | 'viewport'` options.
 - **Logic Persistence**: Clamping is reapplied on the window `resize` event to maintain accessibility.
 
-## 5. Implementation Details
+## 5. Analysis HUD System
+
+### A. HUD Architecture
+The Analyze pane utilizes a high-density "Interactive Inspector" HUD (Heads-Up Display) for real-time data verification.
+- **Header**: Contains window management and a clear title.
+- **Control Bar**: Compact horizontal bar for scale toggles (Log/Linear) and regression selection.
+- **Chart Area**: Centrally aligned, flex-growing canvas utilizing the standardized chart wrapper.
+- **Results Card**: Dedicated footer area displaying mathematical physical parameters (a, b, m, c) and $R^2$ fit quality using KaTeX.
+
+### B. Visual Logic
+- **Color Coding**: Results in the card are color-coded to match the chart lines (Red for Linear, Blue for Power Law).
+- **Adaptive Sizing**: The window has a minimum height to ensure the results card is always visible without truncating the chart.
+
+## 6. Implementation Details
 - **Modules**:
     - `static/js/ui/table_resizer.js`: Logic for drag-to-resize handles.
     - `static/js/ui/column_reorderer.js`: Logic for drag-to-reorder headers.
     - `static/js/ui/measurement_ui.js`: Order-aware rendering for the measurement list.
     - `static/js/ui/drag_utils.js`: Viewport and Parent clamped dragging for floating elements.
-- **CSS**: Located in the "Table Styles" and "Floating Window" sections of `static/style.css`.
+- **CSS**: Located in the "Table Styles", "Floating Window", and "Analysis HUD" sections of `static/style.css`.
