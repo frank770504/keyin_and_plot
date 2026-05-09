@@ -21,6 +21,12 @@ The Unified Reactive Chart Engine provides a high-performance, consistent visual
 ### C. Interaction & Tooltips
 - **Forgiving Hover Detection**: Regression lines use an expanded `hitRadius` and `pointHitRadius` (15px) to ensure tooltips are easy to trigger without pixel-perfect precision.
 - **Nearest-Point Logic**: The engine uses `mode: 'nearest'` and `intersect: false` globally, allowing tooltips to follow the cursor smoothly across all data points and regression segments.
+- **Enhanced Tooltip Layout**: 
+    - **Header (Title)**: Displays the precise coordinates of the hovered point in **$(x, y)$** format.
+    - **Body**: Shows the dataset label or regression equation. Moving coordinates to the header ensures a cleaner layout when multiple points are hovered.
+- **Context-Aware Zooming**: The system dynamically detects cursor position to provide targeted scaling:
+    - **Main Chart Area**: Zooming/panning affects both X and Y axes simultaneously.
+    - **Axis Zones**: Hovering directly over the X or Y axis labels/ticks isolates zooming to that specific axis only.
 - **High-Density Search**: Leveraging 100-point regression segments from the backend ensures reliable interaction even at extreme zoom levels.
 - **Coordinate Robustness**: Tooltip positioning is calculated relative to the chart area, ensuring accuracy during active panning and zooming.
 

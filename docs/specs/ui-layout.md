@@ -26,6 +26,12 @@ The application avoids heavy, distracting blocks of solid color, utilizing an ou
 - **Danger (`.btn-danger`):** Standalone destructive class (White background, Red text/border). Turns solid Red on hover. Functionally identical to `.btn-secondary.danger`.
 - **Ghost (`.btn-ghost`):** Subtle button appearance (very light gray `#f1f3f5` background, slight border/shadow). Used for toggles (e.g., scale toggles, "⚙ Hide Controls") where the button should look clickable but not distract from data. Turns blue when `.active`.
 
+### D. Keyboard & Input Enhancements
+To maximize data entry efficiency, the following UX optimizations are implemented:
+- **Flexible Date Parsing**: The Test Date field supports standard formats (`YYYY-MM-DD`, `YYYY/MM/DD`) as well as a rapid-entry `YYYYMMDD` format (8 digits). Upon detection of the 8-digit format, the field automatically normalizes the string to ISO standard `YYYY-MM-DD`.
+- **Natural Keyboard Flow**: The "Formula ID" field supports standard **Tab** navigation, allowing users to move through the metadata fields (Date, Serial ID, Spindle) using only the keyboard.
+- **Auto-Capitalization (Stylistic)**: Certain identifiers are automatically sanitized to remove whitespace to prevent database lookup errors.
+
 ---
 
 # Technical Specification: Metadata & Workspace Persistence
