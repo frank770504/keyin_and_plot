@@ -25,6 +25,11 @@ def create_app():
         """Serve the main HTML file."""
         return render_template('index.html')
 
+    @app.route('/admin')
+    def admin():
+        """Serve the admin area."""
+        return render_template('admin.html')
+
     return app
 
 

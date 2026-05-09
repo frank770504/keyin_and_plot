@@ -18,7 +18,10 @@
 
                 <div class="user-config-panel">
                     <label for="username-input">Your Name:</label>
-                    <input type="text" id="username-input" placeholder="Enter name">
+                    <div style="display: flex; gap: 5px;">
+                        <input type="text" id="username-input" placeholder="Enter name" style="flex: 1;">
+                        <a href="/admin" class="btn-ghost btn-small" style="text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 0 10px;">Admin</a>
+                    </div>
                 </div>
 
                 <div id="lock-status-container" class="status-panel">
@@ -258,28 +261,34 @@
     <!-- Floating Analysis Window -->
     <div id="floating-chart-window" class="floating-window">
         <div class="window-header" id="chart-window-header">
-            <span id="window-title">Analysis Chart</span>
+            <span id="window-title">Analysis HUD</span>
             <div class="header-controls">
-                <button id="toggle-active-log-x" class="btn-ghost btn-small" title="Toggle X-axis Log/Linear">X-Log</button>
-                <button id="toggle-active-log-y" class="btn-ghost btn-small" title="Toggle Y-axis Log/Linear">Y-Log</button>
                 <button id="close-chart-window" class="close-btn">&times;</button>
             </div>
         </div>
         <div class="window-content">
             <div class="analysis-control-bar">
-                <div class="chart-controls">
-                    <div class="control-group">
-                        <label>Regression:</label>
-                        <label class="checkbox-label"><input type="checkbox" id="active-include-linear"> Linear</label>
-                        <label class="checkbox-label"><input type="checkbox" id="active-include-power"> Power law</label>
-                    </div>
+                <div class="control-group">
+                    <label>Scales:</label>
+                    <button id="toggle-active-log-x" class="btn-ghost btn-small" title="Toggle X-axis Log/Linear">X-Log</button>
+                    <button id="toggle-active-log-y" class="btn-ghost btn-small" title="Toggle Y-axis Log/Linear">Y-Log</button>
+                </div>
+                <div class="control-group">
+                    <label>Regression:</label>
+                    <label class="checkbox-label"><input type="checkbox" id="active-include-linear"> Linear</label>
+                    <label class="checkbox-label"><input type="checkbox" id="active-include-power"> Power law</label>
                 </div>
             </div>
+            
             <div id="active-chart-container">
                 <button id="reset-active-zoom-btn" class="chart-overlay-btn" title="Reset Zoom" style="display: none;">⟲</button>
                 <div id="active-chart-wrapper">
                     <canvas id="active-chart"></canvas>
                 </div>
+            </div>
+
+            <div id="analysis-results-card" class="analysis-results-card">
+                <div class="results-placeholder">Select a regression type to see calculated parameters</div>
             </div>
         </div>
     </div>

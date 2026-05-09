@@ -830,9 +830,65 @@ canvas {
     margin-top: 0;
 }
 
-.window-content .controls {
-    margin-top: 10px;
-    flex-shrink: 0;
+.analysis-control-bar {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.analysis-results-card {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-top: 2px solid #007bff;
+    font-size: 0.9rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.results-placeholder {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    margin: auto;
+}
+
+.regression-result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.linear-result { border-left: 4px solid #ff6384; background: rgba(255, 99, 132, 0.05); }
+.power-result { border-left: 4px solid #36a2eb; background: rgba(54, 162, 235, 0.05); }
+
+.result-formula {
+    font-family: serif;
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+.result-metrics {
+    display: flex;
+    gap: 10px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.metric-badge {
+    padding: 2px 6px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
 }
 
 .chart-overlay-btn {

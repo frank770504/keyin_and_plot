@@ -442,7 +442,7 @@ def get_measurements():
         return only the draft to avoid duplicates in the UI.
     """
     production_measurements = Measurement.query.filter_by(is_draft=False).all()
-    
+
     # Check if there is an active draft for this session
     session_id = request.headers.get('X-Session-ID')
     active_draft = None
@@ -547,7 +547,7 @@ def update_measurement(measurement_id):
         try:
             measurement.date = datetime.strptime(date_str, '%Y-%m-%d').date()
         except (ValueError, TypeError):
-            # Fallback or silent ignore if format is wrong, 
+            # Fallback or silent ignore if format is wrong,
             pass
     elif 'date' in data:
         measurement.date = None
@@ -698,3 +698,35 @@ def update_point(measurement_id, point_id):
     return jsonify({
         "shear_rate": point.shear_rate,
         "shear_stress": point.shear_stress}), 200
+
+
+@api_bp.route('/admin/backups', methods=['GET'])
+def get_backups():
+    """Get list of available backups."""
+    from tools.restore_db import list_backups
+    backups = list_backups()
+    return jsonify(backups)
+
+@api_bp.route('/admin/restore', methods=['POST'])
+def perform_restore():
+    """Restore a backup."""
+    success, error = check_lock()
+    if not success:
+        return jsonify({"error": f"Permission denied: {error}"}), 403
+
+    data = request.get_json()
+    backup_filename = data.get('filename')
+    if not backup_filename:
+        return jsonify({"error": "No backup filename provided"}), 400
+
+    from tools.restore_db import restore_backup
+
+    # Safely close database connections before overwriting the file
+    db.session.remove()
+    db.engine.dispose()
+
+    restore_success = restore_backup(backup_filename)
+    if restore_success:
+        return jsonify({"message": "Database restored successfully"}), 200
+    else:
+        return jsonify({"error": "Restore failed"}), 500

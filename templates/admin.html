@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Area - Rheology Plotter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container" style="justify-content: center; padding-top: 50px;">
+        <div class="column" style="max-width: 800px; flex: none; width: 100%;">
+            <div class="column-content-wrapper">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Admin Area - Database Recovery</h2>
+                    <a href="/" class="btn-primary" style="text-decoration: none;">Return to Workspace</a>
+                </div>
+
+                <div class="user-config-panel" style="margin-top: 20px; background: transparent; border: none; padding: 0;">
+                    <span style="font-weight: 600;">Logged in as:</span>
+                    <span id="admin-name-display" style="margin-left: 10px; font-style: italic;"></span>
+                </div>
+
+                <div id="lock-status-container" class="status-panel">
+                    <span id="lock-status-text">Status: Acquiring lock...</span>
+                </div>
+
+                <div class="validation-note" style="margin-bottom: 20px;">
+                    * The Admin Area locks the entire system to prevent data corruption. No one can edit measurements while you are here.
+                </div>
+
+                <h3>Available Backups</h3>
+                <div class="table-scroll-container">
+                    <table id="backup-list-table">
+                        <thead>
+                            <tr>
+                                <th>Backup Filename</th>
+                                <th class="action-column" style="width: 150px; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="backup-list-body">
+                            <!-- Backups will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
