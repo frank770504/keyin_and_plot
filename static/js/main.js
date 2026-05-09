@@ -1457,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.pointsTableBody.addEventListener('input', handleTableNumericValidation);
     elements.pointsTableBody.addEventListener('change', handleTableInput);
 
-    elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.show());
+    elements.openAnalysisBtn.addEventListener('click', () => analysisWindow.toggle());
 
 
     elements.resetZoomBtn.addEventListener('click', () => {
