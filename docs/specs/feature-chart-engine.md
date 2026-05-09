@@ -38,14 +38,15 @@ The Unified Reactive Chart Engine provides a high-performance, consistent visual
 - **Auto-Update**: Any state change or data modification triggers an immediate re-render of the relevant chart instance.
 
 ## 4. Unified GUI (Analyze vs. Measurement Plots)
-The Comparison Chart implements a high-density, modular control interface:
-- **Integrated Header Bar**: To maximize vertical space, primary actions are integrated into a single horizontal row above the chart:
-    - **Editable Title**: Centered `contenteditable` heading.
-    - **Export Controls**: Format/DPI selectors and the "Save" button.
+Both the Measurement Comparison Chart and the single-measurement Analyze Chart now implement a unified, high-density, modular control interface to maintain a consistent UX:
+- **Integrated Header Bar**: To maximize vertical space, primary actions are integrated above the chart:
+    - **Editable Title**: Centered `contenteditable` heading on both charts.
     - **Viewport Control**: An integrated "Reset Zoom" button (⟲) that appears only when the chart is zoomed or measurements are plotted.
-- **Accordion Control Layout**: Advanced configuration is organized into a collapsible accordion container (hidden by default):
-    - **Axes & Scale**: `X-Log`, `Y-Log`, and manual axis limit inputs.
-    - **Regression**: Toggles for `Linear` and `Power Law` fits.
+- **Advanced Plot Controls**: Both charts feature unified control sets (rendered via Accordion for Comparison, and a fixed Sidebar for Analyze):
+    - **Axes & Scale**: `X-Log` and `Y-Log` toggles, plus manual explicit axis limit inputs (`Min`/`Max`).
+    - **Regression**: Toggles for `Linear` and `Power Law` fits with live KaTeX rendering.
+    - **Export**: Independent PNG and SVG format selectors, DPI selectors, and "Save Image" buttons for each chart, sharing the same underlying export logic.
+- **Comparison-Exclusive Features**: 
     - **Custom Curves**: Tools for adding user-defined mathematical models.
     - **Reference Curves**: Toggles for predefined industry standard or baseline equations.
 

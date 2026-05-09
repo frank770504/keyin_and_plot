@@ -164,14 +164,23 @@ Floating elements utilize a high `z-index` to ensure they remain interactive and
 
 ### A. HUD Architecture
 The Analyze pane utilizes a high-density "Interactive Inspector" HUD (Heads-Up Display) for real-time data verification.
-- **Header**: Contains window management and a clear title.
-- **Control Bar**: Compact horizontal bar for scale toggles (Log/Linear) and regression selection.
-- **Chart Area**: Centrally aligned, flex-growing canvas utilizing the standardized chart wrapper.
-- **Results Card**: Dedicated footer area displaying mathematical physical parameters (a, b, m, c) and $R^2$ fit quality using KaTeX.
+- **Layout**: It is structured as a floating window (`.floating-window`) utilizing a horizontal split layout (`.window-content-horizontal`).
+- **Right Panel (Chart Area)**: A flex-growing canvas showing the live data points from the selected measurement. It includes an editable title.
+- **Left Sidebar**: A fixed-width (`320px`) vertical control panel containing:
+    - **Advanced Plot Controls**: X/Y manual limit inputs (Min/Max) and Apply/Clear buttons.
+    - **Scale Toggles**: X-Log and Y-Log toggle buttons.
+    - **Export**: PNG/SVG format selectors, DPI selectors, and a direct save button for the active analysis.
+    - **Regression Toggles**: Clean checkboxes for Linear and Power Law fits.
+- **Results Card**: Located at the bottom of the sidebar, this area dynamically displays the mathematical physical parameters (a, b, m, c) and $R^2$ fit quality using KaTeX based on the active regressions.
 
-### B. Visual Logic
+### B. Independent Chart Resizing
+- **CSS Resize Handle**: The chart wrapper itself (`.analysis-chart-area`) utilizes `resize: both` and `overflow: hidden`, allowing the user to drag the bottom-right corner to scale the chart up or down entirely independently of the outer floating window.
+- **Flexbox Min-Size Bypass**: The chart container uses `min-height: 0; min-width: 0` to override the default Flexbox intrinsic sizing rules, permitting the container to shrink smaller than the injected Canvas dimensions.
+- **Dynamic Redraw**: A JavaScript `ResizeObserver` is attached directly to the chart container. As the CSS resize handle is dragged, the observer triggers `activeChart.resize()`, causing Chart.js to immediately redraw the canvas to perfectly fit the new user-defined dimensions.
+
+### C. Visual Logic
 - **Color Coding**: Results in the card are color-coded to match the chart lines (Red for Linear, Blue for Power Law).
-- **Adaptive Sizing**: The window has a minimum height to ensure the results card is always visible without truncating the chart.
+- **Default Dimensions**: The window initiates at a large, comfortable size (`1000x650px`) to prevent control squeezing.
 
 ## 6. Implementation Details
 - **Modules**:
