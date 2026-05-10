@@ -49,10 +49,15 @@ Follow these steps to set up and run the project locally.
     ```bash
     ./launch.sh
     ```
+
+    You can specify a custom host and port:
+    ```bash
+    ./launch.sh --url 0.0.0.0 --port 8080
+    ```
     
     Alternatively, to start the Flask server manually:
     ```bash
-    uv run python app.py
+    uv run python app.py --url 127.0.0.1 --port 5001
     ```
 
 2.  **Access the application:**

@@ -41,6 +41,18 @@ else
 fi
 
 # 5. Launch the Application
-echo "🌐 Starting Flask Application..."
+URL="127.0.0.1"
+PORT="5001"
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --url) URL="$2"; shift ;;
+        --port) PORT="$2"; shift ;;
+        *) echo "Usage: ./launch.sh [--url HOST] [--port PORT]"; exit 1 ;;
+    esac
+    shift
+done
+
+echo "🌐 Starting Flask Application on http://$URL:$PORT..."
 echo "-----------------------------------------------"
-exec "$VENV_PYTHON" app.py
+exec "$VENV_PYTHON" app.py --url "$URL" --port "$PORT"
