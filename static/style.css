@@ -787,9 +787,56 @@ canvas {
     border: 1px solid #ccc;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     z-index: 2000; /* Increased to stay above gutters/columns */
-    resize: both;
-    overflow: auto; /* Required for resize handle */
+    overflow: hidden; /* Hide overflow to allow custom handles to be visible at edges */
     flex-direction: column;
+}
+
+/* Custom Resize Handles */
+.resize-handle {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: transparent;
+    z-index: 2001;
+}
+
+.resize-br {
+    bottom: 0;
+    right: 0;
+    cursor: nwse-resize;
+}
+
+.resize-bl {
+    bottom: 0;
+    left: 0;
+    cursor: nesw-resize;
+}
+
+/* Visual Cues for Resize Handles */
+.resize-handle::after {
+    content: "";
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: #ccc;
+    border-style: solid;
+    transition: border-color 0.2s;
+}
+
+.resize-br::after {
+    bottom: 3px;
+    right: 3px;
+    border-width: 0 2px 2px 0; /* Bottom-right L-shape */
+}
+
+.resize-bl::after {
+    bottom: 3px;
+    left: 3px;
+    border-width: 0 0 2px 2px; /* Bottom-left L-shape */
+}
+
+.resize-handle:hover::after {
+    border-color: #007bff; /* Highlight blue on hover */
 }
 
 .window-header {

@@ -79,3 +79,47 @@ export function enableDragging(element, handle, options = {}) {
         document.onmousemove = null;
     }
 }
+
+/**
+ * Shared utility for resizing elements.
+ * Supports 'bottom-right' and 'bottom-left' directions.
+ */
+export function enableResizing(element, handle, direction) {
+    let startWidth, startHeight, startX, startY, startLeft;
+
+    handle.onmousedown = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        startWidth = element.offsetWidth;
+        startHeight = element.offsetHeight;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = element.offsetLeft;
+
+        document.onmousemove = doResize;
+        document.onmouseup = stopResize;
+    };
+
+    function doResize(e) {
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+
+        if (direction === 'bottom-right') {
+            element.style.width = (startWidth + deltaX) + 'px';
+            element.style.height = (startHeight + deltaY) + 'px';
+        } else if (direction === 'bottom-left') {
+            const newWidth = startWidth - deltaX;
+            if (newWidth > 100) { // Min width constraint
+                element.style.width = newWidth + 'px';
+                element.style.left = (startLeft + deltaX) + 'px';
+            }
+            element.style.height = (startHeight + deltaY) + 'px';
+        }
+    }
+
+    function stopResize() {
+        document.onmousemove = null;
+        document.onmouseup = null;
+    }
+}

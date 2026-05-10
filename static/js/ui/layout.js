@@ -1,6 +1,6 @@
 // static/js/ui/layout.js
 
-import { enableDragging } from './drag_utils.js';
+import { enableDragging, enableResizing } from './drag_utils.js';
 
 export class FloatingWindow {
     constructor(windowId, headerId, closeBtnId, onResize = null) {
@@ -16,11 +16,26 @@ export class FloatingWindow {
 
         this.initEvents();
         enableDragging(this.window, this.header);
+        this.initResizing();
         this.initResizeObserver();
     }
 
     initEvents() {
         this.closeBtn.addEventListener('click', () => this.hide());
+    }
+
+    initResizing() {
+        // Bottom Right
+        const br = document.createElement('div');
+        br.className = 'resize-handle resize-br';
+        this.window.appendChild(br);
+        enableResizing(this.window, br, 'bottom-right');
+
+        // Bottom Left
+        const bl = document.createElement('div');
+        bl.className = 'resize-handle resize-bl';
+        this.window.appendChild(bl);
+        enableResizing(this.window, bl, 'bottom-left');
     }
 
     initResizeObserver() {
