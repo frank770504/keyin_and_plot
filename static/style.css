@@ -135,8 +135,8 @@ body.resizing .column-content-wrapper {
 
 .column-content-wrapper {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: visible; /* Prevent clipping of RQL tooltip */
+    overflow-x: visible;
     padding: 20px;
     transition: opacity 0.3s ease;
     box-sizing: border-box;
@@ -276,13 +276,105 @@ body.resizing .column-content-wrapper {
     color: transparent;
 }
 
-.search-bar {
-    width: 100%;
-    padding: 8px;
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 10px;
+}
+
+.search-bar {
+    flex-grow: 1;
+    padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
+}
+
+.rql-help-icon {
+    width: 20px;
+    height: 20px;
+    background-color: #f1f3f5;
+    border: 1px solid #ced4da;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #6c757d;
+    cursor: help;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.rql-help-icon:hover {
+    background-color: #e7f1ff;
+    color: #007bff;
+    border-color: #007bff;
+}
+
+/* Tooltip Styling */
+.rql-tooltip {
+    visibility: hidden;
+    position: absolute;
+    left: 30px; /* Position to the right */
+    top: -50px;
+    width: 240px;
+    background-color: #fff;
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 12px;
+    z-index: 5000; /* Set to the top */
+    opacity: 0;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none;
+}
+
+.rql-help-icon:hover .rql-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-title {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+}
+
+.tooltip-grid {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 4px;
+    font-size: 12px;
+    color: #555;
+}
+
+.tooltip-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 8px 0;
+}
+
+.tooltip-section {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+}
+
+.tooltip-code {
+    display: block;
+    background-color: #f8f9fa;
+    padding: 4px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+    margin-top: 4px;
+    color: #d63384;
 }
 
 #left-column, #center-column {
@@ -355,7 +447,7 @@ body.resizing .column-content-wrapper {
     width: 20%;
     background-color: #fff;
     height: 100%;
-    z-index: 20;
+    z-index: 6000; /* Extremely high to stay above center/right panes for tooltip */
 }
 
 #center-column {
@@ -365,6 +457,16 @@ body.resizing .column-content-wrapper {
     /* border-right: 1px solid #ddd; Removed for gutter */
     height: 100%;
     z-index: 10;
+}
+
+#right-column {
+    /* width: 60%; Removed to allow flex-grow to handle remaining space naturally */
+    flex-grow: 1;
+    background-color: #fff;
+    /* border-left: 1px solid #ddd; Removed for gutter */
+    height: 100%;
+    width: auto; /* Allow flex to control width */
+    z-index: 1; /* Explicit low z-index */
 }
 
 #gutter-center {
@@ -560,12 +662,14 @@ ul {
 /* Table Styles */
 .table-scroll-container {
     overflow-x: auto;
+    overflow-y: auto; /* Added vertical scroll here since wrapper is overflow:visible */
     width: 100%;
     min-height: 400px; /* Ensure a stable workspace footprint */
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
     margin-top: 10px;
+    flex-grow: 1; /* Allow it to fill vertical space */
 }
 
 #points-table {
@@ -792,7 +896,7 @@ canvas {
     background-color: white;
     border: 1px solid #ccc;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 2000; /* Increased to stay above gutters/columns */
+    z-index: 7000; /* Extremely high to stay above left-column (6000) */
     overflow: hidden; /* Hide overflow to allow custom handles to be visible at edges */
     flex-direction: column;
 }
@@ -803,7 +907,7 @@ canvas {
     width: 15px;
     height: 15px;
     background: transparent;
-    z-index: 2001;
+    z-index: 7001;
 }
 
 .resize-br {

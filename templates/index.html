@@ -32,7 +32,28 @@
                     <button id="add-measurement-btn" class="create-btn btn-primary">Add Measurement</button>
                 </div>
 
-                <input type="text" id="measurement-search" placeholder="Search measurements..." class="search-bar">
+                <div class="search-container">
+                    <input type="text" id="measurement-search" placeholder="Search measurements..." class="search-bar">
+                    <div class="rql-help-icon" title="RQL Search Help">
+                        ?
+                        <div class="rql-tooltip">
+                            <div class="tooltip-title">RQL Search Guide</div>
+                            <div class="tooltip-grid">
+                                <strong>fid:</strong> <span>Formula ID</span>
+                                <strong>sid:</strong> <span>Serial ID</span>
+                                <strong>pkey:</strong> <span>Primary Key</span>
+                                <strong>date:</strong> <span>Test Date</span>
+                                <strong>is:plot</strong> <span>Selected items</span>
+                            </div>
+                            <div class="tooltip-divider"></div>
+                            <div class="tooltip-section">Operators: AND, OR, NOT, ( )</div>
+                            <div class="tooltip-divider"></div>
+                            <div class="tooltip-title">Examples:</div>
+                            <code class="tooltip-code">fid:FD AND date:2026</code>
+                            <code class="tooltip-code">is:plot</code>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-scroll-container">
                     <table id="measurement-list-table">
                         <thead>
