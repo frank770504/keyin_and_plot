@@ -71,6 +71,9 @@ The system supports the addition of mathematical models to the comparison plot t
 
 ### C. Plotting Behavior
 - **Range Adaptation**: Curves are plotted across the current X-axis extent of all selected measurements. If no measurements are selected, the system defaults to a range of $0.1$ to $100$ to ensure visibility.
+- **Visual Distinction**: 
+    - **Reference/Custom Curves**: Rendered as **solid lines** with a width of `2px` to represent fixed baselines or industry standards.
+    - **Regression Fits**: Rendered as **dashed lines** to distinguish them as mathematical models derived from the active dataset.
 - **Persistence**: Selected reference curves and custom curves remain on the chart even if the raw measurement data is cleared, providing a stable baseline for comparison.
 
 ## 6. Implementation Details

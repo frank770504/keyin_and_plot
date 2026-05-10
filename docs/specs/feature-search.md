@@ -32,7 +32,17 @@ To maintain a low barrier to entry and backward compatibility, the engine implem
 1.  **Simple Fallback**: If no RQL syntax characters (`:`, `(`, `)`, `!`, `|`, `&`) or uppercase keywords are detected, the system treats the input as a "Global Search" across Name, Date, and Serial ID.
 2.  **Bare Terms in Queries**: Any value provided without a prefix inside a complex query (e.g., `is:plot water`) is automatically evaluated as a Global Search term.
 
-## 4. Implementation Details
+## 4. User Assistance (Cheat Sheet)
+To assist users in learning and using RQL, the search interface includes an interactive help system:
+- **Interaction**: A '?' information icon is positioned next to the search bar.
+- **Tooltip**: Hovering over the icon reveals a high-priority "Cheat Sheet" popover.
+- **Content**: 
+    - Quick reference for field prefixes (`fid:`, `sid:`, `pkey:`, `date:`, `is:plot`, `is:draft`).
+    - List of available logical operators.
+    - Practical syntax examples (e.g., `fid:Batch AND is:plot`).
+- **Visibility**: The tooltip is rendered with a high `z-index` (5000) to ensure it appears above all other workspace elements and gutters.
+
+## 5. Implementation Details
 - **Parser Module**: `static/js/query_parser.js`.
 - **Architecture**: A two-stage process consisting of a Regex-based **Tokenizer** followed by a **Recursive Descent Parser** that generates an Abstract Syntax Tree (AST).
 - **Execution**: The AST is converted into a predicate function `(measurement) => boolean` which is applied to the list in `static/js/ui/measurement_ui.js`.
