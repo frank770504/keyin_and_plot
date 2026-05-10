@@ -82,6 +82,9 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
 
     const currentOrder = currentHeaders.map(th => th.dataset.colId || (th.classList.contains('checkbox-column') ? 'plot' : ''));
 
+    const scrollContainer = table.closest('.table-scroll-container') || table.parentElement;
+    const previousScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+
     tbody.innerHTML = '';
 
     measurements.forEach(measurement => {
@@ -128,13 +131,14 @@ export function renderMeasurementList(elements, onSelect, onComparisonToggle) {
             tr.appendChild(td);
         });
 
-        if (measurement.pkey === state.activeMeasurement) tr.classList.add('active');
+        if (measurement.pkey == state.activeMeasurement) tr.classList.add('active');
         if (measurement.is_draft) tr.classList.add('measurement-draft');
 
         tbody.appendChild(tr);
     });
 
     updateMasterCheckbox(measurements);
+    if (scrollContainer) scrollContainer.scrollTop = previousScrollTop;
 }
 
 export function updateMasterCheckbox(visibleMeasurements) {

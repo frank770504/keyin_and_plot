@@ -434,7 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (wasSame) return; // Already handled active measurement transition
             } else {
                 // "stay" or dialog closed without action
-                refreshMeasurementList();
                 return;
             }
         }
