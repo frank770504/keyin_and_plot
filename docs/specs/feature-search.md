@@ -7,10 +7,10 @@ The Advanced Search system replaces the standard text filter with a robust query
 
 ### A. Field Prefixes
 Specific metadata fields can be targeted using a colon (`:`) separator:
-- `name:<string>`: Matches the formula ID.
-- `id:<string>`: Matches the PKEY.
+- `fid:<string>`: Matches the Formula ID.
+- `pkey:<string>`: Matches the Primary Key (ID).
 - `date:<string>`: Matches the test date string.
-- `serial:<string>`: Matches the Serial ID (UI: SID).
+- `sid:<string>`: Matches the Serial ID.
 - `note:<string>`: Matches the notes.
 - `is:<flag>`: Matches boolean or state flags:
     - `is:plot` or `is:selected`: Shows only measurements selected for comparison.

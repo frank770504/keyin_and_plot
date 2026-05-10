@@ -19,12 +19,12 @@ export function parseQuery(query, comparisonSelected) {
         return (m) => {
             try {
                 const term = trimmedQuery.toLowerCase();
-                const name = (m.formula_id || '').toString().toLowerCase();
+                const fid = (m.formula_id || '').toString().toLowerCase();
                 const pkey = (m.pkey || '').toString();
                 const date = (m.date || '').toString();
-                const serial = (m.serial_id || '').toString().toLowerCase();
+                const sid = (m.serial_id || '').toString().toLowerCase();
                 const note = (m.experiment_note || '').toString().toLowerCase();
-                return name.includes(term) || pkey.includes(term) || date.includes(term) || serial.includes(term) || note.includes(term);
+                return fid.includes(term) || pkey.includes(term) || date.includes(term) || sid.includes(term) || note.includes(term);
             } catch (e) {
                 return false;
             }
@@ -66,7 +66,7 @@ function tokenize(str) {
         }
         else if (match[5]) {
             const parts = match[5].split(':');
-            if (parts.length > 1 && ['name', 'id', 'date', 'serial', 'note', 'is'].includes(parts[0])) {
+            if (parts.length > 1 && ['fid', 'pkey', 'date', 'sid', 'note', 'is'].includes(parts[0])) {
                 tokens.push({ type: 'FIELD', field: parts[0], val: parts.slice(1).join(':') });
             } else {
                 tokens.push({ type: 'VALUE', val: match[5] });
@@ -127,13 +127,13 @@ function evaluate(node, m, comparisonSelected) {
         case 'FIELD':
             const val = (node.val || '').toLowerCase();
             switch (node.field) {
-                case 'name':
+                case 'fid':
                     return (m.formula_id || '').toString().toLowerCase().includes(val);
-                case 'id':
+                case 'pkey':
                     return (m.pkey || '').toString().includes(val);
                 case 'date':
                     return (m.date || '').toString().includes(val);
-                case 'serial':
+                case 'sid':
                     return (m.serial_id || '').toString().toLowerCase().includes(val);
                 case 'note':
                     return (m.experiment_note || '').toString().toLowerCase().includes(val);
