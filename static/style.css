@@ -649,6 +649,10 @@ ul {
     border-left: 4px solid #007bff; /* Primary Blue accent */
 }
 
+tr.active:hover {
+    background-color: #d0e3ff !important; /* Darker blue highlight on hover */
+}
+
 #points-list li {
     display: flex;
     justify-content: space-between;
