@@ -1105,7 +1105,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleSaveChart(containerEl, titleText, formatType, dpiValue) {
-        const container = containerEl || elements.comparisonChartContainer;
+        // Correctly handle event objects passed from event listeners
+        const container = (containerEl instanceof HTMLElement) ? containerEl : elements.comparisonChartContainer;
         if (!container) return;
 
         const titleElement = container === elements.comparisonChartContainer ? elements.comparisonChartTitle : elements.activeChartTitle;
@@ -1126,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Determine which chart instance we are saving
         const targetChart = container === elements.comparisonChartContainer ? comparisonChart : activeChart;
 
-        // Temporarily boost Chart.js resolution for the export
+        // Backup and boost Chart.js resolution to match the target DPI
         let originalDPR = window.devicePixelRatio || 1;
         if (targetChart) {
             originalDPR = targetChart.options.devicePixelRatio || window.devicePixelRatio || 1;
@@ -1135,7 +1136,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            // Give the browser a moment to settle after the blur() and resize()
+            await new Promise(resolve => setTimeout(resolve, 150));
+
             // Options for dom-to-image-more
+            // We rely on the library's internal scale option for high-res output.
+            // This is more stable than manually boosting the Chart.js DPR which causes double-scaling.
             const options = {
                 bgcolor: '#ffffff',
                 scale: scale,
@@ -1214,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Export failed:', error);
-            alert('Failed to save chart image.');
+            showNotification(`Failed to save chart image: ${error.message}`, 'error');
         } finally {
             // Restore original Chart.js resolution
             if (targetChart) {
