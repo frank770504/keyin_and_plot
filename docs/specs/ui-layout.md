@@ -179,10 +179,31 @@ The Analyze pane utilizes a high-density "Interactive Inspector" HUD (Heads-Up D
     - **Regression Toggles**: Clean checkboxes for Linear and Power Law fits.
 - **Results Card**: Located at the bottom of the sidebar, this area dynamically displays the mathematical physical parameters (a, b, m, c) and $R^2$ fit quality using KaTeX based on the active regressions.
 
-### B. Independent Chart Resizing
-- **CSS Resize Handle**: The chart wrapper itself (`.analysis-chart-area`) utilizes `resize: both` and `overflow: hidden`, allowing the user to drag the bottom-right corner to scale the chart up or down entirely independently of the outer floating window.
-- **Flexbox Min-Size Bypass**: The chart container uses `min-height: 0; min-width: 0` to override the default Flexbox intrinsic sizing rules, permitting the container to shrink smaller than the injected Canvas dimensions.
-- **Dynamic Redraw**: A JavaScript `ResizeObserver` is attached directly to the chart container. As the CSS resize handle is dragged, the observer triggers `activeChart.resize()`, causing Chart.js to immediately redraw the canvas to perfectly fit the new user-defined dimensions.
+### B. Symmetrical Resizing
+- **Corner Handles**: Floating windows support resizing from both the **bottom-right** and **bottom-left** corners via custom-injected handles.
+- **Logic**: 
+    - **Bottom-Right**: Adjusts `width` and `height`.
+    - **Bottom-Left**: Adjusts `width`, `height`, and the window's `left` position to maintain visual stability.
+- **Visual Cues**: Both corners feature L-shaped "grip" indicators that highlight in Blue on hover to signal interactivity.
+- **Constraints**: Minimum width is enforced at `100px`.
+
+### C. Visual Logic
+- **Color Coding**: Results in the card are color-coded to match the chart lines (Red for Linear, Blue for Power Law).
+- **Default Dimensions**: The window initiates at a large, comfortable size (`1000x650px`) to prevent control squeezing.
+
+## 6. Implementation Details
+- **Modules**:
+    - `static/js/ui/table_resizer.js`: Logic for drag-to-resize handles.
+    - `static/js/ui/column_reorderer.js`: Logic for drag-to-reorder headers.
+    - `static/js/ui/measurement_ui.js`: Order-aware rendering for the measurement list.
+    - `static/js/ui/drag_utils.js`: Viewport and Parent clamped dragging for floating elements.
+- **CSS**: Located in the "Table Styles", "Floating Window", and "Analysis HUD" sections of `static/style.css`.ion Details
+- **Modules**:
+    - `static/js/ui/table_resizer.js`: Logic for drag-to-resize handles.
+    - `static/js/ui/column_reorderer.js`: Logic for drag-to-reorder headers.
+    - `static/js/ui/measurement_ui.js`: Order-aware rendering for the measurement list.
+    - `static/js/ui/drag_utils.js`: Viewport and Parent clamped dragging for floating elements.
+- **CSS**: Located in the "Table Styles", "Floating Window", and "Analysis HUD" sections of `static/style.css`. dragged, the observer triggers `activeChart.resize()`, causing Chart.js to immediately redraw the canvas to perfectly fit the new user-defined dimensions.
 
 ### C. Visual Logic
 - **Color Coding**: Results in the card are color-coded to match the chart lines (Red for Linear, Blue for Power Law).

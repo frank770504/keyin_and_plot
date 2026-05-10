@@ -28,7 +28,7 @@ The "Draft-First" workflow streamlines measurement creation by initializing a te
 ### A. Creation Trigger (`main.js`)
 - **Action**: Clicking "Create Measurement" calls the initialization API.
 - **Race Condition Prevention**: The "Create Measurement" button is immediately disabled upon click and re-enabled in a `finally` block to prevent multiple concurrent draft creation requests.
-- **State Validation**: If `state.isEditing` is already true, creation is blocked and an alert is shown.
+- **State Validation**: If `state.isEditing` is already true, creation is blocked and a warning notification is shown.
 - **State Transition**: Immediately sets `state.isEditing = true` and `state.editingOriginalName = null` (signaling a new record).
 - **UI Reset & Update**: Clears all workspace inputs (Formula ID, Test Date, Serial ID, Note, and Spindle) to ensure a blank slate. Critically, the `active-measurement-id` field is explicitly set to the `newId` returned by the API.
 - **Field Constraints**:
