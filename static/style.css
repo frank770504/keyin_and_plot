@@ -142,6 +142,39 @@ body.resizing .column-content-wrapper {
     display: flex;
     flex-direction: column;
     min-height: 0; /* Allow wrapper to shrink within flex parent */
+    position: relative;
+}
+
+.scroll-to-active-btn {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: none; /* Controlled via JS */
+    transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
+}
+
+.scroll-to-active-btn.position-top {
+    top: 10px;
+    bottom: auto;
+}
+
+.scroll-to-active-btn.position-bottom {
+    bottom: 30px;
+    top: auto;
+}
+
+.scroll-to-active-btn:hover {
+    background-color: #0056b3;
+    transform: translateX(-50%) scale(1.05);
 }
 
 #comparison-chart-container,

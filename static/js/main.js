@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         measurementListHeaders: document.querySelectorAll('#measurement-list-table th[data-sort]'),
         masterPlotCheckbox: document.getElementById('master-plot-checkbox'),
         addMeasurementBtn: document.getElementById('add-measurement-btn'),
+        scrollToActiveBtn: document.getElementById('scroll-to-active-btn'),
 
         // Lock & User UI
         lockStatusText: document.getElementById('lock-status-text'),
@@ -134,6 +135,53 @@ document.addEventListener('DOMContentLoaded', () => {
     let comparisonChart = null;
     const activeRequests = new Map(); // Track latest request ID per row
     const pendingAdds = new Set();    // Track rows currently being created in DB
+
+    // --- Scroll to Active Button Logic ---
+    const activeRowObserver = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        
+        // Show button if the active row is NOT intersecting (out of view)
+        if (!entry.isIntersecting) {
+            elements.scrollToActiveBtn.style.display = 'block';
+            
+            // Determine if the row is above or below the visible area
+            if (entry.boundingClientRect.top < entry.rootBounds.top) {
+                // Row is hidden above
+                elements.scrollToActiveBtn.textContent = '↑ Active Measurement';
+                elements.scrollToActiveBtn.classList.remove('position-bottom');
+                elements.scrollToActiveBtn.classList.add('position-top');
+            } else {
+                // Row is hidden below
+                elements.scrollToActiveBtn.textContent = '↓ Active Measurement';
+                elements.scrollToActiveBtn.classList.remove('position-top');
+                elements.scrollToActiveBtn.classList.add('position-bottom');
+            }
+        } else {
+            elements.scrollToActiveBtn.style.display = 'none';
+        }
+    }, {
+        root: elements.measurementListTable.closest('.table-scroll-container'),
+        threshold: 0.1 // Triggers when at least 10% is visible/hidden
+    });
+
+    elements.scrollToActiveBtn.addEventListener('click', () => {
+        const activeRow = document.querySelector('#measurement-list-table tbody tr.active');
+        if (activeRow) {
+            activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    // Update observer when list refreshes
+    function updateActiveRowObserver() {
+        activeRowObserver.disconnect(); // Stop observing old row
+        elements.scrollToActiveBtn.style.display = 'none'; // Hide button by default
+
+        const activeRow = document.querySelector('#measurement-list-table tbody tr.active');
+        if (activeRow) {
+            activeRowObserver.observe(activeRow);
+        }
+    }
 
     // --- Layout Initialization ---
     const layoutControl = layout.initLayout(elements, [() => {
@@ -416,6 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function refreshMeasurementList() {
         measurementUI.renderMeasurementList(elements, setActiveMeasurement, handleDrawSelected);
         measurementUI.updateSortIcons(elements);
+        updateActiveRowObserver();
     }
 
     // 2. Workspace & Active Measurement

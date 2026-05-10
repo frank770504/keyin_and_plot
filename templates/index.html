@@ -54,7 +54,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-scroll-container">
+                <div style="position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; margin-top: 10px;">
+                <div class="table-scroll-container" style="margin-top: 0;">
                     <table id="measurement-list-table">
                         <thead>
                             <tr>
@@ -74,6 +75,8 @@
                             <!-- Measurements will be loaded here -->
                         </tbody>
                     </table>
+                </div>
+                <button id="scroll-to-active-btn" class="scroll-to-active-btn"></button>
                 </div>
             </div>
         </div>
