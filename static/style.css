@@ -44,7 +44,7 @@ button {
     transition: background-color 0.2s, filter 0.2s;
 }
 
-#points-table thead th, 
+#points-table thead th,
 #measurement-list-table thead th {
     font-weight: bold;
 }
@@ -152,7 +152,7 @@ body.resizing .column-content-wrapper {
     min-height: 380px; /* Increased for stability */
     display: flex;
     flex-direction: column;
-    overflow: hidden; 
+    overflow: hidden;
 }
 
 #comparison-chart-wrapper,
@@ -561,6 +561,8 @@ ul {
 .table-scroll-container {
     overflow-x: auto;
     width: 100%;
+    min-height: 400px; /* Ensure a stable workspace footprint */
+    background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
     margin-top: 10px;
@@ -572,35 +574,40 @@ ul {
     border-collapse: collapse;
 }
 
-#points-table th[data-field="action"] { width: 40px; }
-#points-table th[data-field="N"] { width: 100px; }
-#points-table th[data-field="eta"] { width: 120px; }
-#points-table th[data-field="torque"] { width: 100px; }
-#points-table th[data-field="shear_rate"] { width: 100px; }
-#points-table th[data-field="shear_stress"] { width: 100px; }
+#points-table th[data-field="action"] { width: 34px; }
+#points-table th[data-field="N"] { width: 80px; }
+#points-table th[data-field="eta"] { width: 90px; }
+#points-table th[data-field="torque"] { width: 80px; }
+#points-table th[data-field="shear_rate"] { width: 80px; }
+#points-table th[data-field="shear_stress"] { width: 80px; }
 
 #points-table th, #points-table td {
     border: 1px solid #ddd;
-    padding: 2px 4px; /* Shrunk padding for smaller height */
+    padding: 2px 2px;
     text-align: center;
-    white-space: nowrap; /* Ensure cells stay on one line */
-    position: relative; /* Anchor for resizer */
+    white-space: nowrap;
+    position: relative;
     overflow: hidden;
+    height: 22px; /* Force small height */
+    line-height: 22px;
 }
 
 #points-table th {
     background-color: #f2f2f2;
-    padding: 4px 8px; /* Keep headers slightly larger for readability */
+    padding: 4 4px;
+    height: 22px;
 }
 
 #points-table input {
-    width: 100%;           /* Fill the cell */
+    width: 100%;
+    height: 20px; /* Force input to stay small */
     border: 1px solid transparent;
-    padding: 4px;
+    padding: 2px 2px;
     box-sizing: border-box;
     text-align: center;
     background-color: transparent;
     transition: border-color 0.2s;
+    line-height: 20px;
 }
 
 #points-table input:hover {
@@ -634,7 +641,6 @@ ul {
 
 #points-table .calculated-value {
     font-family: monospace;
-    font-weight: bold;
     color: #555;
     padding: 0 5px;
 }
@@ -689,7 +695,7 @@ ul {
 }
 
 .metadata-row.align-top label {
-    padding-top: 5px; 
+    padding-top: 5px;
 }
 
 .metadata-row input[type="date"],
@@ -1152,17 +1158,17 @@ canvas {
 }
 
 /* Modern Minimalist Button Hierarchy */
-.btn-primary { 
-    background-color: #fff; 
-    color: #007bff; 
+.btn-primary {
+    background-color: #fff;
+    color: #007bff;
     border: 1px solid #007bff;
 }
 .btn-primary:hover { background-color: #007bff; color: #fff; }
 
-.btn-secondary { 
-    background-color: #fff; 
-    color: #333; 
-    border: 1px solid #ced4da; 
+.btn-secondary {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ced4da;
 }
 .btn-secondary:hover { background-color: #f8f9fa; border-color: #b3b7bb; }
 
@@ -1180,16 +1186,16 @@ canvas {
 .btn-secondary.success:hover { background-color: #28a745; color: #fff; }
 
 /* Keep .btn-danger mapping to Secondary Danger for backward compatibility in JS if needed, or we just update HTML */
-.btn-danger { 
-    background-color: #fff; 
-    color: #dc3545; 
-    border: 1px solid #dc3545; 
+.btn-danger {
+    background-color: #fff;
+    color: #dc3545;
+    border: 1px solid #dc3545;
 }
 .btn-danger:hover { background-color: #dc3545; color: #fff; }
 
-.btn-ghost { 
+.btn-ghost {
     background-color: #f1f3f5; /* Subtle background to look like a button */
-    color: #495057; 
+    color: #495057;
     border: 1px solid #e9ecef; /* Subtle border */
     box-shadow: 0 1px 2px rgba(0,0,0,0.02); /* Slight depth */
 }
