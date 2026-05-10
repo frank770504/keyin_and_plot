@@ -135,13 +135,13 @@ body.resizing .column-content-wrapper {
 
 .column-content-wrapper {
     flex: 1;
-    overflow-y: visible; /* Prevent clipping of RQL tooltip */
-    overflow-x: visible;
+    overflow: visible; /* Required for RQL tooltip to pop out */
     padding: 20px;
     transition: opacity 0.3s ease;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    min-height: 0; /* Allow wrapper to shrink within flex parent */
 }
 
 #comparison-chart-container,
@@ -659,17 +659,16 @@ ul {
     transition: background-color 0.2s;
 }
 
-/* Table Styles */
 .table-scroll-container {
     overflow-x: auto;
-    overflow-y: auto; /* Added vertical scroll here since wrapper is overflow:visible */
+    overflow-y: auto;
     width: 100%;
-    min-height: 400px; /* Ensure a stable workspace footprint */
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
     margin-top: 10px;
-    flex-grow: 1; /* Allow it to fill vertical space */
+    flex: 1; /* Grow to fill space, shrink to fit viewport */
+    min-height: 0; /* Critical for flex shrinking */
 }
 
 #points-table {
@@ -1435,6 +1434,11 @@ canvas {
     background: #ffffff;
 }
 
-ground: #ffffff;
+active::after {
+    transform: rotate(180deg); /* Up arrow */
 }
 
+.accordion-content {
+    padding: 15px;
+    background: #ffffff;
+}
