@@ -1033,17 +1033,42 @@ canvas {
 }
 
 /* Custom Modal Dialog Styles */
-#conflict-dialog {
+.custom-modal {
     border: none;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    padding: 20px;
+    padding: 0; /* Changed to 0 to allow header background to touch edges */
     width: 400px;
     background: #fff;
     font-family: inherit;
+    overflow: hidden;
 }
 
-#conflict-dialog::backdrop {
+.custom-modal .dialog-header {
+    padding: 15px 20px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #fff;
+    background-color: #6c757d; /* Default gray */
+}
+
+.custom-modal.severity-error .dialog-header { background-color: #dc3545; }
+.custom-modal.severity-warning .dialog-header { background-color: #ffc107; color: #333; }
+.custom-modal.severity-success .dialog-header { background-color: #28a745; }
+.custom-modal.severity-info .dialog-header { background-color: #17a2b8; }
+
+.custom-modal .dialog-body {
+    padding: 20px;
+    color: #444;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.custom-modal .modal-actions {
+    padding: 0 20px 20px 20px;
+}
+
+.custom-modal::backdrop {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
 }

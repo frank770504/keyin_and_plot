@@ -1,3 +1,8 @@
+import { initNotifications, showNotification } from './ui/notification_ui.js';
+
+// Initialize Global Notifications
+initNotifications();
+
 const SESSION_ID = crypto.randomUUID();
 const adminName = localStorage.getItem('userName') || '';
 let lockInterval = null;
@@ -194,15 +199,15 @@ async function confirmRestore(filename) {
             });
 
             if (response.ok) {
-                alert('Database restored successfully! Reloading...');
-                window.location.reload();
+                showNotification('Database restored successfully! Reloading...', 'success');
+                setTimeout(() => window.location.reload(), 1500);
             } else {
                 const data = await response.json();
-                alert(`Restore failed: ${data.error}`);
+                showNotification(`Restore failed: ${data.error}`, 'error');
             }
         } catch (error) {
             console.error('Restore error:', error);
-            alert('An error occurred while attempting to restore the database.');
+            showNotification('An error occurred while attempting to restore the database.', 'error');
         }
     }
 }

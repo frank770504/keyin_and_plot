@@ -66,6 +66,15 @@
         </div>
     </div>
 
+    <!-- Notification Dialog -->
+    <dialog id="notification-dialog" class="custom-modal">
+        <div id="notification-header" class="dialog-header">Notification</div>
+        <div id="notification-message" class="dialog-body">Message goes here.</div>
+        <form method="dialog" class="modal-actions">
+            <button type="submit" class="btn-secondary">OK</button>
+        </form>
+    </dialog>
+
     <script type="module" src="{{ url_for('static', filename='js/admin.js') }}"></script>
 </body>
 </html>

@@ -101,7 +101,7 @@
                             <option value="SC4-34">SC4-34</option>
                         </select>
                     </div>
-                    <div class="validation-note">* Required fields</div>
+                    <div class="validation-note">* Required</div>
                 </div>
 
                 <div id="analysis-controls" style="margin: 10px 0;">
@@ -356,15 +356,22 @@
     </dialog>
 
     <!-- Unsaved Changes Dialog -->
-    <dialog id="unsaved-changes-dialog" class="custom-modal">
-        <form method="dialog">
-            <h3>Unsaved Changes</h3>
-            <p>You are currently editing a measurement. What would you like to do before switching?</p>
-            <div class="modal-actions">
-                <button id="unsaved-save-btn" type="submit" value="save" class="btn-success">Save Changes</button>
-                <button type="submit" value="discard" class="btn-danger">Discard Changes</button>
-                <button type="submit" value="stay" class="btn-secondary">Stay Here</button>
-            </div>
+    <dialog id="unsaved-changes-dialog" class="custom-modal severity-warning">
+        <div class="dialog-header">Unsaved Changes</div>
+        <div class="dialog-body">You are currently editing a measurement. What would you like to do before switching?</div>
+        <form method="dialog" class="modal-actions">
+            <button id="unsaved-save-btn" type="submit" value="save" class="btn-success">Save Changes</button>
+            <button type="submit" value="discard" class="btn-danger">Discard Changes</button>
+            <button type="submit" value="stay" class="btn-secondary">Stay Here</button>
+        </form>
+    </dialog>
+
+    <!-- Notification Dialog -->
+    <dialog id="notification-dialog" class="custom-modal">
+        <div id="notification-header" class="dialog-header">Notification</div>
+        <div id="notification-message" class="dialog-body">Message goes here.</div>
+        <form method="dialog" class="modal-actions">
+            <button type="submit" class="btn-secondary">OK</button>
         </form>
     </dialog>
 

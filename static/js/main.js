@@ -8,6 +8,10 @@ import * as workspaceUI from './ui/workspace_ui.js';
 import { createFloatingLegend } from './ui/legend_ui.js';
 import { TableResizer } from './ui/table_resizer.js';
 import { ColumnReorderer } from './ui/column_reorderer.js';
+import { initNotifications, showNotification, showUnsavedChangesDialog } from './ui/notification_ui.js';
+
+// Initialize Global Notifications
+initNotifications();
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
@@ -414,18 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
         measurementUI.updateSortIcons(elements);
     }
 
-    function showUnsavedChangesDialog() {
-        const dialog = elements.unsavedChangesDialog;
-        return new Promise((resolve) => {
-            const handleClose = () => {
-                dialog.removeEventListener('close', handleClose);
-                resolve(dialog.returnValue); // "save", "discard", or "stay"
-            };
-            dialog.addEventListener('close', handleClose);
-            dialog.showModal();
-        });
-    }
-
     // 2. Workspace & Active Measurement
     async function setActiveMeasurement(id) {
         // --- Handle Unsaved Changes ---
@@ -756,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadAndRenderMeasurements();
 
         } catch (error) {
-            alert(error.message);
+            showNotification(error.message, 'error');
             await releaseLockIfPossible();
         } finally {
             elements.addMeasurementBtn.disabled = false;
@@ -810,7 +802,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 await loadAndRenderMeasurements();
             } catch (error) {
-                alert(error.message);
+                showNotification(error.message, 'error');
             } finally {
                 await releaseLockIfPossible();
             }
@@ -841,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             workspaceUI.ensureEmptyRow(elements, handleDeletePoint);
         } catch (error) {
-            alert(error.message);
+            showNotification(error.message, 'error');
         }
     }
 
@@ -868,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             await releaseLockIfPossible();
         } catch (error) {
-            alert(error.message);
+            showNotification(error.message, 'error');
         }
     }
 
@@ -898,7 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadAndRenderMeasurements(); // Refresh list to remove the draft if it was new
             await releaseLockIfPossible();
         } catch (error) {
-            alert(error.message);
+            showNotification(error.message, 'error');
         }
     }
 
@@ -916,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadAndRenderMeasurements(); // Refresh list
         } catch (error) {
             console.error('Failed to rename:', error);
-            alert(error.message);
+            showNotification(error.message, 'error');
             updateSaveButtonState();
         }
     }
@@ -955,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadActiveMeasurementData();
                 workspaceUI.ensureEmptyRow(elements, handleDeletePoint); // Ensure we still have an empty row
             } catch (error) {
-                alert(error.message);
+                showNotification(error.message, 'error');
             }
         }
     }
@@ -1614,7 +1606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const color = elements.customCurveColor.value;
 
         if (isNaN(param1) || isNaN(param2)) {
-            alert('Please enter valid numbers for both parameters.');
+            showNotification('Please enter valid numbers for both parameters.', 'warning');
             return;
         }
 
