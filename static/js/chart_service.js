@@ -461,7 +461,6 @@ export async function getSelectedMeasurementsForChart(measurementIds, options = 
                 data: points,
                 borderColor: curve.color,
                 borderWidth: 2,
-                borderDash: curve.type === 'linear' ? [10, 5] : [5, 5],
                 backgroundColor: 'rgba(0,0,0,0)',
                 type: 'line',
                 showLine: true,
