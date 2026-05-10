@@ -111,8 +111,14 @@ The Unified Table System provides a high-density, customizable interface for dat
 - **Overflow Handling**: Both headers (`th`) and data cells (`td`) utilize `overflow: hidden`, `text-overflow: ellipsis`, and `white-space: nowrap` to maintain layout integrity in narrow columns.
 
 ### B. Independent Viewports
-- **Scroll Container**: Tables are wrapped in a `.table-scroll-container` with `overflow-x: auto`.
+- **Scroll Container**: Tables are wrapped in a `.table-scroll-container` with `overflow-x: auto` and `overflow-y: auto`.
 - **Width Independence**: Tables use `width: max-content`, ensuring they do not stretch or shrink when the surrounding pane is resized via gutters.
+- **Scroll to Active (Measurement List)**:
+    - **Trigger**: A floating button (`.scroll-to-active-btn`) that allows users to quickly jump back to the currently selected measurement if it has been scrolled out of view.
+    - **Dynamic Visibility & Positioning**: Visibility is managed by an `IntersectionObserver` observing the `tr.active` row.
+        - If the active row scrolls out of view above the visible area, the button appears at the top (`.position-top`) with the text `↑ Active Measurement`.
+        - If the active row scrolls out of view below the visible area, the button appears at the bottom (`.position-bottom`) with the text `↓ Active Measurement`.
+    - **Action**: Clicking the button triggers a smooth scroll `scrollIntoView({ behavior: 'smooth', block: 'center' })`, centering the active row within the viewport.
 
 ## 3. Customization & Persistence
 

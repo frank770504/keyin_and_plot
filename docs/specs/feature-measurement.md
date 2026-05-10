@@ -51,3 +51,15 @@ The "Draft-First" workflow streamlines measurement creation by initializing a te
 ## 4. UI Indicators
 - **List Indicator**: Drafts in the measurement list are appended with a ` (Draft)` suffix and styled with italic/muted text (`.measurement-draft`).
 - **Input Removal**: The legacy "New Measurement Name" input field was removed in favor of editing the name directly in the Workspace header during the draft phase.
+- **Active Row State**:
+    - **Highlight**: The currently selected measurement row in the list is highlighted with a soft blue background (`#e7f1ff`) and a primary blue left border (`.active`).
+    - **Hover Interaction**: Hovering over the `.active` row further darkens the background to `#d0e3ff` to provide clear, responsive visual feedback.
+    - **Scroll Memory**: The measurement list's scroll position is strictly preserved across background syncs, sorts, and dialog interactions to prevent the active item from jumping out of view.
+
+## 5. Unsaved Changes Workflow
+When a user has `isEditing = true` (unsaved changes) and attempts to switch to a different measurement by clicking another row in the list, the system intercepts the navigation:
+- **Dialog**: An "Unsaved Changes" modal (`showUnsavedChangesDialog()`) is presented.
+- **Actions**:
+    - **Save Changes**: Commits the draft, updates the UI, and proceeds with the navigation to the newly selected measurement.
+    - **Discard Changes**: Rolls back the draft, resets the UI, and proceeds with the navigation.
+    - **Stay Here**: Cancels the navigation entirely. The UI state, including the active measurement highlight and list scroll position, is strictly preserved without rebuilding the DOM.
